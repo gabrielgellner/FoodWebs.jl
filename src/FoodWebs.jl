@@ -1,5 +1,9 @@
 module FoodWebs
+using Distributions
 
-# package code goes here
+export may_network, niche_network
+export random_predprey
 
-end # module
+include("topology.jl")
+
+end
