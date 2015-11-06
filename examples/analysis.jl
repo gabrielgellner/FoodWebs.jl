@@ -16,5 +16,5 @@ function sample(nsample::Int, f::Float64)
     hcat(rvals, deigs)
 end
 
-data = sample(10, 0.8)
+data = sample(500, 0.8)
 fig1 = plot(data[:, 1], data[:, 2])
