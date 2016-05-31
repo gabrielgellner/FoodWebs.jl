@@ -1,5 +1,8 @@
+"""
+    may_network(S::Int, C::Float64)
 
-
+Returns an `S`x`S` Erdos-Renlyi adjacency matrix with connectance `C`.
+"""
 function may_network(S::Int, C::Float64)
     adj = zeros(Int, S, S)
     for i in 1:S, j in (i + 1):S
@@ -10,6 +13,11 @@ function may_network(S::Int, C::Float64)
     return adj
 end
 
+"""
+    cascade_network(S::Int, C::Float64)
+
+Returns an `S`x`S` adjacency matrix with network structure described by Cohen, Briand & Newman, 1989.
+"""
 function cascade_network(S::Int, C::Float64)
     adj = zeros(Int, S, S)
     for i in 1:S, j in (i + 1):S
@@ -26,6 +34,11 @@ function cascade_network(S::Int, C::Float64)
     adj
 end
 
+"""
+    niche_network(S::Int, C::Float64)
+
+Returns an `S`x`S` adjacency matrix with network structure described by Williams & Martinez 2000.
+"""
 function niche_network(S::Int, C::Float64)
     eta = sort(rand(S))
     beta = 1.0/C - 1.0;
@@ -46,6 +59,9 @@ function niche_network(S::Int, C::Float64)
 end
 
 #TODO: I need to think of a better name for this
+"""
+    random_predprey(adj::Array{Int, 2}, dist::Distribution, f::Float64)
+"""
 function random_predprey(adj::Array{Int, 2}, dist::Distribution, f::Float64)
     S = size(adj, 1) # I assume it is square
     cmat = diagm(-ones(S))
