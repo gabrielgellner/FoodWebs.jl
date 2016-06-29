@@ -4,7 +4,7 @@ using PyPlot
 
 function sample(nsample::Int, f::Float64)
     deigs = zeros(nsample)
-    # interestingly |linspace| doesn't produce an array but instead an
+    # interestingly `linspace` doesn't produce an array but instead an
     # iterator but I can use it like I would expect. I am not sure what the
     # performance trade off is
     rvals = linspace(0.0, 8.0, nsample)
