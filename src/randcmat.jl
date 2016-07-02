@@ -1,5 +1,4 @@
-#TODO: I need to think of a better name for this. Also this needs to be moved out of this
-# file as it is not really about topology
+#TODO: I need to think of a better name for this.
 function random_predprey(adj::Matrix{Int}, dist::Distribution, f::Float64, shuffle=false)
     S = size(adj, 1)
     @assert S == size(adj, 2) # only allow square matrices
