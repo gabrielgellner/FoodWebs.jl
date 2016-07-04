@@ -1,6 +1,3 @@
-function is_connected(adj::Matrix)
-    sum(adj, 2)
-end
 
 function trophic_levels(adj::Matrix)
     S = size(adj, 1)
@@ -38,9 +35,11 @@ function trophic_levels(adj::Matrix)
     # calculate the actual trophic position
     tp = zeros(S)
     for sp = 1:S
-        if sum(adj[:, sp]) == 0
+        if sum(adj[:, sp]) == 0 # basal species
             tp[sp] = 1
         else
+            # assume that all feeding interations are equal so just sum the number of
+            # interactions for each species and divide to get the binary trophic position
             tp[sp] = sum(bylevel[:, sp])/sum(adj[:, sp])
         end
     end

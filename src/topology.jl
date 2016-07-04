@@ -1,8 +1,7 @@
-#TODO: check that all models are giving the same mirroring of the adjancency matrix (upper or lower triangle, etc)
 """
     may_network(S, C)
 
-Generate a `S`*`S` adjancency matrix, with connectance `C`. Following the random network
+Generate a `S`×`S` adjancency matrix, with connectance `C`. Following the random network
 described by:
 May, R. M. Will a large complex system be stable? Nature 238, 413–414 (1972).
 """
@@ -11,6 +10,7 @@ function may_network(S::Int, C::Float64)
     for i in 1:S, j in (i + 1):S
         if rand() < C
             adj[i, j] = 1
+            adj[j, i] = 1
         end
     end
     return adj
@@ -19,7 +19,7 @@ end
 """
     cascade_network(S, C)
 
-Generate a `S`*`S` adjancency matrix, with connectance `C`, following the network structure
+Generate a `S`×`S` adjancency matrix, with connectance `C`, following the network structure
 described by:
 Cohen, J. E. 1978. Food Webs and Niche Space. Princeton University Press, Princeton, N.J.
 """
@@ -34,6 +34,7 @@ function cascade_network(S::Int, C::Float64)
         # community matrix
         if rand() < S*C/(S - 1)
             adj[i, j] = 1
+            adj[j, i] = 1
         end
     end
     return adj
@@ -42,7 +43,7 @@ end
 """
     generalized_cascade_network(S, C)
 
-Generate a `S`*`S` adjancency matrix, with connectance `C`, following the network structure
+Generate a `S`×`S` adjancency matrix, with connectance `C`, following the network structure
 described by:
 Stouffer, D. B., Camacho, J., Guimerà, R. & Ng, C. Quantitative patterns in the structure of
 model and empirical food webs. Ecology 86, 1301–1311 (2005).
@@ -57,6 +58,7 @@ function generalized_cascade_network(S::Int, C::Float64)
         # connectance calculator to only look at the lower triangle of the community matrix
         if rand() < rand(Beta(1, β))
             adj[i, j] = 1
+            adj[j, i] = 1
         end
     end
     return adj
@@ -65,7 +67,7 @@ end
 """
     niche_network(S, C)
 
-Generate a `S`*`S` adjancency matrix, with connectance `C`, following the network
+Generate a `S`×`S` adjancency matrix, with connectance `C`, following the network
 structure described by:
 Williams, R. J. & Martinez, N. D. Simple rules yield complex food webs. Nature 404, 180–3 (2000).
 """
@@ -83,15 +85,16 @@ function niche_network(S::Int, C::Float64)
         # this is not correct as this would simply be canabals
         if ((center - r[i]/2) <= η[j] <= (center + r[i]/2)) && (i != j)
             adj[i, j] = 1
+            adj[j, i] = 1
         end
     end
-    return adj' # figure out why I need to transpose
+    return adj
 end
 
 """
     generalized_niche_network(S, C, diet)
 
-Generate a `S`*`S` adjancency matrix with connectance `C`, and diet continuity `diet`
+Generate a `S`×`S` adjancency matrix with connectance `C`, and diet continuity `diet`
 following the network structure described by:
 Guimerà, R. et al. Origin of compartmentalization in food webs. Ecology 91, 2941–51 (2010).
 """
@@ -120,8 +123,9 @@ function generalized_niche_network(S::Int, C::Float64, diet::Float64)
             # this is a bug in my code or normal behavior
             for j in sample(pos, min(length(pos), n_missing_prey[i]))
                 adj[i, j] = 1
+                adj[j, i] = 1
             end
         end
     end
-    return adj' # figure out why I need to transpose
+    return adj
 end
