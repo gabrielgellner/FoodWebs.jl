@@ -112,6 +112,7 @@ function generalized_niche_network(S::Int, C::Float64, diet::Float64)
             # add the reduced Niche style links
             if i != j && (centers[i] - reduced_r[i]/2) <= η[j] && η[j] <= (centers[i] + reduced_r[i]/2)
                 adj[i, j] = 1
+                adj[j, i] = 1
             end
         end
         # now we pick the cascade style links to make up for the missing links from the
