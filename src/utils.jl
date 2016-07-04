@@ -45,13 +45,3 @@ function trophic_levels(adj::Matrix)
     end
     return tp
 end
-
-# test remove once setup (and add to tests)
-using FoodWebs
-a = [0 1 0; 0 0 1; 0 0 0]
-trophic_levels(a)
-
-test = may_network(10, 0.55)
-trophic_levels(test)
-
-is_connected(test)
