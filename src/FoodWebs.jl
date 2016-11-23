@@ -12,4 +12,7 @@ export random_predprey
 include("utils.jl")
 export trophic_levels
 
+include("circular_laws.jl")
+export ellipsis_sample
+
 end

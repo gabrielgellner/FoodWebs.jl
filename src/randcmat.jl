@@ -1,5 +1,5 @@
 #TODO: I need to think of a better name for this.
-function random_predprey(adj::Matrix{Int}, dist::Distribution, f::Float64, shuffle=false)
+function random_predprey(adj::Matrix{Int}, dist::Distribution, f::Float64; shuffle_prey=false)
     S = size(adj, 1)
     @assert S == size(adj, 2) # only allow square matrices
     cmat = diagm(-ones(S)) # todo allow the diagonals to be set from an passed in argument
@@ -7,7 +7,7 @@ function random_predprey(adj::Matrix{Int}, dist::Distribution, f::Float64, shuff
         if adj[i, j] == 1
             neg = -abs(rand(dist))
             pos = f*abs(rand(dist))
-            if shuffle
+            if shuffle_prey
                 # Don't assume a given species is a predator or a prey, randomly choose for
                 # each pair
                 cmat[i, j], cmat[j, i] = shuffle([neg, pos])
