@@ -37,6 +37,25 @@ function offdiag_pairs(mat::Matrix)
     return pairs
 end
 
+function shuffle_pairs(mat::Matrix)
+    S = size(mat, 1)
+    @assert S == size(mat, 2) # must be square
+    shuff_mat = similar(mat)
+    # leave the diagonal elements alone
+    shuff_mat[diagind(mat)] = diag(mat)
+    #TODO: it would be nice to have some kind of degree of shuffling in the future
+    for i = 1:S
+        for j = i:S
+            if i != j
+                shuff_pair = shuffle([mat[i, j], mat[j, i]])
+                shuff_mat[i, j] = shuff_pair[1]
+                shuff_mat[j, i] = shuff_pair[2]
+            end
+        end
+    end
+    return shuff_mat
+end
+
 function ellipsis_sample(mat::Matrix{Float64})
     S = size(mat, 1)
     @assert S == size(mat, 2)
@@ -89,7 +108,7 @@ function plot_eigs(mat)
     #xlim(1.1*minimum(reigs), 1.1*maximum(reigs))
 end
 
-function eig_ellipse(mat)
+function add_eig_ellipse(mat; stroke="#0072B2")
     ellps = ellipsis_sample(mat)
     Θs = linspace(π/2.0, 0.0, 500)
     x_semi_axis = sqrt(ellps[:S]*ellps[:σ2])*(1 + ellps[:ρ])
@@ -99,7 +118,7 @@ function eig_ellipse(mat)
     #TODO: add a commment as to why I am doing this
     x = vcat(xbase, reverse(xbase), -xbase, reverse(-xbase))
     y = vcat(ybase, reverse(-ybase), -ybase, reverse(ybase))
-    pelip = patches.Polygon(hcat(x + ellps[:μ] + ellps[:μ_diag], y), fill=false, edgecolor="#0072B2", linewidth=2)
+    pelip = patches.Polygon(hcat(x + ellps[:μ] + ellps[:μ_diag], y), fill=false, edgecolor=stroke, linewidth=2)
     #TODO: should really pass this in
     ax = gca()
     ax[:add_patch](pelip)
@@ -107,5 +126,5 @@ end
 
 function plot_eigdist(mat)
     plot_eigs(mat)
-    eig_ellipse(mat)
+    add_eig_ellipse(mat)
 end
