@@ -37,6 +37,13 @@ function offdiag_pairs(mat::Matrix)
     return pairs
 end
 
+"""
+    shuffle_pairs(mat::Matrix)
+
+Given a square matrix `mat` shuffle the offdiagonal pairs above and below the main diagonal
+at random. This is often useful for looking at distributions of the off diagonal pairs that
+that have equal marginal distributions.
+"""
 function shuffle_pairs(mat::Matrix)
     S = size(mat, 1)
     @assert S == size(mat, 2) # must be square
@@ -68,7 +75,8 @@ function ellipsis_sample(mat::Matrix{Float64})
     μ_diag = mean(diag(mat))
 
     # Instead deal with the numerical covariance matrix of the off diagonal pairs
-    σ2x, ρ21, σ2y = cov(pairs, corrected=false)[[1, 2, 4]]
+    # cov(mat, 1, false) uses the population formula for the variance, and goes over columns
+    σ2x, ρ21, σ2y = cov(pairs, 1, false)[[1, 2, 4]]
     # take the mean if the marginals are not equal? Is this a good rule?
     #σ2 = mean([σ2x, σ2y])
     # I for some reason feel that it should be the geometric mean, as I see the variance
@@ -98,14 +106,17 @@ using PyCall
 using PyPlot
 @pyimport matplotlib.patches as patches
 
-function plot_eigs(mat)
+function plot_eigs(mat; plot_range=nothing)
     @assert size(mat, 1) == size(mat, 2)
     S = size(mat, 1)
     eigs = eigvals(mat)
     reigs = real(eigs)
     ieigs = imag(eigs)
     scatter(reigs, ieigs, s=5.0, color="black")
-    #xlim(1.1*minimum(reigs), 1.1*maximum(reigs))
+    if plot_range != nothing
+        xlim(plot_range)
+        ylim(plot_range)
+    end
 end
 
 function add_eig_ellipse(mat; stroke="#0072B2")
@@ -124,7 +135,7 @@ function add_eig_ellipse(mat; stroke="#0072B2")
     ax[:add_patch](pelip)
 end
 
-function plot_eigdist(mat)
-    plot_eigs(mat)
+function plot_eigdist(mat; plot_range=nothing)
+    plot_eigs(mat, plot_range=plot_range)
     add_eig_ellipse(mat)
 end
