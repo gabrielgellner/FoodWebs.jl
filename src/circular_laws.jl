@@ -129,7 +129,8 @@ function add_eig_ellipse(mat; stroke="#0072B2")
     #TODO: add a commment as to why I am doing this
     x = vcat(xbase, reverse(xbase), -xbase, reverse(-xbase))
     y = vcat(ybase, reverse(-ybase), -ybase, reverse(ybase))
-    pelip = patches.Polygon(hcat(x + ellps[:μ] + ellps[:μ_diag], y), fill=false, edgecolor=stroke, linewidth=2)
+    #pelip = patches.Polygon(hcat(x + ellps[:μ] + ellps[:μ_diag], y), fill=false, edgecolor=stroke, linewidth=2)
+    pelip = patches.Polygon(hcat(x + ellps[:μ_diag], y), fill=false, edgecolor=stroke, linewidth=2)
     #TODO: should really pass this in
     ax = gca()
     ax[:add_patch](pelip)
