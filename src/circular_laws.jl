@@ -106,13 +106,13 @@ using PyCall
 using PyPlot
 @pyimport matplotlib.patches as patches
 
-function plot_eigs(mat; plot_range=nothing)
+function plot_eigs(mat; plot_range=nothing, color="black")
     @assert size(mat, 1) == size(mat, 2)
     S = size(mat, 1)
     eigs = eigvals(mat)
     reigs = real(eigs)
     ieigs = imag(eigs)
-    scatter(reigs, ieigs, s=5.0, color="black")
+    scatter(reigs, ieigs, s=5.0, color=color)
     if plot_range != nothing
         xlim(plot_range)
         ylim(plot_range)
