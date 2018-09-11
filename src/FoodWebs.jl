@@ -1,4 +1,5 @@
 module FoodWebs
+using LinearAlgebra
 using Distributions
 
 include("topology.jl")

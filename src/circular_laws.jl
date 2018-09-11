@@ -1,5 +1,5 @@
 
-immutable EllipsisLawResult
+struct EllipsisLawResult
     S::Int
     μ::Float64
     μ2::Float64
