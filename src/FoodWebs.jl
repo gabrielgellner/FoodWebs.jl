@@ -1,6 +1,7 @@
 module FoodWebs
 using LinearAlgebra
 using Distributions
+using LightGraphs
 
 include("topology.jl")
 export may_network
