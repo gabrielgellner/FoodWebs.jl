@@ -26,16 +26,16 @@ as `f -> 1` as you would expect.
 
 nrow = 3
 ncol = 3
-fs = linspace(0, 1, nrow*ncol)
+fs = range(0, stop = 1, length = nrow * ncol)
 S = 500
-cmats = zeros(S, S, length(fs))
+cmats = fill(0.0, S, S, length(fs))
 for (i, f) in enumerate(fs)
-    cmats[:, :, i] = random_predprey(may_network(S, 0.25), Uniform(0, 5), f, shuffle_prey=false)
+    cmats[:, :, i] = random_predprey(may_network(S, 0.25), Uniform(0, 5), f, shuffle_prey = false)
 end
 
 figure()
 for i in 1:size(cmats, 3)
     subplot(nrow, ncol, i)
     FoodWebs.plot_eigdist(cmats[:, :, i])
-    FoodWebs.add_eig_ellipse(FoodWebs.shuffle_pairs(cmats[:, :, i]), stroke="#76a432")
+    FoodWebs.add_eig_ellipse(FoodWebs.shuffle_pairs(cmats[:, :, i]), stroke = "#76a432")
 end

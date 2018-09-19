@@ -1,3 +1,20 @@
+struct PredationMatrix <: AbstractArray{Int, 2}
+    links::Matrix{Int}
+    S::Int
+end
+
+function PredationMatrix(links::Matrix{Int})
+    S1, S2 = size(links)
+    if S1 != S2
+        error("PredationMatrix must be square, given dimensions ($S1, S2)")
+    end
+    return PredationMatrix(links, S1)
+end
+
+Base.size(pmat::PredationMatrix) = size(pmat.links)
+Base.IndexStyle(::Type{<:PredationMatrix}) = IndexCartesian()
+Base.getindex(pmat::PredationMatrix, I...) = getindex(pmat.links, I...)
+
 """
     may_network(S, C)
 
@@ -8,18 +25,17 @@ May, R. M. Will a large complex system be stable? Nature 238, 413–414 (1972).
 function may_network(S::Int, C::Float64)
     adj = fill(0, S, S)
     for i in 1:S
-        for j in (i + 1):S
-            if rand() < C
+        for j in 1:S
+            if rand() < C / 2
                 adj[i, j] = 1
-                #adj[j, i] = 1
             end
         end
     end
-    return adj
+    return PredationMatrix(adj)
 end
 
 """
-cascade_network(S, C)
+cascade_network(S, C)::PredationMatrix
 
 Generate a `S`×`S` adjancency matrix, with connectance `C`, following the network structure
 described by:
@@ -27,7 +43,10 @@ Cohen, J. E. 1978. Food Webs and Niche Space. Princeton University Press, Prince
 """
 function cascade_network(S, C)
     adj = fill(0, S, S)
-    p = 2 * C * S / (S - 1)
+    #NOTE: we only use C * S / (S - 1) (instead of 2CS/(S - 1) ) since we return a
+    #      PredationMatrix and we want our connectance to be over both the predator and
+    #      prey link, that is implicit in this formulation
+    p = C * S / (S - 1)
     for i in 1:(S - 1)
         for j in (i + 1):S
             if rand() < p
@@ -35,11 +54,11 @@ function cascade_network(S, C)
             end
         end
     end
-    return adj
+    return PredationMatrix(adj)
 end
 
 """
-    generalized_cascade_network(S, C)
+    generalized_cascade_network(S, C)::PredationMatrix
 
 Generate a `S`×`S` adjancency matrix, with connectance `C`, following the network structure
 described by:
@@ -57,15 +76,14 @@ function generalized_cascade_network(S::Int, C::Float64)
             # connectance calculator to only look at the lower triangle of the community matrix
             if rand() < rand(Beta(1, β))
                 adj[i, j] = 1
-                #adj[j, i] = 1
             end
         end
     end
-    return adj
+    return PredationMatrix(adj)
 end
 
 """
-    niche_network(S, C)
+    niche_network(S, C)::PredationMatrix
 
 Generate a `S`×`S` adjancency matrix, with connectance `C`, following the network
 structure described by:
@@ -92,37 +110,33 @@ function niche_network(S, C)
         cond = is_connected(DiGraph(adj))
     end
 
-    return adj
+    return PredationMatrix(adj)
 end
 
-# """
-#     niche_network(S, C)
-#
-# Generate a `S`×`S` adjancency matrix, with connectance `C`, following the network
-# structure described by:
-# Williams, R. J. & Martinez, N. D. Simple rules yield complex food webs. Nature 404, 180–3 (2000).
-# """
-# function niche_network(S::Int, C::Float64)
-#     η = sort(rand(S))
-#     β = 1 / C - 1
-#     r = η .* rand(Beta(1, β), S)
-#     # set r[position of min[η]] = 0, so that every web has at least one basal species
-#     r[1] = 0.0
-#
-#     adj = fill(0, S, S)
-#     for i in 1:S
-#         for j in 1:S
-#             center = rand(Uniform(r[i] / 2, η[i]))
-#             #TODO I currently don't allow things on the diagonal, but really
-#             # this is not correct as this would simply be canabals
-#             if ((center - r[i] / 2) <= η[j] <= (center + r[i] / 2)) && (i != j)
-#                 adj[i, j] = 1
-#                 #adj[j, i] = 1
-#             end
-#         end
-#     end
-#     return adj
-# end
+function niche_network(S::Int, C::Float64)
+    adj = fill(0, S, S) #not sure why this is needed outside
+    cond = false
+    while !cond
+        η = sort(rand(S))
+        β = 1 / C - 1
+        r = η .* rand(Beta(1, β), S)
+        # set r[position of min[η]] = 0, so that every web has at least one basal species
+        r[1] = 0.0
+
+        adj = fill(0, S, S)
+        for i in 1:S
+            for j in 1:S
+                center = rand(Uniform(r[i]/2, η[i]))
+                if ((center - r[i] / 2) <= η[j] <= (center + r[i] / 2))
+                    adj[j, i] = 1
+                end
+            end
+        end
+
+        cond = is_connected(DiGraph(adj))
+    end
+    return PredationMatrix(adj)
+ end
 
 """
     generalized_niche_network(S, C, diet)
@@ -145,7 +159,6 @@ function generalized_niche_network(S::Int, C::Float64, diet::Float64)
             # add the reduced Niche style links
             if i != j && (centers[i] - reduced_r[i] / 2) <= η[j] && η[j] <= (centers[i] + reduced_r[i] / 2)
                 adj[i, j] = 1
-                #adj[j, i] = 1
             end
         end
         # now we pick the cascade style links to make up for the missing links from the
@@ -157,9 +170,9 @@ function generalized_niche_network(S::Int, C::Float64, diet::Float64)
             # this is a bug in my code or normal behavior
             for j in sample(pos, min(length(pos), n_missing_prey[i]))
                 adj[i, j] = 1
-                #adj[j, i] = 1
             end
         end
     end
-    return adj
+    #TODO: check for being connected
+    return PredationMatrix(adj)
 end
