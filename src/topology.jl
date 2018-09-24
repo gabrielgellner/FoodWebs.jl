@@ -14,6 +14,7 @@ end
 Base.size(pmat::PredationMatrix) = size(pmat.links)
 Base.IndexStyle(::Type{<:PredationMatrix}) = IndexCartesian()
 Base.getindex(pmat::PredationMatrix, I...) = getindex(pmat.links, I...)
+Base.strides(pmat::PredationMatrix) = strides(pmat.links)
 
 """
     may_network(S, C)

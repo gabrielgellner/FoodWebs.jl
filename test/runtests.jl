@@ -1,10 +1,19 @@
 using FoodWebs
 using Test
 
-# linchain = [0 1 0; 0 0 1; 0 0 0]
-# @test_approx_eq trophic_levels(linchain) [1.0 2.0 3.0]
-# omnchain = [0 1 1; 0 0 1; 0 0 0]
-# @test_approx_eq trophic_levels(omnchain) [1.0, 2.0, 2.5]
+linchain = [0 1 0; 0 0 1; 0 0 0]
+trophic_levels(linchain)
+@test trophic_levels(linchain) ≈ [1.0, 2.0, 3.0]
+
+omnchain = [0 1 1; 0 0 1; 0 0 0]
+trophic_levels(omnchain)
+@test trophic_levels(omnchain) ≈ [1.0, 2.0, 2.5]
+
+omn_relabel = [0 0 1; 1 0 1; 0 0 0]
+@test trophic_levels(omn_relabel) ≈ [2.0, 1.0, 2.5]
+
+cannibal = [1 1 0; 0 1 1; 0 0 1]
+@test trophic_levels(cannibal) ≈ [1.0, 2.0, 3.0]
 
 @test isapprox(connectance(may_network(500, 0.25)), 0.25, rtol = 1e-2)
 @test isapprox(connectance(may_network(500, 0.53)), 0.53, rtol = 1e-2)
