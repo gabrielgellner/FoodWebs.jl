@@ -13,7 +13,8 @@ include("randcmat.jl")
 export random_predprey
 
 include("utils.jl")
-export trophic_levels, connectance, basal_species
+export trophic_levels, connectance
+export basal_species, top_species
 
 include("circular_laws.jl")
 export ellipsis_sample

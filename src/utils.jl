@@ -6,6 +6,11 @@ function basal_species(pmat::PredationMatrix)
     return [i for i in 1:length(col_sums) if col_sums[i] == 0]
 end
 
+function top_species(pmat::PredationMatrix)
+    row_sums = sum(pmat, dims = 2)
+    return [i for i in 1:length(row_sums) if row_sums[i] == 0]
+end
+
 function trophic_levels(adj)
     # the matrix comes in "predator" form but the matrix algebra requires it to be in
     # "prey" form, also needs to be float since we use transition probabilites
