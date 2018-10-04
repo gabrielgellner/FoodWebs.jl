@@ -1,4 +1,5 @@
 module FoodWebs
+
 using LinearAlgebra
 using Distributions
 using LightGraphs
@@ -12,7 +13,7 @@ include("randcmat.jl")
 export random_predprey
 
 include("utils.jl")
-export trophic_levels, connectance
+export trophic_levels, connectance, basal_species
 
 include("circular_laws.jl")
 export ellipsis_sample

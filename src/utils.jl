@@ -1,6 +1,11 @@
 connectance(adj) = sum(adj) / size(adj, 2) ^ 2
 connectance(adj::PredationMatrix) = 2 * sum(adj) / adj.S ^ 2
 
+function basal_species(pmat::PredationMatrix)
+    col_sums = sum(pmat, dims = 1)
+    return [i for i in 1:length(col_sums) if col_sums[i] == 0]
+end
+
 function trophic_levels(adj)
     # the matrix comes in "predator" form but the matrix algebra requires it to be in
     # "prey" form, also needs to be float since we use transition probabilites
