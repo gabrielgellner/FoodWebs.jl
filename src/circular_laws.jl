@@ -1,3 +1,5 @@
+import Random: shuffle
+import Statistics: cov, mean
 
 struct EllipsisLawResult
     S::Int
@@ -21,7 +23,7 @@ function offdiag_pairs(mat::Matrix)
     @assert S == size(mat, 2) # must be square
     # Allocate a matrix of columns [a_ij, a_ji] excluding the diagonals
     # the size is simply (S^2 - S)/2 = S(S - 1)/2
-    pairs = zeros(eltype(mat), Int(S*(S - 1)/2), 2)
+    pairs = fill(zero(eltype(mat)), Int(S * (S - 1) / 2), 2)
     #TODO: likely there is a more efficient way of doing this? Can I skip over the diagonals
     # without an if statement?
     # use a simple counter to unwrap the matrix into the pairs matrix
@@ -71,24 +73,24 @@ function ellipsis_sample(mat::Matrix{Float64})
     μx = mean(pairs[:, 1])
     μy = mean(pairs[:, 2])
     μ = mean([μx, μy]) # this is the same as mean(pairs[:]), that is, the mean of the pair distribution
-    μxy = mean(pairs[:, 1].*pairs[:, 2])
+    μxy = mean(pairs[:, 1] .* pairs[:, 2])
     μ_diag = mean(diag(mat))
 
     # Instead deal with the numerical covariance matrix of the off diagonal pairs
     # cov(mat, 1, false) uses the population formula for the variance, and goes over columns
-    σ2x, ρ21, σ2y = cov(pairs, 1, false)[[1, 2, 4]]
+    σ2x, ρ21, σ2y = cov(pairs, dims = 1, corrected = false)[[1, 2, 4]]
     # take the mean if the marginals are not equal? Is this a good rule?
     #σ2 = mean([σ2x, σ2y])
     # I for some reason feel that it should be the geometric mean, as I see the variance
     # being multiplicative for some reason, note this is also the denominator of the correllation
-    σ2 = sqrt(σ2x*σ2y)
-    ρ = ρ21/sqrt(σ2x*σ2y)
-    #ρ3 = (μxy - μx*μy)/sqrt(σ2x*σ2y) same as ρ from scaled cov function, like above
+    σ2 = sqrt(σ2x * σ2y)
+    ρ = ρ21 / sqrt(σ2x * σ2y)
+    #ρ3 = (μxy - μx * μy) / sqrt(σ2x * σ2y) same as ρ from scaled cov function, like above
 
     #TODO: now that I am using the geometric mean of var, I am assumign that this makes sense
     # in the sqrt(S*V) part
-    x_semi_axis = sqrt(S*σ2)*(1 + ρ)
-    y_semi_axis = sqrt(S*σ2)*(1 - ρ)
+    x_semi_axis = sqrt(S * σ2) * (1 + ρ)
+    y_semi_axis = sqrt(S * σ2) * (1 - ρ)
 
     #return EllipsisLawResult(S, μx, μy, μ, μxy, μ_diag, σ2x, σ2y, σ2, ρ, ρ2, x_semi_axis, y_semi_axis)
     return Dict(
