@@ -87,7 +87,7 @@ function ellipsis_sample(mat::Matrix{Float64})
     ρ = ρ21 / sqrt(σ2x * σ2y)
     #ρ3 = (μxy - μx * μy) / sqrt(σ2x * σ2y) same as ρ from scaled cov function, like above
 
-    #TODO: now that I am using the geometric mean of var, I am assumign that this makes sense
+    #TODO: now that I am using the geometric mean of var, I am assuming that this makes sense
     # in the sqrt(S*V) part
     x_semi_axis = sqrt(S * σ2) * (1 + ρ)
     y_semi_axis = sqrt(S * σ2) * (1 - ρ)
