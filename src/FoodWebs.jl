@@ -16,7 +16,7 @@ include("utils.jl")
 export trophic_levels, connectance
 export basal_species, top_species
 
-include("circular_laws.jl")
+include("ellipsis_laws.jl")
 export ellipsis_sample
 
 end
