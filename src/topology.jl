@@ -42,19 +42,24 @@ Generate a `S`×`S` adjancency matrix, with connectance `C`, following the netwo
 described by:
 Cohen, J. E. 1978. Food Webs and Niche Space. Princeton University Press, Princeton, N.J.
 """
-function cascade_network(S, C)
-    adj = fill(0, S, S)
-    for i in 1:(S - 1)
-        for j in (i + 1):S
-            # Since we are only looping over the top triangle we are only checking
-            # S * (S - 1) / 2 possible links and we know that there are C * (S - 1) / 2 in
-            # total so the probability is just C that we have a link at the specific location
-            if rand() < C
-                adj[i, j] = 1
+function cascade_network(S, C; maxiter = 1000)
+    for iter in 1:maxiter
+        adj = fill(0, S, S)
+        for i in 1:(S - 1)
+            for j in (i + 1):S
+                # Since we are only looping over the top triangle we are only checking
+                # S * (S - 1) / 2 possible links and we know that there are C * (S - 1) / 2 in
+                # total so the probability is just C that we have a link at the specific location
+                if rand() < C
+                    adj[i, j] = 1
+                end
             end
         end
+        if is_connected(DiGraph(adj))
+            return PredationMatrix(adj)
+        end
     end
-    return PredationMatrix(adj)
+    error("Could not find a connected network for ($S, $C) in $maxiter iteractions")
 end
 
 """
@@ -65,21 +70,26 @@ described by:
 Stouffer, D. B., Camacho, J., Guimerà, R. & Ng, C. Quantitative patterns in the structure of
 model and empirical food webs. Ecology 86, 1301–1311 (2005).
 """
-function generalized_cascade_network(S::Int, C::Float64)
-    β = 1 / C - 1
-    adj = fill(0, S, S)
-    for i = 1:S
-        for j = i:S
-            # I need to get rid of the 2 from the orignal model to get the correct connectance
-            # this is related to the fact that we double the number of entries when we move
-            # from an adjancency matrix to a  # community matrix. Maybe I just need to fix the
-            # connectance calculator to only look at the lower triangle of the community matrix
-            if rand() < rand(Beta(1, β))
-                adj[i, j] = 1
+function generalized_cascade_network(S::Int, C::Float64; maxiter = 1000)
+    for iter in 1:maxiter
+        β = 1 / C - 1
+        adj = fill(0, S, S)
+        for i = 1:S
+            for j = i:S
+                # I need to get rid of the 2 from the orignal model to get the correct connectance
+                # this is related to the fact that we double the number of entries when we move
+                # from an adjancency matrix to a  # community matrix. Maybe I just need to fix the
+                # connectance calculator to only look at the lower triangle of the community matrix
+                if rand() < rand(Beta(1, β))
+                    adj[i, j] = 1
+                end
             end
         end
+        if is_connected(DiGraph(adj))
+            return PredationMatrix(adj)
+        end
     end
-    return PredationMatrix(adj)
+    error("Could not find a connected network for ($S, $C) in $maxiter iteractions")
 end
 
 """
@@ -89,30 +99,6 @@ Generate a `S`×`S` adjancency matrix, with connectance `C`, following the netwo
 structure described by:
 Williams, R. J. & Martinez, N. D. Simple rules yield complex food webs. Nature 404, 180–3 (2000).
 """
-function niche_network(S, C)
-    adj = fill(0, S, S) #not sure why this is needed outside
-    cond = false
-    while !cond
-        n_i = sort(rand(S))
-        r_i = rand(Beta(1, ((1 / (2 * C)) - 1)), S) .* n_i
-        c_i = [rand(Uniform(r_i[i] / 2, n_i[i])) for i in 1:S]
-
-        adj = fill(0, S, S)
-
-        for i in 2:S
-            for j in 1:S
-                if n_i[j] > (c_i[i] - (0.5 * r_i[i])) && n_i[j] < (c_i[i] + 0.5 * r_i[i])
-                    adj[j, i] = 1
-                end
-            end
-        end
-
-        cond = is_connected(DiGraph(adj))
-    end
-
-    return PredationMatrix(adj)
-end
-
 function niche_network(S::Int, C::Float64; maxiter = 1000)
     adj = fill(0, S, S) #not sure why this is needed outside
     cond = false
