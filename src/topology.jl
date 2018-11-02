@@ -44,13 +44,12 @@ Cohen, J. E. 1978. Food Webs and Niche Space. Princeton University Press, Prince
 """
 function cascade_network(S, C)
     adj = fill(0, S, S)
-    #NOTE: we only use C * S / (S - 1) (instead of 2CS/(S - 1) ) since we return a
-    #      PredationMatrix and we want our connectance to be over both the predator and
-    #      prey link, that is implicit in this formulation
-    p = C * S / (S - 1)
     for i in 1:(S - 1)
         for j in (i + 1):S
-            if rand() < p
+            # Since we are only looping over the top triangle we are only checking
+            # S * (S - 1) / 2 possible links and we know that there are C * (S - 1) / 2 in
+            # total so the probability is just C that we have a link at the specific location
+            if rand() < C
                 adj[i, j] = 1
             end
         end
