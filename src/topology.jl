@@ -113,10 +113,10 @@ function niche_network(S, C)
     return PredationMatrix(adj)
 end
 
-function niche_network(S::Int, C::Float64)
+function niche_network(S::Int, C::Float64; maxiter = 1000)
     adj = fill(0, S, S) #not sure why this is needed outside
     cond = false
-    while !cond
+    for i in 1:maxiter
         η = sort(rand(S))
         β = 1 / C - 1
         r = η .* rand(Beta(1, β), S)
@@ -133,9 +133,11 @@ function niche_network(S::Int, C::Float64)
             end
         end
 
-        cond = is_connected(DiGraph(adj))
+        if is_connected(DiGraph(adj))
+            return PredationMatrix(adj)
+        end
     end
-    return PredationMatrix(adj)
+    error("Could not find a connected network for ($S, $C) in $maxiter iteractions")
  end
 
 """
