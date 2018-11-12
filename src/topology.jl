@@ -1,6 +1,7 @@
 struct PredationMatrix <: AbstractArray{Int, 2}
     links::Matrix{Int}
     S::Int
+    C::Float64
 end
 
 function PredationMatrix(links::Matrix{Int})
@@ -8,7 +9,8 @@ function PredationMatrix(links::Matrix{Int})
     if S1 != S2
         error("PredationMatrix must be square, given dimensions ($S1, S2)")
     end
-    return PredationMatrix(links, S1)
+    # if there is canibals the connectance measure might be off
+    return PredationMatrix(links, S1, 2 * sum(links) / S1 ^ 2)
 end
 
 Base.size(pmat::PredationMatrix) = size(pmat.links)
