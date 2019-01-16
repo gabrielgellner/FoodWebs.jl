@@ -19,6 +19,15 @@ Base.getindex(pmat::PredationMatrix, I...) = getindex(pmat.links, I...)
 Base.strides(pmat::PredationMatrix) = strides(pmat.links)
 
 """
+    food_chain_network(S)
+
+Generate a linear food chain of length `S`
+"""
+function food_chain_network(S::Int)
+    return PredationMatrix(diagm(1 => fill(1, S)))
+end
+
+"""
     may_network(S, C)
 
 Generate a `S`×`S` adjancency matrix, with connectance `C`. Following the random network
