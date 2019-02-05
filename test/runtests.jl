@@ -34,3 +34,10 @@ coupled_chain_omn = [0 0 0 0 0; 1 0 1 0 0; 1 0 0 0 0; 1 0 0 0 0; 0 0 0 1 0]
 @test isapprox(connectance(niche_network(501, 0.67)), 0.67, rtol = 1e-2)
 @test isapprox(connectance(niche_network(502, 0.81)), 0.81, rtol = 1e-2)
 connectance(niche_network(501, 0.67))
+
+# Resilience Tests
+A1 = [-1.0 0; 0 -10]
+A2 = [-1.0 15; 0 -10]
+@test λ_stability(A1) == λ_stability(A2)
+@test ν_stability(A1) ≈ -1.0
+@test isapprox(ν_stability(A2), 3.25, rtol = 1e-2)
