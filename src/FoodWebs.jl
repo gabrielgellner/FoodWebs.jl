@@ -22,5 +22,6 @@ export basal_species, top_species
 
 include("ellipsis_laws.jl")
 export ellipsis_sample
+export offdiag_pairs, offdiag_pairs_nz
 
 end

@@ -46,6 +46,19 @@ function offdiag_pairs(mat::Matrix)
     return pairs
 end
 
+function offdiag_pairs_nz(M::Matrix)
+    out = []
+    # Look at the upper triangle
+    for i in 1:(size(M, 1) - 1)
+        for j in (i + 1):size(M, 2)
+            if M[i, j] != 0
+                push!(out, [M[i, j], M[j, i]])
+            end
+        end
+    end
+    return VectorOfArray(out)
+end
+
 """
     shuffle_pairs(mat::Matrix)
 
