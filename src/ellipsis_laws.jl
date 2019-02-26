@@ -1,5 +1,6 @@
 import Random: shuffle
 import Statistics: cov, mean
+import RecursiveArrayTools: VectorOfArray
 
 # # General Ellipsis Law
 # Given a random matrix `M` than we have the rule for the bounds on the real parts of the
