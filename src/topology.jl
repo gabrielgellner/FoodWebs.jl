@@ -86,7 +86,7 @@ function generalized_cascade_network(S::Int, C::Float64; maxiter = 1000)
         β = 1 / C - 1
         adj = fill(0, S, S)
         for i = 1:S
-            for j = i:S
+            for j = (i + 1):S
                 # I need to get rid of the 2 from the orignal model to get the correct connectance
                 # this is related to the fact that we double the number of entries when we move
                 # from an adjancency matrix to a  # community matrix. Maybe I just need to fix the
