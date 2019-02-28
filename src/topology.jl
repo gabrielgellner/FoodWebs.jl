@@ -24,7 +24,8 @@ Base.strides(pmat::PredationMatrix) = strides(pmat.links)
 Generate a linear food chain of length `S`
 """
 function food_chain_network(S::Int)
-    return PredationMatrix(diagm(1 => fill(1, S)))
+    @assert S > 0
+    return PredationMatrix(diagm(1 => fill(1, S - 1)))
 end
 
 """
