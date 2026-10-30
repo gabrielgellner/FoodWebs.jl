@@ -8,13 +8,13 @@
 
 A square binary food web matrix where `web[i, j] == 1` means species `j` eats species `i`.
 """
-struct PredationMatrix <: AbstractMatrix{Int}
-    links::Matrix{Int}
+struct PredationMatrix <: AbstractMatrix{Bool}
+    links::Matrix{Bool}
     function PredationMatrix(links::AbstractMatrix{<:Integer})
         S1, S2 = size(links)
         S1 == S2 || throw(DimensionMismatch("PredationMatrix must be square, given ($S1, $S2)"))
         all(x -> x == 0 || x == 1, links) || throw(ArgumentError("PredationMatrix must be binary"))
-        return new(Matrix{Int}(links))
+        return new(Matrix{Bool}(links))
     end
 end
 
@@ -28,7 +28,7 @@ Generate a linear food chain of length `S`, where species `i + 1` eats species `
 """
 function food_chain_network(S::Int)
     S > 0 || throw(ArgumentError("S must be positive, given $S"))
-    return PredationMatrix(diagm(1 => fill(1, S - 1)))
+    return PredationMatrix(diagm(1 => trues(S - 1)))
 end
 
 # Williams & Martinez (2000) style acceptance: keep generating webs until one is (weakly)
@@ -84,10 +84,10 @@ function may_network(
     check_pairwise_connectance(S, C)
     p = 2C * S / (S - 1)
     return accept_web(C, tol, maxiter, basal_paths) do
-        adj = zeros(Int, S, S)
+        adj = zeros(Bool, S, S)
         for i in 1:(S - 1), j in (i + 1):S
             if rand(rng) < p
-                rand(rng, Bool) ? (adj[i, j] = 1) : (adj[j, i] = 1)
+                rand(rng, Bool) ? (adj[i, j] = true) : (adj[j, i] = true)
             end
         end
         adj
@@ -115,10 +115,10 @@ function cascade_network(
     check_pairwise_connectance(S, C)
     p = 2C * S / (S - 1)
     return accept_web(C, tol, maxiter, basal_paths) do
-        adj = zeros(Int, S, S)
+        adj = zeros(Bool, S, S)
         for i in 1:(S - 1), j in (i + 1):S
             if rand(rng) < p
-                adj[i, j] = 1
+                adj[i, j] = true
             end
         end
         adj
@@ -149,10 +149,10 @@ function generalized_cascade_network(
     return accept_web(C, tol, maxiter, basal_paths) do
         # drawing x per pair instead would marginalize to the plain cascade model
         x = rand(rng, Beta(1, β), S)
-        adj = zeros(Int, S, S)
+        adj = zeros(Bool, S, S)
         for i in 1:(S - 1), j in (i + 1):S
             if rand(rng) < x[j]
-                adj[i, j] = 1
+                adj[i, j] = true
             end
         end
         adj
@@ -195,10 +195,10 @@ function niche_network(
     check_niche_connectance(S, C)
     return accept_web(C, tol, maxiter, basal_paths) do
         η, r, centers = niche_parameters(rng, S, C)
-        adj = zeros(Int, S, S)
+        adj = zeros(Bool, S, S)
         for i in 1:S, j in 1:S
             if centers[i] - r[i] / 2 <= η[j] <= centers[i] + r[i] / 2
-                adj[j, i] = 1
+                adj[j, i] = true
             end
         end
         adj
@@ -234,17 +234,17 @@ function generalized_niche_network(
         reduced_r = diet * r
         centers = [rand(rng, Uniform(reduced_r[i] / 2, η[i])) for i in 1:S]
         n_missing_prey = round.(Int, (r - reduced_r) * S)
-        adj = zeros(Int, S, S)
+        adj = zeros(Bool, S, S)
         for i in 1:S
             for j in 1:S
                 if i != j && centers[i] - reduced_r[i] / 2 <= η[j] <= centers[i] + reduced_r[i] / 2
-                    adj[j, i] = 1
+                    adj[j, i] = true
                 end
             end
             candidates = [j for j in 1:(i - 1) if adj[j, i] == 0]
             k = min(length(candidates), n_missing_prey[i])
             for j in sample(rng, candidates, k; replace = false)
-                adj[j, i] = 1
+                adj[j, i] = true
             end
         end
         adj

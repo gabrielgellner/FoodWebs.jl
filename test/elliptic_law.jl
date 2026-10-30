@@ -33,7 +33,8 @@ end
         M[i, j] = σ * z1
         M[j, i] = σ * (ρ * z1 + sqrt(1 - ρ^2) * z2)
     end
-    sol = ellipsis_sample(M)
+    sol = elliptic_law(M)
+    @test sol isa FoodWebs.EllipticLaw
     @test sol.S == S
     @test sol.ρ ≈ ρ atol = 0.02
     @test sol.σ2 ≈ σ^2 rtol = 0.02
