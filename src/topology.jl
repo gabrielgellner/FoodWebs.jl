@@ -156,7 +156,7 @@ end
 
 # Niche values, ranges and centers for the niche model. Species are sorted by niche value and
 # the species with the smallest niche value has range 0, so every web has a basal species.
-function niche_parameters(rng, S, C)
+function niche_parameters(rng::AbstractRNG, S::Int, C::Real)
     β = 1 / (2C) - 1
     η = sort(rand(rng, S))
     r = η .* rand(rng, Beta(1, β), S)
