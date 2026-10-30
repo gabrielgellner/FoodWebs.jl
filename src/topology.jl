@@ -85,14 +85,13 @@ model and empirical food webs. Ecology 86, 1301–1311 (2005).
 function generalized_cascade_network(S::Int, C::Float64; maxiter = 1000)
     for iter in 1:maxiter
         β = 1 / C - 1
+        # each predator j draws a single probability x_j of eating each lower ranked species.
+        # Drawing per pair instead would marginalize to Bernoulli(C), i.e. the plain cascade.
+        x = rand(Beta(1, β), S)
         adj = fill(0, S, S)
         for i = 1:S
             for j = (i + 1):S
-                # I need to get rid of the 2 from the orignal model to get the correct connectance
-                # this is related to the fact that we double the number of entries when we move
-                # from an adjancency matrix to a  # community matrix. Maybe I just need to fix the
-                # connectance calculator to only look at the lower triangle of the community matrix
-                if rand() < rand(Beta(1, β))
+                if rand() < x[j]
                     adj[i, j] = 1
                 end
             end
@@ -121,11 +120,12 @@ function niche_network(S::Int, C::Float64; maxiter = 1000)
         # set r[position of min[η]] = 0, so that every web has at least one basal species
         r[1] = 0.0
 
+        # each species gets a single feeding center, so its diet is an interval of niche space
+        centers = [rand(Uniform(r[i] / 2, η[i])) for i in 1:S]
         adj = fill(0, S, S)
         for i in 1:S
             for j in 1:S
-                center = rand(Uniform(r[i]/2, η[i]))
-                if ((center - r[i] / 2) <= η[j] <= (center + r[i] / 2))
+                if ((centers[i] - r[i] / 2) <= η[j] <= (centers[i] + r[i] / 2))
                     adj[j, i] = 1
                 end
             end
@@ -145,34 +145,37 @@ Generate a `S`×`S` adjancency matrix with connectance `C`, and diet continuity 
 following the network structure described by:
 Guimerà, R. et al. Origin of compartmentalization in food webs. Ecology 91, 2941–51 (2010).
 """
-function generalized_niche_network(S::Int, C::Float64, diet::Float64)
-    η = sort(rand(S))
-    β = 1/C - 1
-    r = η .* rand(Beta(1, β), S)
-    # set r[position of min[η]] = 0, so that every web has at least one basal species
-    r[1] = 0.0
-    reduced_r = diet * r
-    centers = [rand(Uniform(reduced_r[i] / 2, η[i])) for i = 1:S]
-    adj = fill(0, S, S)
-    for i = 1:S
-        for j = 1:S
-            # add the reduced Niche style links
-            if i != j && (centers[i] - reduced_r[i] / 2) <= η[j] && η[j] <= (centers[i] + reduced_r[i] / 2)
-                adj[i, j] = 1
+function generalized_niche_network(S::Int, C::Float64, diet::Float64; maxiter = 1000)
+    β = 1 / C - 1
+    for iter in 1:maxiter
+        η = sort(rand(S))
+        r = η .* rand(Beta(1, β), S)
+        # set r[position of min[η]] = 0, so that every web has at least one basal species
+        r[1] = 0.0
+        reduced_r = diet * r
+        centers = [rand(Uniform(reduced_r[i] / 2, η[i])) for i = 1:S]
+        n_missing_prey = round.(Int, (r - reduced_r) * S)
+        adj = fill(0, S, S)
+        for i = 1:S
+            # add the reduced niche style links, prey j of predator i
+            for j = 1:S
+                if i != j && (centers[i] - reduced_r[i] / 2) <= η[j] <= (centers[i] + reduced_r[i] / 2)
+                    adj[j, i] = 1
+                end
+            end
+            # now we pick cascade style links among lower ranked species to make up for the
+            # missing links from the reduced niche ranges
+            pos = [j for j in 1:(i - 1) if adj[j, i] == 0]
+            k = min(length(pos), n_missing_prey[i])
+            if k > 0
+                for j in sample(pos, k; replace = false)
+                    adj[j, i] = 1
+                end
             end
         end
-        # now we pick the cascade style links to make up for the missing links from the
-        # reduced nich ranges
-        n_missing_prey = round(Int, (r - reduced_r) * S)
-        if n_missing_prey[i] > 0
-            pos = findall(x -> x == 0, adj[i, 1:i]) #TODO: this is likely not efficient
-            # If missing prey is larger than available: eat them all ... need to check if
-            # this is a bug in my code or normal behavior
-            for j in sample(pos, min(length(pos), n_missing_prey[i]))
-                adj[i, j] = 1
-            end
+        if is_connected(DiGraph(adj))
+            return PredationMatrix(adj)
         end
     end
-    #TODO: check for being connected
-    return PredationMatrix(adj)
+    error("Could not find a connected network for ($S, $C, $diet) in $maxiter iteractions")
 end
