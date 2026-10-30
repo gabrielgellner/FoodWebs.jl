@@ -33,15 +33,18 @@ end
 
 # Williams & Martinez (2000) style acceptance: keep generating webs until one is (weakly)
 # connected, so there are no isolated species or separate components, and has a connectance
-# within a relative tolerance `tol` of the target `C`.
-function accept_web(generate, C, tol, maxiter)
+# within a relative tolerance `tol` of the target `C`. With `basal_paths = true` webs are also
+# rejected if some species have no feeding path up from a basal species.
+function accept_web(generate, C, tol, maxiter, basal_paths)
     for _ in 1:maxiter
         adj = generate()
-        if is_connected(DiGraph(adj)) && abs(connectance(adj) - C) <= tol * C
+        if is_connected(DiGraph(adj)) && abs(connectance(adj) - C) <= tol * C &&
+           (!basal_paths || isempty(disconnected_from_basal(adj)))
             return PredationMatrix(adj)
         end
     end
     error("Could not generate a connected web with connectance within $(100tol)% of $C " *
+          (basal_paths ? "and feeding paths from basal species to all species " : "") *
           "in $maxiter attempts")
 end
 
@@ -58,21 +61,25 @@ function check_niche_connectance(S, C)
 end
 
 """
-    may_network([rng], S, C; tol = 0.03, maxiter = 10_000)
+    may_network([rng], S, C; tol = 0.03, maxiter = 10_000, basal_paths = false)
 
 Generate a random `S` species web with connectance `C`, following:
 May, R. M. Will a large complex system be stable? Nature 238, 413–414 (1972).
 
 Each pair of species is linked with probability `2CS / (S - 1)`, and the direction of the
-link (who eats whom) is chosen at random. There are no self links or mutual predation.
+link (who eats whom) is chosen at random. There are no self links or mutual predation. As
+these are random graphs rather than food web models, all but sparse webs usually have no
+basal species, so `basal_paths = true` is rarely satisfiable.
 
 Webs are resampled until they are connected and their connectance is within a relative
-tolerance `tol` of `C`.
+tolerance `tol` of `C`. With `basal_paths = true` they are also resampled until every
+species has a feeding path up from a basal species (see [`disconnected_from_basal`](@ref)).
 """
-function may_network(rng::AbstractRNG, S::Int, C::Real; tol = 0.03, maxiter = 10_000)
+function may_network(rng::AbstractRNG, S::Int, C::Real; tol = 0.03, maxiter = 10_000,
+                    basal_paths = false)
     check_pairwise_connectance(S, C)
     p = 2C * S / (S - 1)
-    return accept_web(C, tol, maxiter) do
+    return accept_web(C, tol, maxiter, basal_paths) do
         adj = zeros(Int, S, S)
         for i in 1:(S - 1), j in (i + 1):S
             if rand(rng) < p
@@ -85,7 +92,7 @@ end
 may_network(S::Int, C::Real; kwargs...) = may_network(Random.default_rng(), S, C; kwargs...)
 
 """
-    cascade_network([rng], S, C; tol = 0.03, maxiter = 10_000)
+    cascade_network([rng], S, C; tol = 0.03, maxiter = 10_000, basal_paths = false)
 
 Generate a cascade model web with `S` species and connectance `C`, following:
 Cohen, J. E. & Newman, C. M. A stochastic theory of community food webs I. Models and
@@ -94,12 +101,14 @@ aggregated data. Proc. R. Soc. Lond. B 224, 421–448 (1985).
 Each species eats each lower ranked species with probability `2CS / (S - 1)`.
 
 Webs are resampled until they are connected and their connectance is within a relative
-tolerance `tol` of `C`.
+tolerance `tol` of `C`. With `basal_paths = true` they are also resampled until every
+species has a feeding path up from a basal species (see [`disconnected_from_basal`](@ref)).
 """
-function cascade_network(rng::AbstractRNG, S::Int, C::Real; tol = 0.03, maxiter = 10_000)
+function cascade_network(rng::AbstractRNG, S::Int, C::Real; tol = 0.03, maxiter = 10_000,
+                        basal_paths = false)
     check_pairwise_connectance(S, C)
     p = 2C * S / (S - 1)
-    return accept_web(C, tol, maxiter) do
+    return accept_web(C, tol, maxiter, basal_paths) do
         adj = zeros(Int, S, S)
         for i in 1:(S - 1), j in (i + 1):S
             if rand(rng) < p
@@ -112,7 +121,7 @@ end
 cascade_network(S::Int, C::Real; kwargs...) = cascade_network(Random.default_rng(), S, C; kwargs...)
 
 """
-    generalized_cascade_network([rng], S, C; tol = 0.03, maxiter = 10_000)
+    generalized_cascade_network([rng], S, C; tol = 0.03, maxiter = 10_000, basal_paths = false)
 
 Generate a generalized cascade model web with `S` species and connectance `C`, following:
 Stouffer, D. B., Camacho, J., Guimerà, R., Ng, C. A. & Amaral, L. A. N. Quantitative patterns
@@ -122,13 +131,14 @@ Each species `j` draws a single probability `x_j ~ Beta(1, β)` of eating each l
 species, with `β` chosen so that `E[x] = 2CS / (S - 1)`.
 
 Webs are resampled until they are connected and their connectance is within a relative
-tolerance `tol` of `C`.
+tolerance `tol` of `C`. With `basal_paths = true` they are also resampled until every
+species has a feeding path up from a basal species (see [`disconnected_from_basal`](@ref)).
 """
 function generalized_cascade_network(rng::AbstractRNG, S::Int, C::Real; tol = 0.03,
-                                     maxiter = 10_000)
+                                     maxiter = 10_000, basal_paths = false)
     check_pairwise_connectance(S, C)
     β = (S - 1) / (2C * S) - 1
-    return accept_web(C, tol, maxiter) do
+    return accept_web(C, tol, maxiter, basal_paths) do
         # drawing x per pair instead would marginalize to the plain cascade model
         x = rand(rng, Beta(1, β), S)
         adj = zeros(Int, S, S)
@@ -156,7 +166,7 @@ function niche_parameters(rng, S, C)
 end
 
 """
-    niche_network([rng], S, C; tol = 0.03, maxiter = 10_000)
+    niche_network([rng], S, C; tol = 0.03, maxiter = 10_000, basal_paths = false)
 
 Generate a niche model web with `S` species and connectance `C`, following:
 Williams, R. J. & Martinez, N. D. Simple rules yield complex food webs. Nature 404, 180–183
@@ -167,11 +177,13 @@ lies in the interval of width `r_i = x η_i`, `x ~ Beta(1, 1/2C - 1)`, centered 
 `c_i ~ U(r_i / 2, η_i)`. Species are ordered by niche value.
 
 Webs are resampled until they are connected and their connectance is within a relative
-tolerance `tol` of `C`.
+tolerance `tol` of `C`. With `basal_paths = true` they are also resampled until every
+species has a feeding path up from a basal species (see [`disconnected_from_basal`](@ref)).
 """
-function niche_network(rng::AbstractRNG, S::Int, C::Real; tol = 0.03, maxiter = 10_000)
+function niche_network(rng::AbstractRNG, S::Int, C::Real; tol = 0.03, maxiter = 10_000,
+                      basal_paths = false)
     check_niche_connectance(S, C)
-    return accept_web(C, tol, maxiter) do
+    return accept_web(C, tol, maxiter, basal_paths) do
         η, r, centers = niche_parameters(rng, S, C)
         adj = zeros(Int, S, S)
         for i in 1:S, j in 1:S
@@ -185,7 +197,7 @@ end
 niche_network(S::Int, C::Real; kwargs...) = niche_network(Random.default_rng(), S, C; kwargs...)
 
 """
-    generalized_niche_network([rng], S, C, diet; tol = 0.03, maxiter = 10_000)
+    generalized_niche_network([rng], S, C, diet; tol = 0.03, maxiter = 10_000, basal_paths = false)
 
 Generate a generalized niche model web with `S` species, connectance `C`, and diet
 contiguity `diet ∈ [0, 1]`, following:
@@ -198,13 +210,14 @@ makes up the missing links with cascade style links to random lower ranked speci
 the generalized cascade model.
 
 Webs are resampled until they are connected and their connectance is within a relative
-tolerance `tol` of `C`.
+tolerance `tol` of `C`. With `basal_paths = true` they are also resampled until every
+species has a feeding path up from a basal species (see [`disconnected_from_basal`](@ref)).
 """
 function generalized_niche_network(rng::AbstractRNG, S::Int, C::Real, diet::Real; tol = 0.03,
-                                   maxiter = 10_000)
+                                   maxiter = 10_000, basal_paths = false)
     check_niche_connectance(S, C)
     0 <= diet <= 1 || throw(ArgumentError("diet must be in [0, 1], given $diet"))
-    return accept_web(C, tol, maxiter) do
+    return accept_web(C, tol, maxiter, basal_paths) do
         η, r, _ = niche_parameters(rng, S, C)
         reduced_r = diet * r
         centers = [rand(rng, Uniform(reduced_r[i] / 2, η[i])) for i in 1:S]

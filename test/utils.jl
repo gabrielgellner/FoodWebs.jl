@@ -20,6 +20,20 @@ end
     @test basal_species([1 1; 0 0]) == Int[]
 end
 
+@testset "disconnected from basal" begin
+    @test disconnected_from_basal([0 1 0; 0 0 1; 0 0 0]) == Int[]
+    # a loop with access to a basal species is fine
+    @test disconnected_from_basal([0 1 0; 0 0 1; 0 1 0]) == Int[]
+    # 2 and 3 only eat each other, and 1 eats nothing
+    @test disconnected_from_basal([0 0 0; 0 0 1; 0 1 0]) == [2, 3]
+    # 4 eats the closed loop, so it is cut off too
+    @test disconnected_from_basal([0 0 0 0; 0 0 1 1; 0 1 0 0; 0 0 0 0]) == [2, 3, 4]
+    @test disconnected_from_basal([0 1; 1 0]) == [1, 2]
+    # a species that only eats itself counts as basal
+    @test disconnected_from_basal([1 1; 0 0]) == Int[]
+    @test disconnected_from_basal(food_chain_network(5)) == Int[]
+end
+
 @testset "trophic levels" begin
     linchain = [0 1 0; 0 0 1; 0 0 0]
     @test trophic_levels(linchain) ≈ [1.0, 2.0, 3.0]

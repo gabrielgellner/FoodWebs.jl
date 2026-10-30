@@ -16,7 +16,9 @@ Pkg.add(url = "https://github.com/gabrielgellner/FoodWebs.jl")
 - **Community matrices** use the Jacobian convention: `J[i, j]` is the effect of species `j`
   on the growth of species `i`, so for predator `j` and prey `i`, `J[i, j] < 0 < J[j, i]`.
 - **Random generators** take an optional leading `rng::AbstractRNG` and resample until the web
-  is connected with connectance within a relative `tol` (default 3%) of the target.
+  is connected with connectance within a relative `tol` (default 3%) of the target. Pass
+  `basal_paths = true` to also reject webs with species that have no feeding path up from a
+  basal species (about 1–2% of niche webs), which is useful for dynamical models.
 
 ```julia
 using FoodWebs, Distributions, Random

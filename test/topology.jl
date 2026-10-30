@@ -121,6 +121,22 @@ end
     end
 end
 
+@testset "basal paths" begin
+    rng = Xoshiro(13)
+    # roughly 1-2% of niche webs contain loops of species cut off from any basal species
+    @test any(!isempty(disconnected_from_basal(niche_network(rng, 40, 0.25))) for _ in 1:500)
+    # random link directions mean dense May networks almost never have a basal species
+    @test_throws ErrorException may_network(rng, 40, 0.25; basal_paths = true, maxiter = 100)
+    for (name, gen) in GENERATORS, _ in 1:100
+        name == "may" && continue
+        web = gen(rng, 40, 0.25; basal_paths = true)
+        @test isempty(disconnected_from_basal(web))
+        @test all(isfinite, trophic_levels(web))
+    end
+    @test niche_network(Xoshiro(1), 30, 0.15; basal_paths = true) ==
+          niche_network(Xoshiro(1), 30, 0.15; basal_paths = true)
+end
+
 @testset "generalized niche network" begin
     rng = Xoshiro(6)
     for diet in (0.0, 0.25, 0.5, 0.75, 1.0), _ in 1:10

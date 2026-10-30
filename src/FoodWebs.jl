@@ -20,7 +20,7 @@ export λ_stability, ν_stability
 
 include("utils.jl")
 export trophic_levels, connectance
-export basal_species, top_species
+export basal_species, top_species, disconnected_from_basal
 
 include("ellipsis_laws.jl")
 export ellipsis_sample
