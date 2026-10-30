@@ -66,8 +66,12 @@ function trophic_levels(web::AbstractMatrix)
     S = LinearAlgebra.checksquare(web)
     unfed = disconnected_from_basal(web)
     if !isempty(unfed)
-        throw(ArgumentError("species $unfed have no feeding path up from a basal species, so " *
-                            "their trophic levels are undefined"))
+        throw(
+            ArgumentError(
+                "species $unfed have no feeding path up from a basal species, so " *
+                    "their trophic levels are undefined"
+            )
+        )
     end
     # diet matrix with predators as rows and without cannibalism
     P = Matrix{Float64}(transpose(web) .!= 0)

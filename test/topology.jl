@@ -134,7 +134,7 @@ end
         @test all(isfinite, trophic_levels(web))
     end
     @test niche_network(Xoshiro(1), 30, 0.15; basal_paths = true) ==
-          niche_network(Xoshiro(1), 30, 0.15; basal_paths = true)
+        niche_network(Xoshiro(1), 30, 0.15; basal_paths = true)
 end
 
 @testset "generalized niche network" begin
@@ -148,13 +148,15 @@ end
     # link can split the interval in two around the species itself
     for _ in 1:20
         web = generalized_niche_network(rng, 50, 0.15, 1.0)
-        @test all(is_interval(sort(union(findall(==(1), web[:, i]), i))) ||
-                  is_interval(findall(==(1), web[:, i])) for i in 1:50)
+        @test all(
+            is_interval(sort(union(findall(==(1), web[:, i]), i))) ||
+                is_interval(findall(==(1), web[:, i])) for i in 1:50
+        )
     end
     # lowering diet contiguity makes diets less interval-like
     n_interval(web) = count(i -> is_interval(findall(==(1), web[:, i])), 1:50)
     @test mean(n_interval(generalized_niche_network(rng, 50, 0.15, 0.0)) for _ in 1:20) <
-          mean(n_interval(generalized_niche_network(rng, 50, 0.15, 1.0)) for _ in 1:20)
+        mean(n_interval(generalized_niche_network(rng, 50, 0.15, 1.0)) for _ in 1:20)
     @test_throws ArgumentError generalized_niche_network(rng, 20, 0.1, 1.5)
     @test_throws ArgumentError generalized_niche_network(rng, 20, 0.1, -0.1)
 end
