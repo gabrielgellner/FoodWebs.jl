@@ -24,7 +24,7 @@ Pkg.add(url = "https://github.com/gabrielgellner/FoodWebs.jl")
 using FoodWebs, Distributions, Random
 web = niche_network(Xoshiro(1), 30, 0.15)
 J = random_predprey(Xoshiro(2), web, Normal(), 0.5)
-λ_stability(J), ν_stability(J)
+spectral_abscissa(J), numerical_abscissa(J)
 ```
 
 ## Development

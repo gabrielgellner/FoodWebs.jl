@@ -21,7 +21,7 @@ is_interval(idx) = isempty(idx) || idx == first(idx):last(idx)
     web = PredationMatrix([0 1; 0 0])
     @test size(web) == (2, 2)
     @test web[1, 2] == 1
-    @test web isa AbstractMatrix{Int}
+    @test web isa AbstractMatrix{Bool}
     @test_throws DimensionMismatch PredationMatrix([0 1 0; 0 0 1])
     @test_throws ArgumentError PredationMatrix([0 2; 0 0])
     @test_throws ArgumentError PredationMatrix([0 -1; 0 0])
