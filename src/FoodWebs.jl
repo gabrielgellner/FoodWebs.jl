@@ -2,9 +2,11 @@ module FoodWebs
 
 using LinearAlgebra
 using Distributions
-using LightGraphs
+using Random: Random, AbstractRNG
+using Graphs: DiGraph, is_connected
 
 include("topology.jl")
+export PredationMatrix
 export food_chain_network
 export may_network
 export cascade_network, generalized_cascade_network
@@ -18,10 +20,10 @@ export λ_stability, ν_stability
 
 include("utils.jl")
 export trophic_levels, connectance
-export basal_species, top_species
+export basal_species, top_species, disconnected_from_basal
 
 include("ellipsis_laws.jl")
 export ellipsis_sample
-export offdiag_pairs, offdiag_pairs_nz
+export offdiag_pairs, offdiag_pairs_nz, shuffle_pairs
 
 end
