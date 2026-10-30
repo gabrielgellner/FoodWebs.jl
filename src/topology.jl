@@ -1,181 +1,230 @@
-struct PredationMatrix <: AbstractArray{Int, 2}
+# # Conventions
+# A food web on `S` species is an `S`×`S` binary matrix where `web[i, j] == 1` means species `j`
+# eats species `i` (prey are rows, predators are columns). Connectance is `C = L / S^2` where `L`
+# is the number of links, following Williams & Martinez (2000).
+
+"""
+    PredationMatrix(links::AbstractMatrix{<:Integer})
+
+A square binary food web matrix where `web[i, j] == 1` means species `j` eats species `i`.
+"""
+struct PredationMatrix <: AbstractMatrix{Int}
     links::Matrix{Int}
-    S::Int
-    C::Float64
-end
-
-function PredationMatrix(links::Matrix{Int})
-    S1, S2 = size(links)
-    if S1 != S2
-        error("PredationMatrix must be square, given dimensions ($S1, S2)")
+    function PredationMatrix(links::AbstractMatrix{<:Integer})
+        S1, S2 = size(links)
+        S1 == S2 || throw(DimensionMismatch("PredationMatrix must be square, given ($S1, $S2)"))
+        all(x -> x == 0 || x == 1, links) || throw(ArgumentError("PredationMatrix must be binary"))
+        return new(Matrix{Int}(links))
     end
-    # if there is canibals the connectance measure might be off
-    return PredationMatrix(links, S1, 2 * sum(links) / S1 ^ 2)
 end
 
-Base.size(pmat::PredationMatrix) = size(pmat.links)
-Base.IndexStyle(::Type{<:PredationMatrix}) = IndexCartesian()
-Base.getindex(pmat::PredationMatrix, I...) = getindex(pmat.links, I...)
-Base.strides(pmat::PredationMatrix) = strides(pmat.links)
+Base.size(web::PredationMatrix) = size(web.links)
+Base.getindex(web::PredationMatrix, i::Int, j::Int) = web.links[i, j]
 
 """
     food_chain_network(S)
 
-Generate a linear food chain of length `S`
+Generate a linear food chain of length `S`, where species `i + 1` eats species `i`.
 """
 function food_chain_network(S::Int)
-    @assert S > 0
+    S > 0 || throw(ArgumentError("S must be positive, given $S"))
     return PredationMatrix(diagm(1 => fill(1, S - 1)))
 end
 
-"""
-    may_network(S, C)
+# Williams & Martinez (2000) style acceptance: keep generating webs until one is (weakly)
+# connected, so there are no isolated species or separate components, and has a connectance
+# within a relative tolerance `tol` of the target `C`.
+function accept_web(generate, C, tol, maxiter)
+    for _ in 1:maxiter
+        adj = generate()
+        if is_connected(DiGraph(adj)) && abs(connectance(adj) - C) <= tol * C
+            return PredationMatrix(adj)
+        end
+    end
+    error("Could not generate a connected web with connectance within $(100tol)% of $C " *
+          "in $maxiter attempts")
+end
 
-Generate a `S`×`S` adjancency matrix, with connectance `C`. Following the random network
-described by:
-May, R. M. Will a large complex system be stable? Nature 238, 413–414 (1972).
+# Upper bound on C for models where only one direction of each species pair can be a link
+function check_pairwise_connectance(S, C)
+    S > 1 || throw(ArgumentError("S must be greater than 1, given $S"))
+    0 < C <= (S - 1) / (2S) ||
+        throw(ArgumentError("C must be in (0, (S - 1) / 2S] = (0, $((S - 1) / (2S))], given $C"))
+end
+
+function check_niche_connectance(S, C)
+    S > 1 || throw(ArgumentError("S must be greater than 1, given $S"))
+    0 < C < 0.5 || throw(ArgumentError("C must be in (0, 0.5), given $C"))
+end
+
 """
-function may_network(S::Int, C::Float64)
-    adj = fill(0, S, S)
-    for i in 1:S
-        for j in 1:S
-            if rand() < C / 2
+    may_network([rng], S, C; tol = 0.03, maxiter = 10_000)
+
+Generate a random `S` species web with connectance `C`, following:
+May, R. M. Will a large complex system be stable? Nature 238, 413–414 (1972).
+
+Each pair of species is linked with probability `2CS / (S - 1)`, and the direction of the
+link (who eats whom) is chosen at random. There are no self links or mutual predation.
+
+Webs are resampled until they are connected and their connectance is within a relative
+tolerance `tol` of `C`.
+"""
+function may_network(rng::AbstractRNG, S::Int, C::Real; tol = 0.03, maxiter = 10_000)
+    check_pairwise_connectance(S, C)
+    p = 2C * S / (S - 1)
+    return accept_web(C, tol, maxiter) do
+        adj = zeros(Int, S, S)
+        for i in 1:(S - 1), j in (i + 1):S
+            if rand(rng) < p
+                rand(rng, Bool) ? (adj[i, j] = 1) : (adj[j, i] = 1)
+            end
+        end
+        adj
+    end
+end
+may_network(S::Int, C::Real; kwargs...) = may_network(Random.default_rng(), S, C; kwargs...)
+
+"""
+    cascade_network([rng], S, C; tol = 0.03, maxiter = 10_000)
+
+Generate a cascade model web with `S` species and connectance `C`, following:
+Cohen, J. E. & Newman, C. M. A stochastic theory of community food webs I. Models and
+aggregated data. Proc. R. Soc. Lond. B 224, 421–448 (1985).
+
+Each species eats each lower ranked species with probability `2CS / (S - 1)`.
+
+Webs are resampled until they are connected and their connectance is within a relative
+tolerance `tol` of `C`.
+"""
+function cascade_network(rng::AbstractRNG, S::Int, C::Real; tol = 0.03, maxiter = 10_000)
+    check_pairwise_connectance(S, C)
+    p = 2C * S / (S - 1)
+    return accept_web(C, tol, maxiter) do
+        adj = zeros(Int, S, S)
+        for i in 1:(S - 1), j in (i + 1):S
+            if rand(rng) < p
                 adj[i, j] = 1
             end
         end
+        adj
     end
-    return PredationMatrix(adj)
 end
+cascade_network(S::Int, C::Real; kwargs...) = cascade_network(Random.default_rng(), S, C; kwargs...)
 
 """
-cascade_network(S, C)::PredationMatrix
+    generalized_cascade_network([rng], S, C; tol = 0.03, maxiter = 10_000)
 
-Generate a `S`×`S` adjancency matrix, with connectance `C`, following the network structure
-described by:
-Cohen, J. E. 1978. Food Webs and Niche Space. Princeton University Press, Princeton, N.J.
+Generate a generalized cascade model web with `S` species and connectance `C`, following:
+Stouffer, D. B., Camacho, J., Guimerà, R., Ng, C. A. & Amaral, L. A. N. Quantitative patterns
+in the structure of model and empirical food webs. Ecology 86, 1301–1311 (2005).
+
+Each species `j` draws a single probability `x_j ~ Beta(1, β)` of eating each lower ranked
+species, with `β` chosen so that `E[x] = 2CS / (S - 1)`.
+
+Webs are resampled until they are connected and their connectance is within a relative
+tolerance `tol` of `C`.
 """
-function cascade_network(S, C; maxiter = 1000)
-    for iter in 1:maxiter
-        adj = fill(0, S, S)
-        for i in 1:(S - 1)
-            for j in (i + 1):S
-                # Since we are only looping over the top triangle we are only checking
-                # S * (S - 1) / 2 possible links and we know that there are C * (S - 1) / 2 in
-                # total so the probability is just C that we have a link at the specific location
-                if rand() < C
-                    adj[i, j] = 1
-                end
+function generalized_cascade_network(rng::AbstractRNG, S::Int, C::Real; tol = 0.03,
+                                     maxiter = 10_000)
+    check_pairwise_connectance(S, C)
+    β = (S - 1) / (2C * S) - 1
+    return accept_web(C, tol, maxiter) do
+        # drawing x per pair instead would marginalize to the plain cascade model
+        x = rand(rng, Beta(1, β), S)
+        adj = zeros(Int, S, S)
+        for i in 1:(S - 1), j in (i + 1):S
+            if rand(rng) < x[j]
+                adj[i, j] = 1
             end
         end
-        if is_connected(DiGraph(adj))
-            return PredationMatrix(adj)
-        end
+        adj
     end
-    error("Could not find a connected network for ($S, $C) in $maxiter iteractions")
+end
+function generalized_cascade_network(S::Int, C::Real; kwargs...)
+    return generalized_cascade_network(Random.default_rng(), S, C; kwargs...)
+end
+
+# Niche values, ranges and centers for the niche model. Species are sorted by niche value and
+# the species with the smallest niche value has range 0, so every web has a basal species.
+function niche_parameters(rng, S, C)
+    β = 1 / (2C) - 1
+    η = sort(rand(rng, S))
+    r = η .* rand(rng, Beta(1, β), S)
+    r[1] = 0.0
+    centers = [rand(rng, Uniform(r[i] / 2, η[i])) for i in 1:S]
+    return η, r, centers
 end
 
 """
-    generalized_cascade_network(S, C)::PredationMatrix
+    niche_network([rng], S, C; tol = 0.03, maxiter = 10_000)
 
-Generate a `S`×`S` adjancency matrix, with connectance `C`, following the network structure
-described by:
-Stouffer, D. B., Camacho, J., Guimerà, R. & Ng, C. Quantitative patterns in the structure of
-model and empirical food webs. Ecology 86, 1301–1311 (2005).
+Generate a niche model web with `S` species and connectance `C`, following:
+Williams, R. J. & Martinez, N. D. Simple rules yield complex food webs. Nature 404, 180–183
+(2000).
+
+Each species `i` has a niche value `η_i ~ U(0, 1)` and eats every species whose niche value
+lies in the interval of width `r_i = x η_i`, `x ~ Beta(1, 1/2C - 1)`, centered at
+`c_i ~ U(r_i / 2, η_i)`. Species are ordered by niche value.
+
+Webs are resampled until they are connected and their connectance is within a relative
+tolerance `tol` of `C`.
 """
-function generalized_cascade_network(S::Int, C::Float64; maxiter = 1000)
-    for iter in 1:maxiter
-        β = 1 / C - 1
-        # each predator j draws a single probability x_j of eating each lower ranked species.
-        # Drawing per pair instead would marginalize to Bernoulli(C), i.e. the plain cascade.
-        x = rand(Beta(1, β), S)
-        adj = fill(0, S, S)
-        for i = 1:S
-            for j = (i + 1):S
-                if rand() < x[j]
-                    adj[i, j] = 1
-                end
+function niche_network(rng::AbstractRNG, S::Int, C::Real; tol = 0.03, maxiter = 10_000)
+    check_niche_connectance(S, C)
+    return accept_web(C, tol, maxiter) do
+        η, r, centers = niche_parameters(rng, S, C)
+        adj = zeros(Int, S, S)
+        for i in 1:S, j in 1:S
+            if centers[i] - r[i] / 2 <= η[j] <= centers[i] + r[i] / 2
+                adj[j, i] = 1
             end
         end
-        if is_connected(DiGraph(adj))
-            return PredationMatrix(adj)
-        end
+        adj
     end
-    error("Could not find a connected network for ($S, $C) in $maxiter iteractions")
 end
+niche_network(S::Int, C::Real; kwargs...) = niche_network(Random.default_rng(), S, C; kwargs...)
 
 """
-    niche_network(S, C)::PredationMatrix
+    generalized_niche_network([rng], S, C, diet; tol = 0.03, maxiter = 10_000)
 
-Generate a `S`×`S` adjancency matrix, with connectance `C`, following the network
-structure described by:
-Williams, R. J. & Martinez, N. D. Simple rules yield complex food webs. Nature 404, 180–3 (2000).
+Generate a generalized niche model web with `S` species, connectance `C`, and diet
+contiguity `diet ∈ [0, 1]`, following:
+Stouffer, D. B., Camacho, J. & Amaral, L. A. N. A robust measure of food web intervality.
+PNAS 103, 19015–19020 (2006).
+
+Each species keeps a fraction `diet` of its niche model range as a contiguous interval, and
+makes up the missing links with cascade style links to random lower ranked species. With
+`diet = 1` this is the niche model without cannibalism, and with `diet = 0` it is close to
+the generalized cascade model.
+
+Webs are resampled until they are connected and their connectance is within a relative
+tolerance `tol` of `C`.
 """
-function niche_network(S::Int, C::Float64; maxiter = 1000)
-    adj = fill(0, S, S) #not sure why this is needed outside
-    cond = false
-    for i in 1:maxiter
-        η = sort(rand(S))
-        β = 1 / C - 1
-        r = η .* rand(Beta(1, β), S)
-        # set r[position of min[η]] = 0, so that every web has at least one basal species
-        r[1] = 0.0
-
-        # each species gets a single feeding center, so its diet is an interval of niche space
-        centers = [rand(Uniform(r[i] / 2, η[i])) for i in 1:S]
-        adj = fill(0, S, S)
+function generalized_niche_network(rng::AbstractRNG, S::Int, C::Real, diet::Real; tol = 0.03,
+                                   maxiter = 10_000)
+    check_niche_connectance(S, C)
+    0 <= diet <= 1 || throw(ArgumentError("diet must be in [0, 1], given $diet"))
+    return accept_web(C, tol, maxiter) do
+        η, r, _ = niche_parameters(rng, S, C)
+        reduced_r = diet * r
+        centers = [rand(rng, Uniform(reduced_r[i] / 2, η[i])) for i in 1:S]
+        n_missing_prey = round.(Int, (r - reduced_r) * S)
+        adj = zeros(Int, S, S)
         for i in 1:S
             for j in 1:S
-                if ((centers[i] - r[i] / 2) <= η[j] <= (centers[i] + r[i] / 2))
+                if i != j && centers[i] - reduced_r[i] / 2 <= η[j] <= centers[i] + reduced_r[i] / 2
                     adj[j, i] = 1
                 end
             end
+            candidates = [j for j in 1:(i - 1) if adj[j, i] == 0]
+            k = min(length(candidates), n_missing_prey[i])
+            for j in sample(rng, candidates, k; replace = false)
+                adj[j, i] = 1
+            end
         end
-
-        if is_connected(DiGraph(adj))
-            return PredationMatrix(adj)
-        end
+        adj
     end
-    error("Could not find a connected network for ($S, $C) in $maxiter iteractions")
- end
-
-"""
-    generalized_niche_network(S, C, diet)
-
-Generate a `S`×`S` adjancency matrix with connectance `C`, and diet continuity `diet`
-following the network structure described by:
-Guimerà, R. et al. Origin of compartmentalization in food webs. Ecology 91, 2941–51 (2010).
-"""
-function generalized_niche_network(S::Int, C::Float64, diet::Float64; maxiter = 1000)
-    β = 1 / C - 1
-    for iter in 1:maxiter
-        η = sort(rand(S))
-        r = η .* rand(Beta(1, β), S)
-        # set r[position of min[η]] = 0, so that every web has at least one basal species
-        r[1] = 0.0
-        reduced_r = diet * r
-        centers = [rand(Uniform(reduced_r[i] / 2, η[i])) for i = 1:S]
-        n_missing_prey = round.(Int, (r - reduced_r) * S)
-        adj = fill(0, S, S)
-        for i = 1:S
-            # add the reduced niche style links, prey j of predator i
-            for j = 1:S
-                if i != j && (centers[i] - reduced_r[i] / 2) <= η[j] <= (centers[i] + reduced_r[i] / 2)
-                    adj[j, i] = 1
-                end
-            end
-            # now we pick cascade style links among lower ranked species to make up for the
-            # missing links from the reduced niche ranges
-            pos = [j for j in 1:(i - 1) if adj[j, i] == 0]
-            k = min(length(pos), n_missing_prey[i])
-            if k > 0
-                for j in sample(pos, k; replace = false)
-                    adj[j, i] = 1
-                end
-            end
-        end
-        if is_connected(DiGraph(adj))
-            return PredationMatrix(adj)
-        end
-    end
-    error("Could not find a connected network for ($S, $C, $diet) in $maxiter iteractions")
+end
+function generalized_niche_network(S::Int, C::Real, diet::Real; kwargs...)
+    return generalized_niche_network(Random.default_rng(), S, C, diet; kwargs...)
 end

@@ -1,4 +1,3 @@
-import Random: shuffle
 import Statistics: cov, mean
 
 # # General Ellipsis Law
@@ -65,24 +64,21 @@ Given a square matrix `mat` shuffle the offdiagonal pairs above and below the ma
 at random. This is often useful for looking at distributions of the off diagonal pairs that
 that have equal marginal distributions.
 """
-function shuffle_pairs(mat::Matrix)
-    S = size(mat, 1)
-    @assert S == size(mat, 2) # must be square
-    shuff_mat = similar(mat)
-    # leave the diagonal elements alone
-    shuff_mat[diagind(mat)] = diag(mat)
+function shuffle_pairs(rng::AbstractRNG, mat::Matrix)
+    S = LinearAlgebra.checksquare(mat)
+    # the diagonal elements are left alone
+    shuff_mat = copy(mat)
     #TODO: it would be nice to have some kind of degree of shuffling in the future
-    for i = 1:S
-        for j = i:S
-            if i != j
-                shuff_pair = shuffle([mat[i, j], mat[j, i]])
-                shuff_mat[i, j] = shuff_pair[1]
-                shuff_mat[j, i] = shuff_pair[2]
+    for i = 1:(S - 1)
+        for j = (i + 1):S
+            if rand(rng, Bool)
+                shuff_mat[i, j], shuff_mat[j, i] = mat[j, i], mat[i, j]
             end
         end
     end
     return shuff_mat
 end
+shuffle_pairs(mat::Matrix) = shuffle_pairs(Random.default_rng(), mat)
 
 function ellipsis_sample(mat::Matrix{Float64})
     S = size(mat, 1)
