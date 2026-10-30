@@ -1,5 +1,9 @@
 # FoodWebs.jl
-To install this package, from the julia command prompt, run:
+
+Models and utilities for ecological food webs: network topologies, random community
+matrices, stability metrics and elliptic-law predictions.
+
 ```julia
-Pkg.clone("https://github.com/gabrielgellner/FoodWebs.jl")
+using Pkg
+Pkg.add(url = "https://github.com/gabrielgellner/FoodWebs.jl")
 ```

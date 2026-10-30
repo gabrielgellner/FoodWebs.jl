@@ -2,7 +2,7 @@ module FoodWebs
 
 using LinearAlgebra
 using Distributions
-using LightGraphs
+using Graphs: DiGraph, is_connected
 
 include("topology.jl")
 export food_chain_network

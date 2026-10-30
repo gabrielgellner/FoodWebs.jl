@@ -1,6 +1,5 @@
 import Random: shuffle
 import Statistics: cov, mean
-import RecursiveArrayTools: VectorOfArray
 
 # # General Ellipsis Law
 # Given a random matrix `M` than we have the rule for the bounds on the real parts of the
@@ -47,17 +46,16 @@ function offdiag_pairs(mat::Matrix)
     return pairs
 end
 
+"""
+    offdiag_pairs_nz(M::Matrix)
+
+Return a `2 × n` matrix whose columns are the off-diagonal pairs `[M[i, j], M[j, i]]` for
+the upper-triangle entries with `M[i, j] != 0`.
+"""
 function offdiag_pairs_nz(M::Matrix)
-    out = []
     # Look at the upper triangle
-    for i in 1:(size(M, 1) - 1)
-        for j in (i + 1):size(M, 2)
-            if M[i, j] != 0
-                push!(out, [M[i, j], M[j, i]])
-            end
-        end
-    end
-    return VectorOfArray(out)
+    pairs = [(M[i, j], M[j, i]) for i in 1:(size(M, 1) - 1) for j in (i + 1):size(M, 2) if M[i, j] != 0]
+    return permutedims([first.(pairs) last.(pairs)])
 end
 
 """
