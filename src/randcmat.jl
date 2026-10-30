@@ -21,7 +21,7 @@ function random_predprey(
     # links can be on either side of the diagonal (e.g. niche webs where a prey has a higher
     # niche value than its predator)
     for i in 1:S, j in 1:S
-        if i != j && web[i, j] == 1
+        if i != j && web[i, j]
             neg = -abs(rand(rng, dist))
             pos = f * abs(rand(rng, dist))
             if shuffle_prey && rand(rng, Bool)

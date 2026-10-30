@@ -13,6 +13,6 @@ using ExplicitImports: test_explicit_imports
     include("topology.jl")
     include("utils.jl")
     include("randcmat.jl")
-    include("resilience.jl")
-    include("ellipsis_laws.jl")
+    include("stability.jl")
+    include("elliptic_law.jl")
 end
