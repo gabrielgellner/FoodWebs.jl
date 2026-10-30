@@ -44,5 +44,5 @@ using LinearAlgebra: diag
 
     web = niche_network(Xoshiro(9), 30, 0.15)
     @test random_predprey(Xoshiro(1), web, Normal(), 0.5) ==
-          random_predprey(Xoshiro(1), web, Normal(), 0.5)
+        random_predprey(Xoshiro(1), web, Normal(), 0.5)
 end

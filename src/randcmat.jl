@@ -12,8 +12,10 @@ diagonal is `-1`. Cannibalistic links are ignored.
 With `shuffle_prey = true` the two entries of each pair are randomly swapped, so the
 predator–prey sign structure is kept but not which species is the predator.
 """
-function random_predprey(rng::AbstractRNG, web::PredationMatrix, dist::Distribution, f::Real;
-                         shuffle_prey = false)
+function random_predprey(
+        rng::AbstractRNG, web::PredationMatrix, dist::Distribution, f::Real;
+        shuffle_prey = false
+    )
     S = size(web, 1)
     J = -Matrix{Float64}(I, S, S)
     # links can be on either side of the diagonal (e.g. niche webs where a prey has a higher

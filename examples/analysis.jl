@@ -13,7 +13,7 @@ function sample(nsample::Int, f::Float64)
         cmat = random_predprey(web, Uniform(rvals[i], rvals[i] + 1.0), f)
         deigs[i] = maximum(real(eigvals(cmat)))
     end
-    hcat(rvals, deigs)
+    return hcat(rvals, deigs)
 end
 
 data = sample(500, 0.8)

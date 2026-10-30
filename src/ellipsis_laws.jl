@@ -32,8 +32,8 @@ function offdiag_pairs(mat::Matrix)
     # without an if statement?
     # use a simple counter to unwrap the matrix into the pairs matrix
     current_row = 1
-    for i = 1:S
-        for j = i:S
+    for i in 1:S
+        for j in i:S
             if i != j
                 pairs[current_row, :] = [mat[i, j], mat[j, i]]
                 current_row += 1
@@ -67,8 +67,8 @@ function shuffle_pairs(rng::AbstractRNG, mat::Matrix)
     # the diagonal elements are left alone
     shuff_mat = copy(mat)
     #TODO: it would be nice to have some kind of degree of shuffling in the future
-    for i = 1:(S - 1)
-        for j = (i + 1):S
+    for i in 1:(S - 1)
+        for j in (i + 1):S
             if rand(rng, Bool)
                 shuff_mat[i, j], shuff_mat[j, i] = mat[j, i], mat[i, j]
             end

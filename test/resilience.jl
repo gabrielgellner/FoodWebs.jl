@@ -17,7 +17,7 @@ using Random: Xoshiro
     rng = Xoshiro(10)
     for _ in 1:50
         A = randn(rng, 10, 10)
-        @test ν_stability(A) >= λ_stability(A) - 1e-10
+        @test ν_stability(A) >= λ_stability(A) - 1.0e-10
         Asym = A + A'
         @test ν_stability(Asym) ≈ λ_stability(Asym)
     end

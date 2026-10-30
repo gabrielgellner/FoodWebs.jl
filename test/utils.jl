@@ -70,11 +70,11 @@ end
     for _ in 1:20
         web = generalized_cascade_network(rng, 40, 0.15)
         t = trophic_levels(web)
-        @test all(>=(1 - 1e-12), t)
+        @test all(>=(1 - 1.0e-12), t)
         @test all(t[b] ≈ 1 for b in basal_species(web))
         for j in 1:40
             prey = [i for i in 1:40 if web[i, j] == 1 && i != j]
-            isempty(prey) || @test t[j] >= 1 + minimum(t[prey]) - 1e-9
+            isempty(prey) || @test t[j] >= 1 + minimum(t[prey]) - 1.0e-9
         end
     end
 end

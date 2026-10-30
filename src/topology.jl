@@ -39,25 +39,27 @@ function accept_web(generate, C, tol, maxiter, basal_paths)
     for _ in 1:maxiter
         adj = generate()
         if is_connected(DiGraph(adj)) && abs(connectance(adj) - C) <= tol * C &&
-           (!basal_paths || isempty(disconnected_from_basal(adj)))
+                (!basal_paths || isempty(disconnected_from_basal(adj)))
             return PredationMatrix(adj)
         end
     end
-    error("Could not generate a connected web with connectance within $(100tol)% of $C " *
-          (basal_paths ? "and feeding paths from basal species to all species " : "") *
-          "in $maxiter attempts")
+    error(
+        "Could not generate a connected web with connectance within $(100tol)% of $C " *
+            (basal_paths ? "and feeding paths from basal species to all species " : "") *
+            "in $maxiter attempts"
+    )
 end
 
 # Upper bound on C for models where only one direction of each species pair can be a link
 function check_pairwise_connectance(S, C)
     S > 1 || throw(ArgumentError("S must be greater than 1, given $S"))
-    0 < C <= (S - 1) / (2S) ||
+    return 0 < C <= (S - 1) / (2S) ||
         throw(ArgumentError("C must be in (0, (S - 1) / 2S] = (0, $((S - 1) / (2S))], given $C"))
 end
 
 function check_niche_connectance(S, C)
     S > 1 || throw(ArgumentError("S must be greater than 1, given $S"))
-    0 < C < 0.5 || throw(ArgumentError("C must be in (0, 0.5), given $C"))
+    return 0 < C < 0.5 || throw(ArgumentError("C must be in (0, 0.5), given $C"))
 end
 
 """
@@ -75,8 +77,10 @@ Webs are resampled until they are connected and their connectance is within a re
 tolerance `tol` of `C`. With `basal_paths = true` they are also resampled until every
 species has a feeding path up from a basal species (see [`disconnected_from_basal`](@ref)).
 """
-function may_network(rng::AbstractRNG, S::Int, C::Real; tol = 0.03, maxiter = 10_000,
-                    basal_paths = false)
+function may_network(
+        rng::AbstractRNG, S::Int, C::Real; tol = 0.03, maxiter = 10_000,
+        basal_paths = false
+    )
     check_pairwise_connectance(S, C)
     p = 2C * S / (S - 1)
     return accept_web(C, tol, maxiter, basal_paths) do
@@ -104,8 +108,10 @@ Webs are resampled until they are connected and their connectance is within a re
 tolerance `tol` of `C`. With `basal_paths = true` they are also resampled until every
 species has a feeding path up from a basal species (see [`disconnected_from_basal`](@ref)).
 """
-function cascade_network(rng::AbstractRNG, S::Int, C::Real; tol = 0.03, maxiter = 10_000,
-                        basal_paths = false)
+function cascade_network(
+        rng::AbstractRNG, S::Int, C::Real; tol = 0.03, maxiter = 10_000,
+        basal_paths = false
+    )
     check_pairwise_connectance(S, C)
     p = 2C * S / (S - 1)
     return accept_web(C, tol, maxiter, basal_paths) do
@@ -134,8 +140,10 @@ Webs are resampled until they are connected and their connectance is within a re
 tolerance `tol` of `C`. With `basal_paths = true` they are also resampled until every
 species has a feeding path up from a basal species (see [`disconnected_from_basal`](@ref)).
 """
-function generalized_cascade_network(rng::AbstractRNG, S::Int, C::Real; tol = 0.03,
-                                     maxiter = 10_000, basal_paths = false)
+function generalized_cascade_network(
+        rng::AbstractRNG, S::Int, C::Real; tol = 0.03,
+        maxiter = 10_000, basal_paths = false
+    )
     check_pairwise_connectance(S, C)
     β = (S - 1) / (2C * S) - 1
     return accept_web(C, tol, maxiter, basal_paths) do
@@ -180,8 +188,10 @@ Webs are resampled until they are connected and their connectance is within a re
 tolerance `tol` of `C`. With `basal_paths = true` they are also resampled until every
 species has a feeding path up from a basal species (see [`disconnected_from_basal`](@ref)).
 """
-function niche_network(rng::AbstractRNG, S::Int, C::Real; tol = 0.03, maxiter = 10_000,
-                      basal_paths = false)
+function niche_network(
+        rng::AbstractRNG, S::Int, C::Real; tol = 0.03, maxiter = 10_000,
+        basal_paths = false
+    )
     check_niche_connectance(S, C)
     return accept_web(C, tol, maxiter, basal_paths) do
         η, r, centers = niche_parameters(rng, S, C)
@@ -213,8 +223,10 @@ Webs are resampled until they are connected and their connectance is within a re
 tolerance `tol` of `C`. With `basal_paths = true` they are also resampled until every
 species has a feeding path up from a basal species (see [`disconnected_from_basal`](@ref)).
 """
-function generalized_niche_network(rng::AbstractRNG, S::Int, C::Real, diet::Real; tol = 0.03,
-                                   maxiter = 10_000, basal_paths = false)
+function generalized_niche_network(
+        rng::AbstractRNG, S::Int, C::Real, diet::Real; tol = 0.03,
+        maxiter = 10_000, basal_paths = false
+    )
     check_niche_connectance(S, C)
     0 <= diet <= 1 || throw(ArgumentError("diet must be in [0, 1], given $diet"))
     return accept_web(C, tol, maxiter, basal_paths) do
