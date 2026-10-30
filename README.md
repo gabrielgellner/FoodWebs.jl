@@ -26,3 +26,16 @@ web = niche_network(Xoshiro(1), 30, 0.15)
 J = random_predprey(Xoshiro(2), web, Normal(), 0.5)
 λ_stability(J), ν_stability(J)
 ```
+
+## Development
+
+Tasks are run with [just](https://github.com/casey/just):
+
+```sh
+just setup      # install Runic and JETLS as Julia apps, instantiate environments
+just fmt        # format with Runic
+just check      # formatting check, JETLS lint, and tests (what CI runs)
+```
+
+Formatting uses [Runic](https://github.com/fredrikekre/Runic.jl). To have `git blame` skip the
+bulk formatting commit, run `git config blame.ignoreRevsFile .git-blame-ignore-revs`.
