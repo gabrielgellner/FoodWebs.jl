@@ -31,14 +31,28 @@ jobs:
           version: '1'
   lint:
     runs-on: ubuntu-latest
+    env:
+      # JETLS gets its own depot, cached as a whole, so its compiled code survives between
+      # runs. julia-actions/cache does not keep the precompiled app between runs.
+      JULIA_DEPOT_PATH: /home/runner/.jetls-depot
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
+        id: julia
         with:
           version: '1'
-      - uses: julia-actions/cache@v2
-      - uses: julia-actions/julia-buildpkg@v1
+      - name: Resolve JETLS release commit
+        id: jetls
+        run: echo "sha=$(git ls-remote https://github.com/aviatesk/JETLS.jl refs/heads/release | cut -f1)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          path: /home/runner/.jetls-depot
+          key: jetls-${{ runner.os }}-julia-${{ steps.julia.outputs.julia-version }}-${{ steps.jetls.outputs.sha }}-${{ hashFiles('Project.toml') }}
+          restore-keys: |
+            jetls-${{ runner.os }}-julia-${{ steps.julia.outputs.julia-version }}-${{ steps.jetls.outputs.sha }}-
       - name: Install JETLS
-        run: julia --startup-file=no -e 'using Pkg; Pkg.Apps.add(url = "https://github.com/aviatesk/JETLS.jl", rev = "release")'
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: julia --startup-file=no -e 'using Pkg; Pkg.Apps.add(url = "https://github.com/aviatesk/JETLS.jl", rev = "${{ steps.jetls.outputs.sha }}")'
       - name: Lint
-        run: ~/.julia/bin/jetls check -q .
+        run: $JULIA_DEPOT_PATH/bin/jetls check -q .
