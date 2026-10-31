@@ -46,6 +46,7 @@ Tasks are run with [just](https://github.com/casey/just):
 just setup      # install Runic and JETLS as Julia apps, instantiate environments, enable hooks
 just fmt        # format with Runic
 just ci         # formatting check, JETLS lint, and tests (run by the pre-push hook)
+just gallery    # render the Quarto gallery of the bundled webs to gallery/webs.html
 ```
 
 Formatting uses [Runic](https://github.com/fredrikekre/Runic.jl). To have `git blame` skip the

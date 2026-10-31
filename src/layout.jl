@@ -8,8 +8,13 @@
 Positions `(x, y)` for drawing `web`, where `web[i, j] != 0` means species `j` eats species `i`.
 `y` is the trophic level `levels[i]`; prey-averaged levels by default, or any vector of levels.
 
-Species whose levels lie within `band` of the next lower species share a band, and each band is
-spread evenly across `x`, centred on zero with unit spacing. The order within each band comes from
+Species are grouped into bands of levels at most `band` apart: going up the levels, a species
+starts a new band when its level is more than `band` above the lowest level in the current band.
+Measuring from the band's lowest species keeps bands short for continuous levels such as the
+MacKay levels, where chaining each species to the next would merge most of the web into one
+band. Each band is spread evenly across `x`, centred on zero with unit spacing, and shifted by
+half a unit when it lies within `band` of the band below and would otherwise put nodes at the
+same `x`. The order within each band comes from
 the barycenter heuristic: `sweeps` passes, alternately up and down the bands, each ordering a
 band by the mean `x` of every species' prey and predators in other bands, keeping the ordering
 with the fewest edge crossings ([`FoodWebs.edge_crossings`](@ref)). The starting order is the
@@ -24,7 +29,7 @@ function trophic_layout(
     bands = trophic_bands(levels, band)
     neighbours = [[j for j in 1:S if j != i && (web[i, j] != 0 || web[j, i] != 0)] for i in 1:S]
     x = zeros(S)
-    place!(x, bands)
+    place!(x, bands, levels, band)
     positions() = [(x[i], float(levels[i])) for i in 1:S]
     # the heuristic can add crossings on a sweep, so keep the best ordering seen
     best, fewest = positions(), edge_crossings(web, positions())
@@ -34,7 +39,7 @@ function trophic_layout(
             members = bands[b]
             centre(i) = isempty(neighbours[i]) ? x[i] : mean(x[j] for j in neighbours[i])
             sort!(members; by = i -> (centre(i), x[i]))
-            place!(x, bands)
+            place!(x, bands, levels, band)
         end
         n = edge_crossings(web, positions())
         n < fewest && ((best, fewest) = (positions(), n))
@@ -42,12 +47,12 @@ function trophic_layout(
     return best
 end
 
-# species sorted by level, split where the level rises by more than `band`
+# species sorted by level, split where the level rises more than `band` above the band's lowest
 function trophic_bands(levels, band)
     order = sortperm(levels)
     bands = [[first(order)]]
     for i in order[2:end]
-        if levels[i] - levels[last(bands[end])] > band
+        if levels[i] - levels[first(bands[end])] > band
             push!(bands, [i])
         else
             push!(bands[end], i)
@@ -56,13 +61,20 @@ function trophic_bands(levels, band)
     return bands
 end
 
-# spread each band evenly across x, centred on zero, in its current order
-function place!(x, bands)
-    for members in bands
+# Spread each band evenly across x, centred on zero, in its current order. A band within `band`
+# of the band below would put nodes of nearly equal height at the same x when both have the same
+# parity, so it is shifted by half a unit to interleave them.
+function place!(x, bands, levels, band)
+    previous_offset = 0.0
+    for (b, members) in enumerate(bands)
         n = length(members)
+        offset = mod(-(n + 1) / 2, 1)
+        close = b > 1 && minimum(levels[members]) - maximum(levels[bands[b - 1]]) < band
+        shift = close && offset == previous_offset ? 0.5 : 0.0
         for (k, i) in enumerate(members)
-            x[i] = k - (n + 1) / 2
+            x[i] = k - (n + 1) / 2 + shift
         end
+        previous_offset = mod(offset + shift, 1)
     end
     return x
 end
@@ -100,10 +112,14 @@ Keywords:
   `trophic_levels` and `trophic_layout`);
 - `color`: node colours, one per species or a single colour (by default by trophic level), with
   `colormap`;
-- `markersize`: one per species or a single size;
-- `edgecolor` and `edgewidth`: for the arrows;
+- `markersize`: one per species or a single size (by default shrinking from 22 as `S` grows
+  past 30);
+- `edgecolor`, `edgealpha`, `edgewidth` and `tipsize`: for the arrows (by default the opacity
+  and arrowhead size fall as the number of links grows, so dense webs stay legible). Arrows
+  stop at the node edges in screen space, so they meet the nodes whatever the aspect ratio;
 - `labels` and `fontsize`: text drawn on each node (`nothing` for none; by default the species
-  indices) and its size;
+  indices for webs of up to 60 species and none for larger ones) and its size. Labels are
+  white on dark nodes and black on light ones;
 - `highlight_cannibals`: draw cannibals with a thick outline (default `true`).
 """
 function foodwebplot end
