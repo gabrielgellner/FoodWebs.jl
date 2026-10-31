@@ -438,3 +438,88 @@ function add_prey!(rng, adj, i, candidates, n_prey)
     k > 0 && (adj[sample(rng, new, k; replace = false), i] .= true)
     return adj
 end
+
+"""
+    probabilistic_niche_probabilities(η, c, r; a = 1, p = 2)
+
+The link probabilities of the probabilistic niche model, following:
+Williams, R. J., Anandanadesan, A. & Purves, D. The probabilistic niche model reveals the
+niche structure and role of body size in a complex food web. PLoS ONE 5, e12092 (2010).
+
+Returns the `S`×`S` matrix `P` where `P[j, i]` is the probability that species `i` eats species
+`j` (prey are rows, predators are columns),
+
+    P[j, i] = a exp(-|(η[j] - c[i]) / (r[i] / 2)|^p),
+
+for niche values `η`, feeding centers `c` and feeding ranges `r`. The paper uses the Gaussian
+kernel `p = 2`. The probability peaks at `a` when `η[j] == c[i]`, and as `p` grows the kernel
+approaches the niche model's interval of width `r[i]` centered on `c[i]`. A species with
+`r[i] == 0` eats nothing. Williams et al. fix `a = 0.9999` when fitting, as `a = 1` gives
+links outside the data a log-likelihood of `-Inf`.
+"""
+function probabilistic_niche_probabilities(
+        η::AbstractVector{<:Real}, c::AbstractVector{<:Real}, r::AbstractVector{<:Real};
+        a::Real = 1, p::Real = 2
+    )
+    S = length(η)
+    length(c) == length(r) == S ||
+        throw(DimensionMismatch("η, c and r must have the same length, given $S, $(length(c)), $(length(r))"))
+    all(>=(0), r) || throw(ArgumentError("feeding ranges r must be non-negative"))
+    0 <= a <= 1 || throw(ArgumentError("a must be in [0, 1], given $a"))
+    p > 0 || throw(ArgumentError("p must be positive, given $p"))
+    return [r[i] == 0 ? 0.0 : a * exp(-abs((η[j] - c[i]) / (r[i] / 2))^p) for j in 1:S, i in 1:S]
+end
+
+"""
+    probabilistic_niche_network([rng], η, c, r; a = 1, p = 2)
+    probabilistic_niche_network([rng], S, C; a = 1, p = 2, tol = 0.03, maxiter = 10_000, basal_paths = false)
+
+Generate a probabilistic niche model web (Williams, Anandanadesan & Purves 2010), where each
+species `i` eats each species `j` independently with probability `P[j, i]` from
+[`probabilistic_niche_probabilities`](@ref).
+
+Given niche values `η`, feeding centers `c` and feeding ranges `r`, it draws one web from
+these probabilities.
+
+Given `S` and `C`, it draws the parameters as in [`niche_network`](@ref). The kernel
+integrates to `a Γ(1 + 1/p) r[i]` (`a √π r[i] / 2` for the Gaussian), against `r[i]` for the
+niche model's interval, so the ranges are drawn at the niche model connectance
+`C / (a Γ(1 + 1/p))` to give `C S^2` links on average. This must be below 0.5. Webs are
+resampled until they are connected and their number of links `L` satisfies
+`abs(L - C S^2) <= max(tol C S^2, 1/2)`: within a relative tolerance `tol` of `C S^2`, widened
+for small webs to include the whole number of links nearest `C S^2`. With `basal_paths = true`
+they are also resampled until every species has a feeding path up from a basal species (see
+[`disconnected_from_basal`](@ref)).
+"""
+function probabilistic_niche_network(
+        rng::AbstractRNG, η::AbstractVector{<:Real}, c::AbstractVector{<:Real},
+        r::AbstractVector{<:Real}; a::Real = 1, p::Real = 2
+    )
+    P = probabilistic_niche_probabilities(η, c, r; a, p)
+    return PredationMatrix(rand(rng, size(P)...) .< P)
+end
+function probabilistic_niche_network(
+        rng::AbstractRNG, S::Int, C::Real; a::Real = 1, p::Real = 2, tol = 0.03,
+        maxiter = 10_000, basal_paths = false
+    )
+    check_niche_connectance(S, C)
+    0 < a <= 1 || throw(ArgumentError("a must be in (0, 1], given $a"))
+    p > 0 || throw(ArgumentError("p must be positive, given $p"))
+    Cn = C / (a * gamma(1 + 1 / p))
+    Cn < 0.5 || throw(
+        ArgumentError(
+            "connectance $C is out of reach with a = $a, p = $p: the niche ranges would " *
+                "need a connectance of $Cn, at least 0.5"
+        )
+    )
+    return accept_web(S, C, tol, maxiter, basal_paths) do
+        η, r, centers = niche_parameters(rng, S, Cn)
+        rand(rng, S, S) .< probabilistic_niche_probabilities(η, centers, r; a, p)
+    end
+end
+function probabilistic_niche_network(η::AbstractVector{<:Real}, c::AbstractVector{<:Real}, r::AbstractVector{<:Real}; kwargs...)
+    return probabilistic_niche_network(Random.default_rng(), η, c, r; kwargs...)
+end
+function probabilistic_niche_network(S::Int, C::Real; kwargs...)
+    return probabilistic_niche_network(Random.default_rng(), S, C; kwargs...)
+end

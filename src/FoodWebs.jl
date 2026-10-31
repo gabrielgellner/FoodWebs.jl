@@ -4,6 +4,7 @@ using Distributions: Beta, Distribution, Uniform, sample
 using Graphs: DiGraph, is_connected, weakly_connected_components
 using LinearAlgebra: Diagonal, I, LinearAlgebra, Symmetric, diag, diagind, diagm, eigmax, eigvals
 using Random: AbstractRNG, Random
+using SpecialFunctions: gamma
 using Statistics: cov, mean
 
 include("topology.jl")
@@ -13,6 +14,7 @@ export may_network
 export cascade_network, generalized_cascade_network
 export generalized_niche_network, minimum_potential_niche_network, nested_hierarchy_network,
     niche_network
+export probabilistic_niche_network, probabilistic_niche_probabilities
 
 include("randcmat.jl")
 export random_predprey

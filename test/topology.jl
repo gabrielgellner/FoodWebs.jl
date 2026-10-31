@@ -14,6 +14,7 @@ const GENERATORS = Dict(
     "generalized niche" => (rng, S, C; kw...) -> generalized_niche_network(rng, S, C, 0.5; kw...),
     "nested hierarchy" => nested_hierarchy_network,
     "minimum potential niche" => (rng, S, C; kw...) -> minimum_potential_niche_network(rng, S, C, 0.3; kw...),
+    "probabilistic niche" => probabilistic_niche_network,
 )
 
 # species are sorted by niche value, so an interval diet is a contiguous run of row indices
@@ -281,4 +282,72 @@ end
     @test_throws ArgumentError minimum_potential_niche_network(rng, 20, 0.1, -0.1)
     # 0.3 links per species pair cannot survive forbidding 80% of the interior links
     @test_throws ArgumentError minimum_potential_niche_network(rng, 50, 0.3, 0.8)
+end
+
+@testset "probabilistic niche probabilities" begin
+    η = [0.1, 0.3, 0.5, 0.7, 0.9]
+    c = [0.0, 0.3, 0.6, 0.5, 0.7]
+    r = [0.0, 0.2, 0.2, 0.4, 0.8]
+    P = probabilistic_niche_probabilities(η, c, r; a = 0.8)
+    @test size(P) == (5, 5)
+    @test all(0 .<= P .<= 0.8)
+    # a species with no range eats nothing
+    @test all(iszero, P[:, 1])
+    # the probability peaks at a on the feeding center: species 2 is centered on η[2], and so
+    # is species 4 on η[3]
+    @test P[2, 2] == 0.8
+    @test P[3, 4] == 0.8
+    # one half range from the center the Gaussian kernel is a e^-1, and with p = 1 also a e^-1
+    @test P[2, 4] ≈ 0.8 * exp(-1)
+    @test probabilistic_niche_probabilities(η, c, r; a = 0.8, p = 1)[2, 4] ≈ 0.8 * exp(-1)
+    # it falls off with distance from the center
+    @test P[3, 5] > P[2, 5] > P[1, 5]
+
+    # as p grows the kernel approaches the niche model's interval of width r centered on c
+    Pbox = probabilistic_niche_probabilities(η, c, r; p = 1000)
+    for i in 2:5, j in 1:5
+        abs(abs(η[j] - c[i]) - r[i] / 2) > 0.01 || continue
+        @test (Pbox[j, i] > 0.5) == (abs(η[j] - c[i]) < r[i] / 2)
+    end
+
+    @test_throws DimensionMismatch probabilistic_niche_probabilities(η, c, r[1:4])
+    @test_throws ArgumentError probabilistic_niche_probabilities(η, c, -r)
+    @test_throws ArgumentError probabilistic_niche_probabilities(η, c, r; a = 1.5)
+    @test_throws ArgumentError probabilistic_niche_probabilities(η, c, r; p = 0)
+end
+
+@testset "probabilistic niche network" begin
+    rng = Xoshiro(12)
+    # webs from given parameters have sum(P) links on average
+    S = 50
+    η = sort(rand(rng, S))
+    r = η .* rand(rng, S) .* 0.3
+    c = [rand(rng) * (η[i] - r[i] / 2) + r[i] / 2 for i in 1:S]
+    P = probabilistic_niche_probabilities(η, c, r)
+    webs = [probabilistic_niche_network(rng, η, c, r) for _ in 1:2000]
+    @test all(web isa PredationMatrix for web in webs)
+    @test isapprox(mean(sum, webs), sum(P), rtol = 0.02)
+    # and each link appears with its probability
+    @test maximum(abs.(mean(webs) .- P)) < 0.05
+    @test probabilistic_niche_network(Xoshiro(1), η, c, r) == probabilistic_niche_network(Xoshiro(1), η, c, r)
+
+    # diets are close to intervals for sharp kernels and not for the Gaussian
+    n_interval(web) = count(i -> is_interval(findall(web[:, i])), 1:60)
+    gauss = mean(n_interval(probabilistic_niche_network(rng, 60, 0.1)) for _ in 1:20)
+    sharp = mean(n_interval(probabilistic_niche_network(rng, 60, 0.1; p = 64)) for _ in 1:20)
+    niche = mean(n_interval(niche_network(rng, 60, 0.1)) for _ in 1:20)
+    @test gauss < sharp
+    @test sharp >= 0.95 * niche
+
+    # connectance stays on target for other a and p at small C, where little of the kernel
+    # falls outside niche values 0 to 1
+    for (a, p) in ((0.5, 2), (1, 1), (1, 8))
+        mC = mean(connectance(probabilistic_niche_network(rng, 100, 0.05; a, p, tol = Inf)) for _ in 1:200)
+        @test isapprox(mC, 0.05, rtol = 0.05)
+    end
+
+    @test_throws ArgumentError probabilistic_niche_network(rng, 20, 0.1; a = 0)
+    @test_throws ArgumentError probabilistic_niche_network(rng, 20, 0.1; p = -1)
+    # 0.2 / (0.2 Γ(3/2)) > 0.5
+    @test_throws ArgumentError probabilistic_niche_network(rng, 20, 0.2; a = 0.2)
 end
