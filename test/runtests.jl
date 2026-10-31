@@ -15,4 +15,5 @@ using ExplicitImports: test_explicit_imports
     include("randcmat.jl")
     include("stability.jl")
     include("elliptic_law.jl")
+    include("layout.jl")
 end

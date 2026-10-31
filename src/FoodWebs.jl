@@ -24,6 +24,10 @@ include("utils.jl")
 export connectance, trophic_levels
 export basal_species, disconnected_from_basal, top_species
 
+include("layout.jl")
+export foodwebplot, foodwebplot!, trophic_layout
+public edge_crossings
+
 include("elliptic_law.jl")
 export elliptic_law
 export offdiag_pairs, offdiag_pairs_nz, shuffle_pairs

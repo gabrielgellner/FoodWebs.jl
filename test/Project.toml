@@ -1,5 +1,6 @@
 [deps]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 ExplicitImports = "7d51a73a-1435-4ff3-83d9-f097790105c7"
 FoodWebs = "6d07a039-1ac1-577b-a10e-abe3f3d3fc7d"
@@ -11,4 +12,5 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 Aqua = "0.8"
+CairoMakie = "0.15"
 ExplicitImports = "1"

@@ -27,6 +27,17 @@ J = random_predprey(Xoshiro(2), web, Normal(), 0.5)
 spectral_abscissa(J), numerical_abscissa(J)
 ```
 
+## Plotting
+
+`trophic_layout(web)` gives node positions with each species at the height of its trophic level,
+ordered across each level to reduce edge crossings. With a Makie backend loaded, `foodwebplot`
+draws the web from those positions, with arrows from prey to predator.
+
+```julia
+using FoodWebs, CairoMakie, Random
+fig, ax = foodwebplot(niche_network(Xoshiro(1), 20, 0.12; basal_paths = true))
+```
+
 ## Development
 
 Tasks are run with [just](https://github.com/casey/just):
