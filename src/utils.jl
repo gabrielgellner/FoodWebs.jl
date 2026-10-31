@@ -73,26 +73,65 @@ lowest level is 1. With this shift the two methods agree on webs with no loops a
 omnivory, where every link spans exactly one level. `web` may be any non-negative weighted matrix, and
 cannibalistic links do not change the levels.
 
+With `method = :shortest`, a species' level is 1 plus the number of links in its shortest food
+chain down to a basal species, and with `method = :short_weighted` it is the mean of the
+shortest and prey-averaged levels (Williams & Martinez 2004). Like `:prey_averaged`, these
+ignore cannibalistic links and throw an `ArgumentError` for species with no feeding path up
+from a basal species.
+
 MacKay, R. S., Johnson, S. & Sansom, B. How directed is a directed network? R. Soc. Open
 Sci. 7, 201138 (2020).
+
+Williams, R. J. & Martinez, N. D. Limits to trophic levels and omnivory in complex food webs:
+theory and data. Am. Nat. 163, 458–468 (2004).
 """
 function trophic_levels(web::AbstractMatrix; method::Symbol = :prey_averaged)
     method === :prey_averaged && return prey_averaged_trophic_levels(web)
     method === :mackay && return mackay_trophic_levels(web)
-    throw(ArgumentError("method must be :prey_averaged or :mackay, given :$method"))
+    method === :shortest && return shortest_trophic_levels(web)
+    method === :short_weighted && return (shortest_trophic_levels(web) + prey_averaged_trophic_levels(web)) / 2
+    throw(
+        ArgumentError(
+            "method must be :prey_averaged, :short_weighted, :shortest or :mackay, given :$method"
+        )
+    )
+end
+
+function check_fed(web)
+    unfed = disconnected_from_basal(web)
+    isempty(unfed) || throw(
+        ArgumentError(
+            "species $unfed have no feeding path up from a basal species, so their trophic " *
+                "levels are undefined"
+        )
+    )
+    return nothing
+end
+
+function shortest_trophic_levels(web::AbstractMatrix)
+    S = LinearAlgebra.checksquare(web)
+    check_fed(web)
+    eats(pred, prey) = pred != prey && web[prey, pred] != 0
+    level = zeros(Int, S)
+    frontier = [j for j in 1:S if !any(eats(j, i) for i in 1:S)]
+    level[frontier] .= 1
+    # breadth-first search up the web from the basal species
+    while !isempty(frontier)
+        next = Int[]
+        for prey in frontier, pred in 1:S
+            if level[pred] == 0 && eats(pred, prey)
+                level[pred] = level[prey] + 1
+                push!(next, pred)
+            end
+        end
+        frontier = next
+    end
+    return Float64.(level)
 end
 
 function prey_averaged_trophic_levels(web::AbstractMatrix)
     S = LinearAlgebra.checksquare(web)
-    unfed = disconnected_from_basal(web)
-    if !isempty(unfed)
-        throw(
-            ArgumentError(
-                "species $unfed have no feeding path up from a basal species, so " *
-                    "their trophic levels are undefined"
-            )
-        )
-    end
+    check_fed(web)
     # diet matrix with predators as rows and without cannibalism
     P = Matrix{Float64}(transpose(web) .!= 0)
     P[diagind(P)] .= 0
