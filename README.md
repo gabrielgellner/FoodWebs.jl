@@ -43,10 +43,23 @@ fig, ax = foodwebplot(niche_network(Xoshiro(1), 20, 0.12; basal_paths = true))
 Tasks are run with [just](https://github.com/casey/just):
 
 ```sh
-just setup      # install Runic and JETLS as Julia apps, instantiate environments
+just setup      # install Runic and JETLS as Julia apps, instantiate environments, enable hooks
 just fmt        # format with Runic
-just check      # formatting check, JETLS lint, and tests (what CI runs)
+just ci         # formatting check, JETLS lint, and tests (run by the pre-push hook)
 ```
 
 Formatting uses [Runic](https://github.com/fredrikekre/Runic.jl). To have `git blame` skip the
 bulk formatting commit, run `git config blame.ignoreRevsFile .git-blame-ignore-revs`.
+
+## License
+
+Copyright (C) 2015–2026 Gabriel Gellner.
+
+FoodWebs.jl is free software: you can redistribute it and/or modify it under the terms of the
+GNU General Public License as published by the Free Software Foundation, either version 3 of
+the License, or (at your option) any later version. It is distributed in the hope that it will
+be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE. See [LICENSE](LICENSE) for the full text.
+
+Versions up to 0.3.0 were released under the MIT License. The bundled data in `data/` keep their
+own terms; see [data/README.md](data/README.md).
