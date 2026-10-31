@@ -45,7 +45,7 @@ end
         @test size(web) == (S, S)
         @test all(x -> x == 0 || x == 1, web)
         @test is_connected(DiGraph(web.links))
-        @test abs(connectance(web) - C) <= 0.03C
+        @test abs(count(web) - C * S^2) <= 0.03 * C * S^2
         # May networks are random graphs, not food web models, so they need not have basal
         # species
         name == "may" || @test !isempty(basal_species(web))
@@ -57,12 +57,43 @@ end
     @test abs(connectance(gen(rng, 60, 0.1; tol = 0.005)) - 0.1) <= 0.005 * 0.1
     # reproducible from a seeded rng
     @test gen(Xoshiro(42), 30, 0.15) == gen(Xoshiro(42), 30, 0.15)
-    # impossible targets fail loudly instead of looping forever: 0.101 * 20^2 is not an integer
-    @test_throws ErrorException gen(rng, 20, 0.101; tol = 0.0, maxiter = 5)
+    # 0.1 * 8^2 = 6.4 links allows at most 6, too few to connect 8 species
+    @test_throws ArgumentError gen(rng, 8, 0.1)
     @test_throws ArgumentError gen(rng, 1, 0.1)
     @test_throws ArgumentError gen(rng, 20, 0.0)
     @test_throws ArgumentError gen(rng, 20, -0.1)
     @test_throws ArgumentError gen(rng, 20, 0.6)
+end
+
+@testset "small webs: $name" for (name, gen) in GENERATORS
+    # no whole number of links lies within 3% of C S^2 here, so the generators accept the
+    # nearest one
+    rng = Xoshiro(7)
+    for (S, C) in ((6, 0.18), (7, 0.15), (9, 0.12)), _ in 1:10
+        @test count(gen(rng, S, C)) == round(Int, C * S^2)
+    end
+    # with tol = 0 every web has the nearest whole number of links
+    @test count(gen(rng, 20, 0.101; tol = 0.0)) == 40
+end
+
+@testset "acceptance unchanged for large webs: $name" for (name, gen) in GENERATORS
+    # when tol C S^2 >= 1/2 the window is the relative one, so a seeded generator returns the
+    # first draw that is connected with a link count within tol of C S^2
+    S, C = 40, 0.1
+    for seed in 1:5
+        rng = Xoshiro(seed)
+        expected = nothing
+        while expected === nothing
+            web = try
+                gen(rng, S, C; tol = Inf, maxiter = 1)
+            catch err
+                err isa ErrorException || rethrow()
+                continue
+            end
+            abs(count(web) - C * S^2) <= 0.03 * C * S^2 && (expected = web)
+        end
+        @test gen(Xoshiro(seed), S, C) == expected
+    end
 end
 
 @testset "unbiased connectance: $name" for (name, gen) in GENERATORS
