@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-10-31
+
+### Features
+
+- **plotting**: Lay out food webs by trophic level with `trophic_layout`, ordering species within each level to reduce edge crossings, and draw them with `foodwebplot` and `foodwebplot!` in a Makie package extension (#23, #27)
+
 ## [0.2.0] - 2026-10-30
 
 ### Breaking Changes
