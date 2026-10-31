@@ -1,0 +1,45 @@
+node,M,N,category
+CPOM,,,""
+FPOM,,,""
+Tabellaria flocculosa,2.27856629950786e-12,9.74100456432487e9,producer
+Achnanthes sp.,4.11264617488311e-13,5.54408238501468e9,producer
+Diatom sp. 1 (Brachysira),4.29017297610507e-12,7.46119498544033e9,producer
+Diatoma mesodon,1.18517853333033e-11,3.05701738986787e9,producer
+Eunotia incisa,2.27856629950786e-12,3.88603905491683e9,producer
+Eunotia rhomboidea,1.91044127372439e-12,2.33162343295008e9,producer
+Eunotia sp. (L),1.05845893820953e-11,1.50260176790115e9,producer
+Fragilaria sp.,2.63875352981789e-11,1.08809093537671e9,producer
+Frustulia rhomboides var saxonica,3.42685623828501e-11,4.19692217931018e9,producer
+Peronia fibula,7.37706381980475e-12,7.77207810983363e9,producer
+Pinnularia subcapitata,1.63262077449696e-11,1.19171864350782e9,producer
+Gomphonema,4.73135082361569e-11,1.13990478944225e9,producer
+Eunotia exigua,1.30764817703568e-12,1.08809093537671e9,producer
+Ancylus fluviatilis,1.70546425108599,1.6,invertebrate
+Annelidae undet.,0.569072511135924,6.4,invertebrate
+Baetis muticus,0.403027795975691,52.7999999999997,invertebrate
+Baetis rhodani,1.22234291642394,91.2000000000008,invertebrate
+Baetis scambus,0.721081522597302,17.6,invertebrate
+Baetis sp.,0.107073157266906,67.2000000000007,invertebrate
+Baetis vernus,0.411642490618269,62.3999999999994,invertebrate
+Calopteryx splendens,1.4666780300684,1.6,invertebrate
+Chironomidae undet.,0.1079772825954,140.799999999999,invertebrate
+Chloroperla tripunctata,0.732335909520259,15.9999999999998,invertebrate
+Diplectrona felix,0.354292750865782,4.8,invertebrate
+Elmis aenea Lv.,0.361745372769268,1.6,invertebrate
+Empididae undet.,0.47962251050865,3.2,invertebrate
+Gammarus pulex,1.1202637585689,52.7999999999997,invertebrate
+Gyrinidae undet. Lv.,0.616338294920046,1.6,invertebrate
+Heptagenia lateralis,0.396711437755173,172.799999999998,invertebrate
+Hydropsyche siltalai,1.07398887345689,20.7999999999999,invertebrate
+Isoperla grammatica,1.9423340514044,14.4,invertebrate
+Leuctra inermis,0.63481799622585,104.0,invertebrate
+Limnius volckmari Lv.,0.361745372769268,1.6,invertebrate
+Oulimnius sp. Lv.,0.129377705909161,1.6,invertebrate
+Perla bipunctata,5.09732650351205,6.4,invertebrate
+Philopotamus montanus,1.32386531997883,1.6,invertebrate
+Protonemura meyeri,0.210916245492157,1.6,invertebrate
+Silo pallipes,0.298438083350408,1.6,invertebrate
+Siphonoperla torrentium,0.391708579192435,48.0000000000003,invertebrate
+Tanypodinae undet.,0.280835872698417,14.4,invertebrate
+Tipulidae undet.,0.492799910573251,1.6,invertebrate
+Salmo trutta,35000.0000000004,0.13,vert.ecto

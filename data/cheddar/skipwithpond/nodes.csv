@@ -1,0 +1,38 @@
+node,category,kingdom,phylum,class,order,family,genus,species,resolved_to
+Detritus,"","","","","","","","",""
+Polycelis tenuis,invertebrate,Animalia,Platyhelminthes,Turbellaria,Tricladida,Planariidae,Polycelis,tenuis,Species
+Small oligochaetes (principally Enchytraeidae),invertebrate,Animalia,Annelida,Citellata,"","","","",Class
+Lumbriculus variegatus,invertebrate,Animalia,Annelida,Clitellata,Lumbriculida,Lumbriculidae,Lumbriculus,variegatus,Species
+Oribatei sp.,invertebrate,Animalia,Arthropoda,Arachnida,Oribatida,"",Oribatei,"",Species
+Argyroneta aquatica,invertebrate,Animalia,Arthropoda,Arachnida,Araneae,Cybaeidae,Argyroneta,aquatica,Species
+Scaphaloberis mucronata,invertebrate,Animalia,Arthropoda,Branchiopoda,Cladocera,Daphniidae,Scaphaloberis,mucronata,Species
+Chydorus latus,invertebrate,Animalia,Arthropoda,Branchiopoda,Cladocera,Chydoridae,Chydorus,latus,Species
+Acanthocyclops vernalis,invertebrate,Animalia,Arthropoda,Maxillopoda,Cyclopoida,Cyclopidae,Acanthocyclops,vernalis,Species
+Enallagma cyathigerum,invertebrate,Animalia,Arthropoda,Insecta,Odonata,Coenagrionidae,Enallagma,cyathigerum,Species
+Lestes sponsa,invertebrate,Animalia,Arthropoda,Insecta,Odonata,Lestidae,Lestes,sponsa,Species
+Aeshna juncea,invertebrate,Animalia,Arthropoda,Insecta,Odonata,Aeshnidae,Aeshna,juncea,Species
+Sympetrum scoticum,invertebrate,Animalia,Arthropoda,Insecta,Odonata,Libellulidae,Sympetrum,scoticum,Species
+Notonecta glauca,invertebrate,Animalia,Arthropoda,Insecta,Hemiptera,Notonectidae,Notonecta,glauca,Species
+Callicorixa praeusta,invertebrate,Animalia,Arthropoda,Insecta,Hemiptera,Corixidae,Callicorixa,praeusta,Species
+Corixa dentipes,invertebrate,Animalia,Arthropoda,Insecta,Hemiptera,Corixidae,Corixa,dentipes,Species
+Corixa punctata,invertebrate,Animalia,Arthropoda,Insecta,Hemiptera,Corixidae,Corixa,punctata,Species
+Hesperocorixa linnei,invertebrate,Animalia,Arthropoda,Insecta,Hemiptera,Corixidae,Hesperocorixa,linnei,Species
+Hesperocorixa sahlbergi,invertebrate,Animalia,Arthropoda,Insecta,Hemiptera,Corixidae,Hesperocorixa,sahlbergi,Species
+Arctocorisa germari,invertebrate,Animalia,Arthropoda,Insecta,Hemiptera,Corixidae,Arctocorisa,germari,Species
+Sigaria semistraiata,invertebrate,Animalia,Arthropoda,Insecta,Hemiptera,Corixidae,Sigaria,semistraiata,Species
+Corixidae nymphs,invertebrate,Animalia,Arthropoda,Insecta,Hemiptera,Corixidae,"","",Family
+Hydroporus erythrocephalus,invertebrate,Animalia,Arthropoda,Insecta,Coleoptera,Dytiscidae,Hydroporus,erythrocephalus,Species
+Agabus sturmii,invertebrate,Animalia,Arthropoda,Insecta,Coleoptera,Dytiscidae,Agabus,sturmii,Species
+Agabus bipustulatus,invertebrate,Animalia,Arthropoda,Insecta,Coleoptera,Dytiscidae,Agabus,bipustulatus,Species
+Ilybius fuliginosus,invertebrate,Animalia,Arthropoda,Insecta,Coleoptera,Dytiscidae,Ilybius,fuliginosus,Species
+Agabus / Ilybius larvae,invertebrate,Animalia,Arthropoda,Insecta,Coleoptera,Dytiscidae,"","",Family
+Dytiscus marginalis,invertebrate,Animalia,Arthropoda,Insecta,Coleoptera,Dytiscidae,Dytiscus,marginalis,Species
+Sialis lutaria,invertebrate,Animalia,Arthropoda,Insecta,Megaloptera,Sialidae,Sialis,lutaria,Species
+Holocentropus picicornis,invertebrate,Animalia,Arthropoda,Insecta,Trichoptera,Polycentropodidae,Holocentropus,picicornis,Species
+Limnephilus marmoratus,invertebrate,Animalia,Arthropoda,Insecta,Trichoptera,Limnephilidae,Limnephilus,marmoratus,Species
+Procladius sagittalis,invertebrate,Animalia,Arthropoda,Insecta,Diptera,Chironomidae,Procladius,sagittalis,Species
+Corynoneura scutellata,invertebrate,Animalia,Arthropoda,Insecta,Diptera,Chironomidae,Corynoneura,scutellata,Species
+Chironomus dorsalis,invertebrate,Animalia,Arthropoda,Insecta,Diptera,Chironomidae,Chironomus,dorsalis,Species
+Glyptotendipes pallens,invertebrate,Animalia,Arthropoda,Insecta,Diptera,Chironomidae,Glyptotendipes,pallens,Species
+Tanytarsus bruchonius,invertebrate,Animalia,Arthropoda,Insecta,Diptera,Chironomidae,Tanytarsus,bruchonius,Species
+Other Chironomidae,invertebrate,Animalia,Arthropoda,Insecta,Diptera,Chironomidae,"","",Family

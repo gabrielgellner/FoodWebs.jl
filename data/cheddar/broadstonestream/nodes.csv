@@ -1,0 +1,38 @@
+node,N,M,category,kingdom,phylum,class,order,family,genus,species,resolved_to
+Cordulegaster boltonii,10.0,9.72508907066233,invertebrate,Animalia,Arthropoda,Insecta,Odonata,Cordulegastridae,Cordulegaster,boltonii,Species
+Sialis fuliginosa,36.0,2.75630944006354,invertebrate,Animalia,Arthropoda,Insecta,Megaloptera,Sialidae,Sialis,fuliginosa,Species
+Plectrocnemia conspersa,82.0,0.739607015265337,invertebrate,Animalia,Arthropoda,Insecta,Trichoptera,Polycentropodidae,Plectrocnemia,conspersa,Species
+Pedicia sp.,2.0,6.8067808171875,invertebrate,Animalia,Arthropoda,Insecta,Diptera,Tipulidae,Pedicia,"",Species
+Siphonoperla torrentium,8.0,0.325865637594735,invertebrate,Animalia,Arthropoda,Insecta,Plecoptera,Chloroperlidae,Siphonoperla,torrentium,Species
+Dicranota sp.,11.0,0.474845945035461,invertebrate,Animalia,Arthropoda,Insecta,Diptera,Tipulidae,Dicranota,"",Species
+Platambus maculatus,2.0,0.68738,invertebrate,Animalia,Arthropoda,Insecta,Coleoptera,Dytiscidae,Platambus,maculatus,Species
+Macropelopia nebulosa,228.0,0.157114344661242,invertebrate,Animalia,Arthropoda,Insecta,Diptera,Chironomidae,Macropelopia,nebulosa,Species
+Zavrelimyia barbatipes,974.0,0.00863479071623868,invertebrate,Animalia,Arthropoda,Insecta,Diptera,Chironomidae,Zavrelimyia,barbatipes,Species
+Trissopelopia longimana,722.0,0.0355314183952551,invertebrate,Animalia,Arthropoda,Insecta,Diptera,Chironomidae,Trissopelopia,longimana,Species
+Bezzia sp.,393.0,0.0976,invertebrate,Animalia,Arthropoda,Insecta,Diptera,Ceratopogonidae,Bezzia,"",Species
+Potamophylax cingulatus,7.0,4.08489199304483,invertebrate,Animalia,Arthropoda,Insecta,Trichoptera,Limnephilidae,Potamophylax,cingulatus,Species
+Adicella reducta,0.3,0.507692307692308,invertebrate,Animalia,Arthropoda,Insecta,Trichoptera,Limnephilidae,Adicella,reducta,Species
+Tipulidae (non-predatory),8.0,0.0949276196002321,invertebrate,Animalia,Arthropoda,Insecta,Diptera,Tipulidae,"","",Family
+Nemurella pictetii,341.0,0.101879075813283,invertebrate,Animalia,Arthropoda,Insecta,Plecoptera,Nemouridae,Nemurella,pictetii,Species
+Leuctra nigra,2208.0,0.0416573960192064,invertebrate,Animalia,Arthropoda,Insecta,Plecoptera,Leuctridae,Leuctra,nigra,Species
+Leuctra hippopus,19.0,0.215041254994781,invertebrate,Animalia,Arthropoda,Insecta,Plecoptera,Leuctridae,Leuctra,hippopus,Species
+Corynoneura lobata,67.0,0.0035425956080835,invertebrate,Animalia,Arthropoda,Insecta,Diptera,Chironomidae,Corynoneura,lobata,Species
+Prodiamesa olivacea,320.0,0.17275311974399,invertebrate,Animalia,Arthropoda,Insecta,Diptera,Chironomidae,Prodiamesa,olivacea,Species
+Heterotrissocladius marcidus,5104.0,0.0057108676000481,invertebrate,Animalia,Arthropoda,Insecta,Diptera,Chironomidae,Heterotrissocladius,marcidus,Species
+Micropsectra bidentata,6293.0,0.00379972626673466,invertebrate,Animalia,Arthropoda,Insecta,Diptera,Chironomidae,Micropsectra,bidentata,Species
+Brillia modesta,208.0,0.0130569724293276,invertebrate,Animalia,Arthropoda,Insecta,Diptera,Chironomidae,Brillia,modesta,Species
+Polypedilum albicorne grp.,1242.0,0.00508736497898368,invertebrate,Animalia,Arthropoda,Insecta,Diptera,Chironomidae,Polypedilum,albicorne grp.,Species
+Paraleptophlebia submarginata,14.0,0.0243329971502175,invertebrate,Animalia,Arthropoda,Insecta,Ephemeroptera,Leptophlebiidae,Paraleptophlebia,submarginata,Species
+Oligochaetes,185.0,0.608069325630816,invertebrate,Animalia,Annelida,Oligochaeta,"","","","",Class
+Pisidium sp.,311.0,0.130336990309436,invertebrate,Animalia,Mollusca,Bivalvia,Veneroida,Spahaeridae,Pisidium,"",Species
+Simulium sp.,82.0,0.0474105185666999,invertebrate,Animalia,Arthropoda,Insecta,Diptera,Simuliidae,Simulium,"",Species
+Helodidae sp.,2.0,1.82649472450176,invertebrate,Animalia,Arthropoda,Insecta,Coleoptera,Helodidae,Helodidae,"",Species
+Niphargus aquilex,3.0,0.380134300341297,invertebrate,Animalia,Arthropoda,Malacostraca,Amphipoda,Gammaridae,Niphargus,aquilex,Species
+Asellus meridianus,2.0,0.866804769844647,invertebrate,Animalia,Arthropoda,Malacostraca,Isopoda,Asellidae,Asellus,meridianus,Species
+Cyclopoids,13196.0,8.84381969594664e-6,invertebrate,Animalia,Arthropoda,Maxillopoda,Cyclopoida,"","","",Order
+Terrestrial invertebrates,,,invertebrate,Animalia,"","","","","","",""
+CPOM,,,"","","","","","","","",""
+FPOM,,,"","","","","","","","",""
+Leptothrix spp.,,,invertebrate,Bacteria,Proteobacteria,Betaproteobacteria,Burkholderiales,Comamonadaceae,Leptothrix,"",Genus
+Algae,,,producer,"","","","","","","",""
+Diptera,1.0,0.42209,invertebrate,Animalia,Arthropoda,Insecta,Diptera,"","","",Order

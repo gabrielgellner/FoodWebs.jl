@@ -1,0 +1,66 @@
+node,M,N,trophic_group,category,node_status,kingdom,phylum,class,order,family,genus,species,resolved_to
+Amorphous detritus (FPOM),,,detritus,"",survived,"","","","","","","",""
+Plant fragments (CPOM),,,detritus,"",survived,"","","","","","","",""
+Fungal spores,5.10740150357195e-11,1.99159028905761e7,decomposer,"",survived,"","","","","","","",""
+Fungal mycelia,9.74316371300451e-9,4.23740524678801e7,decomposer,"",survived,"","","","","","","",""
+Psammothidium lauenburgianum,6.21870563798751e-15,7.91954078991278e7,primary.producer,producer,survived,Chromista,Ochrophyta,Bacillariophyceae,Achnanthales,Achnanthidiaceae,Psammothidium,lauenburgianum,Species
+Planothidium lanceolatum,7.07294042404577e-14,5.1605976466302e8,primary.producer,producer,survived,Chromista,Ochrophyta,Bacillariophyceae,Achnanthales,Achnanthidiaceae,Planothidium,lanceolatum,Species
+Algal cysts,1.58818101429983e-12,5.40629823995303e6,primary.producer,producer,survived,"","","","","","","",""
+Amphora ovalis,2.76248545463158e-12,4.43098214489298e7,primary.producer,producer,survived,Chromista,Ochrophyta,Bacillariophyceae,Thalassiophysales,Catenulaceae,Amphora,lanceolatum,Species
+Amphora pediculus,1.67996409548482e-14,9.8878074362693e8,primary.producer,producer,survived,Chromista,Ochrophyta,Bacillariophyceae,Thalassiophysales,Catenulaceae,Amphora,pediculus,Species
+Chrococcus minor,1.93374854529526e-16,1.32007923619225e11,primary.producer,producer,survived,Prokaryota,Cyanobacteria,Cyanophyceae,Chroococcales,Chroococcaceae,Chrococcus,minor,Species
+Cymbella lanceolata,3.81592649118934e-11,1.99986186963274e6,primary.producer,producer,extinct,Chromista,Ochrophyta,Bacillariophyceae,Cymbellales,Cymbellaceae,Cymbella,lanceolata,Species
+Encyonema minutum,8.59013521505394e-14,1.68655302538874e7,primary.producer,producer,survived,Chromista,Ochrophyta,Bacillariophyceae,Cymbellales,Cymbellaceae,Encyonema,minutum,Species
+Cocconeis placentula,2.00032240786504e-13,6.52829844158614e8,primary.producer,producer,survived,Chromista,Ochrophyta,Bacillariophyceae,Achnanthales,Cocconeidaceae,Cocconeis,placentula,Species
+Cymatopleura solea,3.53508613361998e-11,2.20089842688808e7,primary.producer,producer,survived,Chromista,Ochrophyta,Bacillariophyceae,Surirellales,Surirellaceae,Cymatopleura,solea,Species
+Diatoma vulgare,1.85353162341481e-12,6.8249582652206e7,primary.producer,producer,survived,Chromista,Ochrophyta,Bacillariophyceae,Fragilariales,Fragilariaceae,Diatoma,vulgare,Species
+Staurosira elliptica,8.98255737729417e-16,2.21513398413719e7,primary.producer,producer,survived,Chromista,Ochrophyta,Bacillariophyceae,Fragilariales,Fragilariaceae,Staurosira,elliptica,Species
+Fragilaria vaucheriae,7.15484121416898e-13,9.21722098658875e7,primary.producer,producer,survived,Chromista,Ochrophyta,Bacillariophyceae,Fragilariales,Fragilariaceae,Fragilaria,vaucheriae,Species
+Gongrosira incrustans,8.59013521505394e-14,3.15500462337463e10,primary.producer,producer,survived,Plantae,Chlorophyta,Chlorophyceae,Chaetophorales,Chaetophoraceae,Gongrosira,incrustans,Species
+Gomphonema olivaceum,1.2407949007361e-14,6.56145266302906e7,primary.producer,producer,survived,Chromista,Ochrophyta,Bacillariophyceae,Cymbellales,Gomphonemataceae,Gomphonema,olivaceum,Species
+Gyrosigma sp.,7.17959588544674e-10,4.23740524678801e7,primary.producer,producer,survived,Chromista,Ochrophyta,Bacillariophyceae,Naviculales,Pleurosigmataceae,Gyrosigma,"",Species
+Melosira varians,1.71356269968644e-13,3.29761538015919e9,primary.producer,producer,survived,Chromista,Ochrophyta,Bacillariophyceae,Melosirales,Melosiraceae,Melosira,varians,Species
+Nitzschia dissipata,4.51855944374922e-13,2.69215462407529e8,primary.producer,producer,survived,Chromista,Ochrophyta,Bacillariophyceae,Bacillariales,Bacillariaceae,Nitzschia,dissipata,Species
+Navicula gregaria,3.07255736526745e-13,6.27769193838217e7,primary.producer,producer,survived,Chromista,Ochrophyta,Bacillariophyceae,Naviculales,Naviculaceae,Navicula,gregaria,Species
+Navicula lanceolata,2.76248545463158e-12,9.97011115016164e8,primary.producer,producer,survived,Chromista,Ochrophyta,Bacillariophyceae,Naviculales,Naviculaceae,Navicula,lanceolata,Species
+Navicula menisculus,2.00032240786504e-13,1.57833795385014e9,primary.producer,producer,survived,Chromista,Ochrophyta,Bacillariophyceae,Naviculales,Naviculaceae,Navicula,menisculus,Species
+Nitzschia perminuta,5.09565480608115e-13,6.1588552911534e7,primary.producer,producer,survived,Chromista,Ochrophyta,Bacillariophyceae,Bacillariales,Bacillariaceae,Nitzschia,perminuta,Species
+Navicula tripunctata,1.85353162341481e-12,1.73980269803829e8,primary.producer,producer,survived,Chromista,Ochrophyta,Bacillariophyceae,Naviculales,Naviculaceae,Navicula,tripunctata,Species
+Rhoicosphenia abbreviata,8.83079900418562e-13,3.09955965983738e8,primary.producer,producer,survived,Chromista,Ochrophyta,Bacillariophyceae,Cymbellales,Rhoicospheniaceae,Rhoicosphenia,abbreviata,Species
+Surirella minuta,2.67731825996845e-13,9.9724071174155e7,primary.producer,producer,survived,Chromista,Ochrophyta,Bacillariophyceae,Surirellales,Surirellaceae,Surirella,minuta,Species
+Spirulina sp.,9.74316371300451e-9,9.92658806871032e6,primary.producer,producer,survived,Prokaryota,Cyanobacteria,Cyanophyceae,Pseudanabaenales,Pseudanabaenaceae,Spirulina,"",Species
+Surirella brebissonii,2.67731825996845e-13,2.27300295329098e7,primary.producer,producer,survived,Chromista,Ochrophyta,Bacillariophyceae,Surirellales,Surirellaceae,Surirella,brebissonii,Species
+Synedra ulna,5.27108476236395e-10,9.53235043920514e7,primary.producer,producer,survived,Chromista,Ochrophyta,Bacillariophyceae,Fragilariales,Fragilariaceae,Synedra,ulna,Species
+Asellus aquaticus,1.85951634446247,59.2652335240215,detritivore,invertebrate,survived,Animalia,Arthropoda,Malacostraca,Isopoda,Asellidae,Asellus,aquaticus,Species
+Elmis aenea,0.0843140595114771,27.4979298689507,detritivore,invertebrate,extinct,Animalia,Arthropoda,Insecta,Coleoptera,Elimidae,Elmis,aenea,Species
+Ephemera danica,14.3284759806459,414.858506934454,detritivore,invertebrate,extinct,Animalia,Arthropoda,Insecta,Ephemeroptera,Ephemeridae,Ephemera,danica,Species
+Gammarus pulex,2.91608379852123,651.778454319139,detritivore,invertebrate,survived,Animalia,Arthropoda,Malacostraca,Amphipoda,Gammaridae,Gammarus,pulex,Species
+Heterotrissocladius sp.,0.119563879998812,131.673991272162,detritivore,invertebrate,survived,Animalia,Arthropoda,Insecta,Diptera,Chironomidae,Heterotrissocladius,"",Species
+Limnius volckmari,0.382032226884411,29.6278406375879,detritivore,invertebrate,survived,Animalia,Arthropoda,Insecta,Coleoptera,Elimidae,Limnius,volckmari,Species
+Naididae,0.112901574879419,901.571137605957,detritivore,invertebrate,survived,Animalia,Annelida,Clitellata,Haplotaxida,Naididae,"","",Family
+Ostracoda,1.79597381319692e-7,355.549440858593,detritivore,invertebrate,extinct,Animalia,Arthropoda,Ostracoda,"","","","",Class
+Oulimnius tuberculatus,0.0588301559988883,29.6278406375879,detritivore,invertebrate,survived,Animalia,Arthropoda,Insecta,Coleoptera,Elimidae,Oulimnius,tuberculatus,Species
+Pisidium sp.,2.58880894181816,1214.78662047122,detritivore,invertebrate,survived,Animalia,Mollusca,Bivalvia,Veneroida,Pisidiidae,Pisidium,"",Species
+Polypedilum sp.,0.0768776324173842,40.1236099599189,detritivore,invertebrate,extinct,Animalia,Arthropoda,Insecta,Diptera,Chironomidae,Polypedilum,"",Species
+Prodiamesa olivacea,0.386990229190269,40.9166434829046,detritivore,invertebrate,survived,Animalia,Arthropoda,Insecta,Diptera,Chironomidae,Prodiamesa,olivacea,Species
+Sericostoma personatum,11.2564125057611,29.6278406375879,detritivore,invertebrate,extinct,Animalia,Arthropoda,Insecta,Trichoptera,Sericostomatidae,Sericostoma,personatum,Species
+Tubificidae,0.310455958812836,3170.29736695272,detritivore,invertebrate,survived,Animalia,Annelida,Clitellata,Haplotaxida,Tubificidae,"","",Family
+Ancylus fluviatilis,2.08017561009859,9.17064749114932,herbivore,invertebrate,extinct,Animalia,Mollusca,Gastropda,Basommatophora,Ancylidae,Ancylus,fluviatilis,Species
+Athripsodes spp.,0.125141109180239,88.879171988482,herbivore,invertebrate,extinct,Animalia,Arthropoda,Insecta,Trichoptera,Leptoceridae,Athripsodes,"",Genus
+Baetidae,0.19948029417319,14.8149435155883,herbivore,invertebrate,survived,Animalia,Arthropoda,Insecta,Ephemeroptera,Baetidae,"","",Family
+Cricotopus sp.,0.185054648979471,131.673991272162,herbivore,invertebrate,survived,Animalia,Arthropoda,Insecta,Diptera,Chironomidae,Cricotopus,"",Species
+Cryptochironomus sp.,0.0632703154866501,152.475476765992,herbivore,invertebrate,survived,Animalia,Arthropoda,Insecta,Diptera,Chironomidae,Cryptochironomus,"",Species
+Radix balthica,70.1455298419971,215.873831601281,herbivore,invertebrate,survived,Animalia,Mollusca,Gastropda,Basommatophora,Lymnaeidae,Radix,balthica,Species
+Microtendipes sp.,0.252522453344769,192.575041445065,herbivore,invertebrate,survived,Animalia,Arthropoda,Insecta,Diptera,Chironomidae,Microtendipes,"",Species
+Potamopyrgus antipodarum,3.23295753368094,355.549440858593,herbivore,invertebrate,survived,Animalia,Mollusca,Gastropda,Neotaenioglossa,Hydrobiidae,Potamopyrgus,antipodarum,Species
+Procladius sp.,0.0148456767505227,4.93855619617608,herbivore,invertebrate,survived,Animalia,Arthropoda,Insecta,Diptera,Chironomidae,Procladius,"",Species
+Synorthocladius sp.,0.0209990670376243,32.9230453333407,herbivore,invertebrate,survived,Animalia,Arthropoda,Insecta,Diptera,Chironomidae,Synorthocladius,"",Species
+Theodoxus fluviatilis,15.2510589584334,6.34892212337701,herbivore,invertebrate,extinct,Animalia,Mollusca,Gastropda,Neritopsina,Neritidae,Theodoxus,fluviatilis,Species
+Valvata piscinalis,7.18124923883474,59.2652335240215,herbivore,invertebrate,extinct,Animalia,Mollusca,Gastropda,Heterostropha,Valvatidae,Valvata,piscinalis,Species
+Erpobdella octoculata,42.0436101081749,118.522280719571,predator,invertebrate,extinct,Animalia,Annelida,Clitellata,Arhynchobdellida,Erpobdellidae,Erpobdella,octoculata,Species
+Haliplus lineatocollis,2.29879370926401,64.9082649131841,predator,invertebrate,extinct,Animalia,Arthropoda,Insecta,"",Haliplidae,Haliplus,lineatocollis,Species
+Hydropsyche spp.,2.06633151756448,43.0031233630544,predator,invertebrate,survived,Animalia,Arthropoda,Insecta,Trichoptera,Hydropsychidae,Hydropsyche,"",Genus
+Macropelopia sp.,0.0536784541025512,20.9893988362352,predator,invertebrate,survived,Animalia,Arthropoda,Insecta,Diptera,Chironomidae,Macropelopia,"",Species
+Pentaneura sp.,0.0126765186585785,3.70339469397536,predator,invertebrate,extinct,Animalia,Arthropoda,Insecta,Diptera,Chironomidae,Pentaneura,"",Species
+Polycentropus flavomaculatus,1.65462659305055,59.2652335240215,predator,invertebrate,extinct,Animalia,Arthropoda,Insecta,Trichoptera,Polycentropodidae,Polycentropus,flavomaculatus,Species
+Sialis lutaria,4.26481306545034,29.6278406375879,predator,invertebrate,extinct,Animalia,Arthropoda,Insecta,Megaloptera,Sialidae,Sialis,lutaria,Species

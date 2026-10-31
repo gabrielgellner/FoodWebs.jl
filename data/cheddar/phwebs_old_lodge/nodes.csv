@@ -1,0 +1,24 @@
+node,M,N,category
+CPOM,,,""
+FPOM,,,""
+Eunotia  exigua,1.91044127372439e-12,2.06797431087376e9,producer
+Eunotia rhomboidea,6.82005399611212e-13,2.10924209091341e8,producer
+Eunotia vanheurckii,4.29017297610507e-12,8.6203807193851e8,producer
+Eunotia incisa,1.99290752874042e-11,2.20094826877919e8,producer
+Eunotia pectinalis,7.84605986497869e-11,3.57654093676616e8,producer
+Brachysira brebissonii,3.42685623828501e-11,1.19218031225539e8,producer
+Brachysira vitrea,1.91044127372439e-12,6.00675465020991e8,producer
+Surirella linearis,1.73007423165454e-10,1.78827046838309e8,producer
+Frustulia rhomboides var. saxonica,9.56092792103095e-11,5.96090156127699e7,producer
+Frustulia rhomboides var. viridula,5.35922607541101e-10,4.90628051582026e8,producer
+Chironomidae undet.,0.0780902841246669,64.0000000000004,invertebrate
+Leuctra nigra,0.941248776757733,214.399999999999,invertebrate
+Nemoura cinerea,0.355365885914443,342.400000000003,invertebrate
+Plectrocnemia conspersa,2.81551037114513,51.1999999999999,invertebrate
+Simuliidae gra,0.1731706449536,6.4,invertebrate
+Simuliidae grb,0.183573703929365,83.1999999999992,invertebrate
+Simuliidae grc,0.224037670161325,3.2,invertebrate
+Siphonoperla torrentium,1.03837018228053,15.9999999999998,invertebrate
+Tanypodinae undet.,0.217279599239141,6.4,invertebrate
+Leuctra sp.,,,invertebrate
+Salmo trutta,50000.0000000001,0.0700000000000005,vert.ecto

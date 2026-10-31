@@ -1,0 +1,88 @@
+node,M,N,category
+CPOM,,,""
+FPOM,,,""
+Achnanthes devei,6.96111750481886e-11,2.50982518602427e11,producer
+Achnanthes elliptica,4.21915615681465e-11,2.84446854416024e11,producer
+Achnanthes lanceolata,8.78911355489036e-11,1.20471608929141e12,producer
+Amphora ovalis,3.81915615612387e-11,2.9281293836949e11,producer
+Amphora pediculus,2.68690891463125e-11,1.17125175347779e11,producer
+Cocconeis placentula,4.78168123123542e-11,3.7647377790357e11,producer
+Cymbella lanceolata,7.47389043318647e-11,3.51375526043368e11,producer
+Cymbella minuta,4.12317894631472e-11,2.9281293836949e11,producer
+Cymbella silesiaca,3.88233172134138e-11,2.25884266742172e11,producer
+Cymbella solea,4.44880324800507e-11,1.08759091394366e11,producer
+Diatoma vulgaris,6.89145616156092e-11,5.18697205111573e11,producer
+Fragilaria elliptica,1.85615654616249e-11,1.25491259301208e11,producer
+Fragilaria leptostauron,6.21548794526374e-11,1.67321679068278e11,producer
+Fragilaria vaucheriae,3.9584713812347e-11,2.84446854416024e11,producer
+Gomphonema olivaceum,1.48751226457715e-11,1.33857343254609e11,producer
+Gongrosira incrustans,1.84612317577211e-11,2.50982518602427e11,producer
+Melosira varians,1.84561263456503e-11,3.26277274183127e11,producer
+Navicula capitatoradiata,1.36781889757165e-11,5.43795456971934e11,producer
+Navicula cryptotenella,4.87288805232125e-13,3.59741609996792e11,producer
+Navicula gregoria,4.4488032482796e-11,1.41386818812697e12,producer
+Navicula lanceolata,1.08492941669626e-12,1.32184126463927e12,producer
+Navicula menisculus,3.87307231350486e-13,5.10331121158264e11,producer
+Navicula pseudogregaria,1.96053122223833e-11,3.3464335813657e10,producer
+Navicula tripunctata,1.79915239220627e-12,3.3464335813657e11,producer
+Nitzschia amphibia,6.618958401586e-11,3.09545106276304e11,producer
+Nitzschia dissipata,3.57051637220161e-11,1.67321679068278e11,producer
+Nitzschia perminuta,1.48156489125594e-11,6.69286716273013e10,producer
+Rhoicosphenia curvata,2.56377172114499e-11,2.67714686509229e11,producer
+Surirella ovalis,6.9611175818746e-11,2.42616434649017e11,producer
+Synedra ulva,3.4896156394139e-11,9.20269234875435e10,producer
+Tabellaria flocculosa,2.02736390611025e-11,1.12105524975739e12,producer
+Anabolia nervosa,5.18112829899723,1.6,invertebrate
+Ancylus fluviatilis,0.406736587522083,15.9999999999998,invertebrate
+Annelidae undet.,0.861318944611637,35.1999999999999,invertebrate
+Aphelocheirus aestivalis,3.0,52.7999999999997,invertebrate
+Asellus aquaticus,2.14785384701439,4.8,invertebrate
+Baetis niger,1.08640270380239,48.0000000000003,invertebrate
+Bithynia leachi,2.30478880775735,4.8,invertebrate
+Caenis rivulorum,0.307441129439331,89.600000000001,invertebrate
+Calopteryx splendens,40.6290226177123,1.6,invertebrate
+Ceratopogonidae undet.,0.207243701236217,46.3999999999999,invertebrate
+Chironomidae undet.,0.260946557525934,249.600000000002,invertebrate
+Dicranota sp.,0.536234569068471,76.7999999999996,invertebrate
+Ecdyonurus dispar,2.14133311462824,3.2,invertebrate
+Elmis aenea Lv.,0.288449033034263,20.7999999999999,invertebrate
+Empididae undet.,0.117192518774809,1.6,invertebrate
+Ephemera danica,2.24153071255066,12.8000000000001,invertebrate
+Erpobdella octoculata,10.0,1.6,invertebrate
+Gammarus pulex,0.762756663543075,1544.00000000001,invertebrate
+Gyrinidae undet. Lv,2.21363334490824,3.2,invertebrate
+Heptagenia sulphurea,1.31374844472219,14.4,invertebrate
+Hydracarina sp.,0.143166018124812,28.7999999999999,invertebrate
+Hydropsyche contubernalis,1.02773014039768,1.6,invertebrate
+Hydropsyche instabilis,3.05784543300979,25.6,invertebrate
+Hydropsyche pellucidula,2.86169069064078,8.00000000000001,invertebrate
+Hydropsyche siltalai,3.33441904381177,8.00000000000001,invertebrate
+Hydroptila sp.,0.0986200736654941,15.9999999999998,invertebrate
+Lepidostoma hirtum,2.50576714539201,1.6,invertebrate
+Leuctra geniculata,1.12233318832328,204.799999999998,invertebrate
+Limnius volckmari Ad.,5.73570226294598,15.9999999999998,invertebrate
+Limnius volckmari Lv.,0.489445540097904,232.0,invertebrate
+Oulimnius tuberculatus Lv.,0.111376900986391,17.6,invertebrate
+Piscicola geometra,6.95813685384927,1.6,invertebrate
+Plectrocnemia conspersa,3.45766971695542,1.6,invertebrate
+Rhithrogena semicolorata,0.83961820776865,1.6,invertebrate
+Sericostoma personatum,5.06827539268504,11.2,invertebrate
+Seratella ignita,0.420371490924511,79.9999999999993,invertebrate
+Silo pallipes,1.63594455045715,1.6,invertebrate
+Simuliidae grc,0.122303619745874,1.6,invertebrate
+Simuliidae grd,0.122303619745874,3.2,invertebrate
+Tanypodinae undet.,0.280470535148262,52.7999999999997,invertebrate
+Theodoxus fluviatilis,1.66843729840699,83.1999999999992,invertebrate
+Tipulidae undet.,0.738575343145445,3.2,invertebrate
+Leuctra sp.,,,invertebrate
+Hydropsyche sp.,,,invertebrate
+Simuliidae grx,,,invertebrate
+Salmo trutta,5000.00000000001,0.0199999999999999,vert.ecto
+Esox,287500.000000001,0.01,vert.ecto
+Thymallus,82500.0000000009,0.01,vert.ecto
+Chub,16249.9999999999,0.01,vert.ecto
+leuciscus,86249.9999999997,0.0700000000000005,vert.ecto
+rutilus rutilus,36249.9999999998,0.0399999999999998,vert.ecto
+Plath,37500.0000000001,0.01,vert.ecto
+gobio gobio,2500.00000000001,0.0199999999999999,vert.ecto
+Anguilla,77499.9999999999,0.0299999999999998,vert.ecto

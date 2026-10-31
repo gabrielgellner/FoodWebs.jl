@@ -1,0 +1,403 @@
+{
+  "description": "Seven trophic-species food webs, converted by data/scripts/convert_williams_martinez.jl. Species are numbered.",
+  "licenses": [
+    {
+      "name": "notspecified",
+      "title": "No license given; redistributed with citation of the original data"
+    }
+  ],
+  "name": "williams-martinez-2000",
+  "resources": [
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "bridge_brook_lake-nodes",
+      "path": "bridge_brook_lake/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "bridge_brook_lake-trophic-links",
+      "path": "bridge_brook_lake/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "bridge_brook_lake-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "bridge_brook_lake-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "chesapeake_bay-nodes",
+      "path": "chesapeake_bay/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "chesapeake_bay-trophic-links",
+      "path": "chesapeake_bay/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "chesapeake_bay-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "chesapeake_bay-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "coachella_valley-nodes",
+      "path": "coachella_valley/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "coachella_valley-trophic-links",
+      "path": "coachella_valley/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "coachella_valley-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "coachella_valley-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "little_rock_lake-nodes",
+      "path": "little_rock_lake/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "little_rock_lake-trophic-links",
+      "path": "little_rock_lake/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "little_rock_lake-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "little_rock_lake-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "skipwith_pond-nodes",
+      "path": "skipwith_pond/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "skipwith_pond-trophic-links",
+      "path": "skipwith_pond/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "skipwith_pond-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "skipwith_pond-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "st_martin_island-nodes",
+      "path": "st_martin_island/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "st_martin_island-trophic-links",
+      "path": "st_martin_island/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "st_martin_island-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "st_martin_island-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "ythan_estuary-nodes",
+      "path": "ythan_estuary/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "ythan_estuary-trophic-links",
+      "path": "ythan_estuary/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "ythan_estuary-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "ythan_estuary-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    }
+  ],
+  "sources": [
+    {
+      "title": "Williams, R. J. & Martinez, N. D. Simple rules yield complex food webs. Nature 404, 180–183 (2000); Dunne, J. A., Williams, R. J. & Martinez, N. D. Food-web structure and network theory: the role of connectance and size. PNAS 99, 12917–12922 (2002)."
+    }
+  ],
+  "title": "Trophic-species webs of Williams & Martinez (2000)"
+}

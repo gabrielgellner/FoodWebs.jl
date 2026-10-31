@@ -1,0 +1,1517 @@
+{
+  "description": "The food webs shipped with cheddar 0.1-640, converted by data/scripts/convert_cheddar.jl.",
+  "licenses": [
+    {
+      "name": "BSD-2-Clause",
+      "path": "LICENSE",
+      "title": "BSD 2-Clause License"
+    }
+  ],
+  "name": "cheddar",
+  "resources": [
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "benguela-nodes",
+      "path": "benguela/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          },
+          {
+            "name": "category",
+            "type": "string"
+          },
+          {
+            "name": "M",
+            "type": "number"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "benguela-trophic-links",
+      "path": "benguela/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "benguela-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "benguela-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "broadstonestream-nodes",
+      "path": "broadstonestream/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          },
+          {
+            "name": "N",
+            "type": "number"
+          },
+          {
+            "name": "M",
+            "type": "number"
+          },
+          {
+            "name": "category",
+            "type": "string"
+          },
+          {
+            "name": "kingdom",
+            "type": "string"
+          },
+          {
+            "name": "phylum",
+            "type": "string"
+          },
+          {
+            "name": "class",
+            "type": "string"
+          },
+          {
+            "name": "order",
+            "type": "string"
+          },
+          {
+            "name": "family",
+            "type": "string"
+          },
+          {
+            "name": "genus",
+            "type": "string"
+          },
+          {
+            "name": "species",
+            "type": "string"
+          },
+          {
+            "name": "resolved_to",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "broadstonestream-trophic-links",
+      "path": "broadstonestream/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "broadstonestream-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "broadstonestream-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "chesapeakebay-nodes",
+      "path": "chesapeakebay/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "chesapeakebay-trophic-links",
+      "path": "chesapeakebay/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "chesapeakebay-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "chesapeakebay-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "millstream_c4-nodes",
+      "path": "millstream_c4/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          },
+          {
+            "name": "M",
+            "type": "number"
+          },
+          {
+            "name": "N",
+            "type": "number"
+          },
+          {
+            "name": "trophic_group",
+            "type": "string"
+          },
+          {
+            "name": "category",
+            "type": "string"
+          },
+          {
+            "name": "node_status",
+            "type": "string"
+          },
+          {
+            "name": "kingdom",
+            "type": "string"
+          },
+          {
+            "name": "phylum",
+            "type": "string"
+          },
+          {
+            "name": "class",
+            "type": "string"
+          },
+          {
+            "name": "order",
+            "type": "string"
+          },
+          {
+            "name": "family",
+            "type": "string"
+          },
+          {
+            "name": "genus",
+            "type": "string"
+          },
+          {
+            "name": "species",
+            "type": "string"
+          },
+          {
+            "name": "resolved_to",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "millstream_c4-trophic-links",
+      "path": "millstream_c4/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "millstream_c4-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "millstream_c4-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "millstream_d4-nodes",
+      "path": "millstream_d4/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          },
+          {
+            "name": "M",
+            "type": "number"
+          },
+          {
+            "name": "N",
+            "type": "number"
+          },
+          {
+            "name": "trophic_group",
+            "type": "string"
+          },
+          {
+            "name": "category",
+            "type": "string"
+          },
+          {
+            "name": "node_status",
+            "type": "string"
+          },
+          {
+            "name": "kingdom",
+            "type": "string"
+          },
+          {
+            "name": "phylum",
+            "type": "string"
+          },
+          {
+            "name": "class",
+            "type": "string"
+          },
+          {
+            "name": "order",
+            "type": "string"
+          },
+          {
+            "name": "family",
+            "type": "string"
+          },
+          {
+            "name": "genus",
+            "type": "string"
+          },
+          {
+            "name": "species",
+            "type": "string"
+          },
+          {
+            "name": "resolved_to",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "millstream_d4-trophic-links",
+      "path": "millstream_d4/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "millstream_d4-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "millstream_d4-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "phwebs_afon_hafren-nodes",
+      "path": "phwebs_afon_hafren/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          },
+          {
+            "name": "M",
+            "type": "number"
+          },
+          {
+            "name": "N",
+            "type": "number"
+          },
+          {
+            "name": "category",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "phwebs_afon_hafren-trophic-links",
+      "path": "phwebs_afon_hafren/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "phwebs_afon_hafren-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "phwebs_afon_hafren-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "phwebs_allt_a_mharcaidh-nodes",
+      "path": "phwebs_allt_a_mharcaidh/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          },
+          {
+            "name": "M",
+            "type": "number"
+          },
+          {
+            "name": "N",
+            "type": "number"
+          },
+          {
+            "name": "category",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "phwebs_allt_a_mharcaidh-trophic-links",
+      "path": "phwebs_allt_a_mharcaidh/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "phwebs_allt_a_mharcaidh-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "phwebs_allt_a_mharcaidh-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "phwebs_bere_stream-nodes",
+      "path": "phwebs_bere_stream/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          },
+          {
+            "name": "M",
+            "type": "number"
+          },
+          {
+            "name": "N",
+            "type": "number"
+          },
+          {
+            "name": "category",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "phwebs_bere_stream-trophic-links",
+      "path": "phwebs_bere_stream/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "phwebs_bere_stream-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "phwebs_bere_stream-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "phwebs_broadstone-nodes",
+      "path": "phwebs_broadstone/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          },
+          {
+            "name": "M",
+            "type": "number"
+          },
+          {
+            "name": "N",
+            "type": "number"
+          },
+          {
+            "name": "category",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "phwebs_broadstone-trophic-links",
+      "path": "phwebs_broadstone/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "phwebs_broadstone-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "phwebs_broadstone-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "phwebs_dargall_lane-nodes",
+      "path": "phwebs_dargall_lane/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          },
+          {
+            "name": "M",
+            "type": "number"
+          },
+          {
+            "name": "N",
+            "type": "number"
+          },
+          {
+            "name": "category",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "phwebs_dargall_lane-trophic-links",
+      "path": "phwebs_dargall_lane/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "phwebs_dargall_lane-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "phwebs_dargall_lane-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "phwebs_duddon_pike_beck-nodes",
+      "path": "phwebs_duddon_pike_beck/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          },
+          {
+            "name": "M",
+            "type": "number"
+          },
+          {
+            "name": "N",
+            "type": "number"
+          },
+          {
+            "name": "category",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "phwebs_duddon_pike_beck-trophic-links",
+      "path": "phwebs_duddon_pike_beck/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "phwebs_duddon_pike_beck-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "phwebs_duddon_pike_beck-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "phwebs_hardknott_gill-nodes",
+      "path": "phwebs_hardknott_gill/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          },
+          {
+            "name": "M",
+            "type": "number"
+          },
+          {
+            "name": "N",
+            "type": "number"
+          },
+          {
+            "name": "category",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "phwebs_hardknott_gill-trophic-links",
+      "path": "phwebs_hardknott_gill/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "phwebs_hardknott_gill-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "phwebs_hardknott_gill-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "phwebs_mill_stream-nodes",
+      "path": "phwebs_mill_stream/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          },
+          {
+            "name": "M",
+            "type": "number"
+          },
+          {
+            "name": "N",
+            "type": "number"
+          },
+          {
+            "name": "category",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "phwebs_mill_stream-trophic-links",
+      "path": "phwebs_mill_stream/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "phwebs_mill_stream-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "phwebs_mill_stream-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "phwebs_mosedal_beck-nodes",
+      "path": "phwebs_mosedal_beck/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          },
+          {
+            "name": "M",
+            "type": "number"
+          },
+          {
+            "name": "N",
+            "type": "number"
+          },
+          {
+            "name": "category",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "phwebs_mosedal_beck-trophic-links",
+      "path": "phwebs_mosedal_beck/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "phwebs_mosedal_beck-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "phwebs_mosedal_beck-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "phwebs_old_lodge-nodes",
+      "path": "phwebs_old_lodge/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          },
+          {
+            "name": "M",
+            "type": "number"
+          },
+          {
+            "name": "N",
+            "type": "number"
+          },
+          {
+            "name": "category",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "phwebs_old_lodge-trophic-links",
+      "path": "phwebs_old_lodge/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "phwebs_old_lodge-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "phwebs_old_lodge-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "skipwithpond-nodes",
+      "path": "skipwithpond/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          },
+          {
+            "name": "category",
+            "type": "string"
+          },
+          {
+            "name": "kingdom",
+            "type": "string"
+          },
+          {
+            "name": "phylum",
+            "type": "string"
+          },
+          {
+            "name": "class",
+            "type": "string"
+          },
+          {
+            "name": "order",
+            "type": "string"
+          },
+          {
+            "name": "family",
+            "type": "string"
+          },
+          {
+            "name": "genus",
+            "type": "string"
+          },
+          {
+            "name": "species",
+            "type": "string"
+          },
+          {
+            "name": "resolved_to",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "skipwithpond-trophic-links",
+      "path": "skipwithpond/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "skipwithpond-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "skipwithpond-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "tl84-nodes",
+      "path": "tl84/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          },
+          {
+            "name": "category",
+            "type": "string"
+          },
+          {
+            "name": "M",
+            "type": "number"
+          },
+          {
+            "name": "N",
+            "type": "number"
+          },
+          {
+            "name": "kingdom",
+            "type": "string"
+          },
+          {
+            "name": "phylum",
+            "type": "string"
+          },
+          {
+            "name": "class",
+            "type": "string"
+          },
+          {
+            "name": "order",
+            "type": "string"
+          },
+          {
+            "name": "family",
+            "type": "string"
+          },
+          {
+            "name": "genus",
+            "type": "string"
+          },
+          {
+            "name": "species",
+            "type": "string"
+          },
+          {
+            "name": "resolved_to",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "tl84-trophic-links",
+      "path": "tl84/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "tl84-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "tl84-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "tl86-nodes",
+      "path": "tl86/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          },
+          {
+            "name": "category",
+            "type": "string"
+          },
+          {
+            "name": "M",
+            "type": "number"
+          },
+          {
+            "name": "N",
+            "type": "number"
+          },
+          {
+            "name": "kingdom",
+            "type": "string"
+          },
+          {
+            "name": "phylum",
+            "type": "string"
+          },
+          {
+            "name": "class",
+            "type": "string"
+          },
+          {
+            "name": "order",
+            "type": "string"
+          },
+          {
+            "name": "family",
+            "type": "string"
+          },
+          {
+            "name": "genus",
+            "type": "string"
+          },
+          {
+            "name": "species",
+            "type": "string"
+          },
+          {
+            "name": "resolved_to",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "tl86-trophic-links",
+      "path": "tl86/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "tl86-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "tl86-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "ythanestuary-nodes",
+      "path": "ythanestuary/nodes.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "node",
+            "type": "string"
+          },
+          {
+            "name": "category",
+            "type": "string"
+          },
+          {
+            "name": "M",
+            "type": "number"
+          },
+          {
+            "name": "N",
+            "type": "number"
+          },
+          {
+            "name": "kingdom",
+            "type": "string"
+          },
+          {
+            "name": "phylum",
+            "type": "string"
+          },
+          {
+            "name": "class",
+            "type": "string"
+          },
+          {
+            "name": "order",
+            "type": "string"
+          },
+          {
+            "name": "family",
+            "type": "string"
+          },
+          {
+            "name": "genus",
+            "type": "string"
+          },
+          {
+            "name": "species",
+            "type": "string"
+          },
+          {
+            "name": "resolved_to",
+            "type": "string"
+          },
+          {
+            "name": "common_name",
+            "type": "string"
+          }
+        ],
+        "primaryKey": "node"
+      }
+    },
+    {
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "ythanestuary-trophic-links",
+      "path": "ythanestuary/trophic.links.csv",
+      "schema": {
+        "fields": [
+          {
+            "description": "species eaten",
+            "name": "resource",
+            "type": "string"
+          },
+          {
+            "description": "species eating",
+            "name": "consumer",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": "resource",
+            "reference": {
+              "fields": "node",
+              "resource": "ythanestuary-nodes"
+            }
+          },
+          {
+            "fields": "consumer",
+            "reference": {
+              "fields": "node",
+              "resource": "ythanestuary-nodes"
+            }
+          }
+        ],
+        "primaryKey": [
+          "resource",
+          "consumer"
+        ]
+      }
+    }
+  ],
+  "sources": [
+    {
+      "path": "https://cran.r-project.org/src/contrib/cheddar_0.1-640.tar.gz",
+      "title": "Hudson, L. N., Reuman, D. C. & Emerson, R. Cheddar: analysis and visualisation of ecological communities in R. Methods Ecol. Evol. 4, 99–104 (2013)."
+    }
+  ],
+  "title": "Food webs of the R package cheddar"
+}
