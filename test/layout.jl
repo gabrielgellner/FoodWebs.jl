@@ -28,6 +28,14 @@ chain(S) = (
         p = trophic_layout(diamond)
         @test sort([p[2][1], p[3][1]]) == [-0.5, 0.5]
         @test p[1][1] == p[4][1] == 0
+        # evenly spaced levels split into bands no taller than `band`, rather than chaining
+        # into one band
+        @test FoodWebs.trophic_bands([1.0, 1.2, 1.4, 1.6, 1.8], 0.3) == [[1, 2], [3, 4], [5]]
+        # two single species in close bands interleave instead of sitting on top of each other
+        x = FoodWebs.place!(zeros(2), [[1], [2]], [2.0, 2.2], 0.3)
+        @test x == [0.0, 0.5]
+        # bands far apart stay centred
+        @test FoodWebs.place!(zeros(2), [[1], [2]], [1.0, 2.0], 0.3) == [0.0, 0.0]
     end
 
     @testset "deterministic and fewer crossings" begin
@@ -63,4 +71,28 @@ end
     fig = CairoMakie.Figure()
     ax = CairoMakie.Axis(fig[1, 1])
     @test foodwebplot!(ax, chain(3); color = :tomato, labels = nothing) === ax
+    # an empirical web with named species, and a web too large for labels by default
+    fig, ax = foodwebplot(foodweb("williams_martinez_2000/chesapeake_bay"))
+    @test fig isa CairoMakie.Figure
+    fig, ax = foodwebplot(foodweb("williams_martinez_2000/little_rock_lake"))
+    @test !any(p -> p isa CairoMakie.Text, ax.scene.plots)
+
+    ext = Base.get_extension(FoodWebs, :FoodWebsMakieExt)
+    # arrows end at the node edge in pixels, whatever the aspect ratio: an arrow from (0, 0) to
+    # (1, 1) stops 10 pixels short of (1, 1) on a wide and on a tall axis
+    for scale in (CairoMakie.Vec2f(100, 10), CairoMakie.Vec2f(10, 100))
+        o, d = ext.arrow_geometry([CairoMakie.Point2f(0, 0)], [CairoMakie.Point2f(1, 1)], [5], [10], scale)
+        tip = (o[1] .+ d[1]) .* scale
+        @test sqrt(sum(abs2, tip .- scale)) ≈ 10 atol = 1.0e-3
+        @test sqrt(sum(abs2, o[1] .* scale)) ≈ 5 atol = 1.0e-3
+    end
+    # nodes closer than their radii get no arrow
+    o, _ = ext.arrow_geometry([CairoMakie.Point2f(0, 0)], [CairoMakie.Point2f(0.1, 0)], [5], [10], CairoMakie.Vec2f(100, 100))
+    @test isempty(o)
+    # labels are white on dark nodes and black on light ones
+    @test ext.label_color(:black) == CairoMakie.RGBf(1, 1, 1)
+    @test ext.label_color(:yellow) == CairoMakie.RGBf(0, 0, 0)
+    # thinner drawing for larger webs
+    @test ext.default_markersize(100) < ext.default_markersize(20)
+    @test ext.default_edgealpha(1000) < ext.default_edgealpha(50)
 end

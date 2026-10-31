@@ -1,0 +1,134 @@
+---
+title: "Bundled food webs"
+subtitle: "Every web in `data/`, drawn with `foodwebplot`"
+engine: julia
+julia:
+  exeflags: ["--project=@."]
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    embed-resources: true
+    page-layout: full
+execute:
+  echo: false
+---
+
+Each web is drawn twice: species placed at their prey-averaged trophic levels (Levine 1980),
+and at the levels of MacKay, Johnson & Sansom (2020). The two agree on webs with no loops and no
+omnivory; where they differ, the web is loopy or omnivorous, and the trophic incoherence `F₀`
+in the right panel's title measures how far its links are from spanning one level each.
+Nodes are coloured by level, cannibals have a thick outline, and species are numbered as in the
+species key under each web. Rebuild with `just gallery`.
+
+```{julia}
+using FoodWebs, CairoMakie
+using Printf: @sprintf
+
+ids = filter(id -> startswith(id, "cheddar/") || startswith(id, "williams_martinez_2000/"), foodweb_ids())
+webs = [foodweb(id) for id in ids]
+props = [structural_properties(w) for w in webs]
+figdir = mkpath(joinpath(@__DIR__, "webs_files", "gallery"))
+fmt(x) = isnan(x) ? "–" : @sprintf("%.2f", x)
+nothing
+```
+
+## Reading the two trophic levels
+
+Prey-averaged levels fix every basal species at 1 and place each consumer one level above the
+mean of its prey, so a consumer feeding at two levels gets a non-integer level. MacKay levels fit
+"each link spans one level" by least squares over all links with no species fixed, so a basal
+species sits one level below the mean MacKay level of its predators. `F₀` is the mean squared
+amount by which links miss spanning exactly one level.
+
+In the first web, B1 and B2 eat nothing, H eats B1, and P eats H and B2. The prey-averaged
+levels call P an omnivore at 2.5, with links spanning 0.5 and 1.5. MacKay levels lift B2 to level
+2, every link spans exactly one level, and `F₀ = 0`: the web is perfectly layered, with B2 a
+resource entering one level up. Each species keeps its horizontal position in all four panels,
+so only the heights change. In the second web P also eats B1. No choice of levels makes P's
+links to B1 and H both span one level, so the omnivory remains and `F₀ > 0`.
+
+```{julia}
+function example(links, title)
+    species = ["B1", "B2", "H", "P"]
+    index = Dict(s => k for (k, s) in enumerate(species))
+    web = zeros(Bool, 4, 4)
+    for (prey, predator) in links
+        web[index[prey], index[predator]] = true
+    end
+    return FoodWeb(web; species, name = title)
+end
+examples = [
+    example([("B1", "H"), ("H", "P"), ("B2", "P")], "B2 enters one level up"),
+    example([("B1", "H"), ("H", "P"), ("B2", "P"), ("B1", "P")], "P also eats B1"),
+]
+fig = Figure(size = (1100, 650))
+for (row, w) in enumerate(examples)
+    for (col, (method, name)) in enumerate(((:prey_averaged, "prey-averaged"), (:mackay, "MacKay")))
+        levels = trophic_levels(w; method)
+        title = "$(w.name): $name levels" * (method === :mackay ? " (F₀ = $(fmt(trophic_incoherence(w))))" : "")
+        ax = Axis(fig[row, col]; title, ylabel = "trophic level")
+        # the same horizontal positions in every panel, so only the heights change
+        layout = [(x, y) for (x, y) in zip([-1.0, 1.0, -0.8, 0.3], levels)]
+        foodwebplot!(ax, w; levels, layout, labels = w.species, markersize = 30, fontsize = 12)
+    end
+end
+fig
+```
+
+```{julia}
+#| output: asis
+println("| Web | Method | B1 | B2 | H | P |")
+println("|---|---|--:|--:|--:|--:|")
+for w in examples, method in (:prey_averaged, :mackay)
+    println("| $(w.name) | $method | ", join(fmt.(trophic_levels(w; method)), " | "), " |")
+end
+```
+
+## Summary
+
+```{julia}
+#| output: asis
+println("| Web | S | L | C | T | I | B | Loop | Omniv | F₀ | Path length |")
+println("|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|")
+for (id, w, p) in zip(ids, webs, props)
+    S = size(w, 1); L = count(w.web.links)
+    println("| [$(w.name)](#$(replace(id, r"[^a-z0-9]" => "-"))) | $S | $L | ", fmt(L / S^2), " | ",
+        join(fmt.((p.T, p.I, p.B, p.Loop, p.Omniv, trophic_incoherence(w), p.PathLength)), " | "), " |")
+end
+```
+
+```{julia}
+#| output: asis
+for (id, w, p) in zip(ids, webs, props)
+    S = size(w, 1)
+    L = count(w.web.links)
+    anchor = replace(id, r"[^a-z0-9]" => "-")
+    println("## $(w.name) {#$anchor}\n")
+    println("`$id`: $S species, $L links, C = ", fmt(L / S^2), ".\n")
+    println(w.metadata["citation"], "\n")
+    haskey(w.metadata, "notes") && println("*", w.metadata["notes"], "*\n")
+
+    width = clamp(round(Int, 16 * S), 600, 1400)
+    fig = Figure(size = (2width, round(Int, 0.75width)))
+    panels = (
+        ("prey-averaged levels", trophic_levels(w)),
+        ("MacKay levels (F₀ = $(fmt(trophic_incoherence(w))))", trophic_levels(w; method = :mackay)),
+    )
+    for (k, (title, levels)) in enumerate(panels)
+        ax = Axis(fig[1, k]; title, ylabel = "trophic level")
+        foodwebplot!(ax, w; levels)
+    end
+    file = joinpath(figdir, replace(id, "/" => "__") * ".png")
+    save(file, fig)
+    println("![](", relpath(file, @__DIR__), ")\n")
+
+    println("| T | I | B | GenSD | VulSD | MxSim | Loop | Cannib | Omniv | TL | Max TL | Path length |")
+    println("|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|")
+    println("| ", join(fmt.(values(p)), " | "), " |\n")
+
+    println("<details><summary>Species key</summary>\n")
+    println(join(("$k. $(w.species[k])" for k in 1:S), "\n"), "\n")
+    println("</details>\n")
+end
+```

@@ -36,6 +36,11 @@ ci: fmt-check lint test
 
 alias check := ci
 
+# Render the Quarto gallery of the bundled food webs to gallery/webs.html
+gallery:
+    {{ julia }} --project=gallery -e 'using Pkg; Pkg.instantiate()'
+    quarto render gallery/webs.qmd
+
 # ── Release ───────────────────────────────────────────────────────────────────
 
 # Step 1 — Preview the next version and the unreleased changelog (no files changed)
