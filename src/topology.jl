@@ -277,3 +277,73 @@ end
 function generalized_niche_network(S::Int, C::Real, diet::Real; kwargs...)
     return generalized_niche_network(Random.default_rng(), S, C, diet; kwargs...)
 end
+
+"""
+    nested_hierarchy_network([rng], S, C; tol = 0.03, maxiter = 10_000, basal_paths = false)
+
+Generate a nested-hierarchy model web with `S` species and connectance `C`, following:
+Cattin, M.-F., Bersier, L.-F., Banašek-Richter, C., Baltensperger, R. & Gabriel, J.-P.
+Phylogenetic constraints and adaptation explain food-web structure. Nature 427, 835–839
+(2004), as described by Stouffer, D. B., Camacho, J., Guimerà, R., Ng, C. A. & Amaral, L. A. N.
+Quantitative patterns in the structure of model and empirical food webs. Ecology 86,
+1301–1311 (2005), Appendix B.
+
+Species are ordered by niche value, and each species `i` eats `round(S r_i)` species, with
+`r_i` drawn as the niche model's range. Species pick their prey in order of niche value:
+
+1. The first prey `j` is a random species with a lower niche value.
+2. If another species also eats `j`, further prey come from the prey of `j`'s consumer group:
+   the consumers of `j` and the consumers sharing a prey with them. Only species with lower
+   niche values than `i` are drawn.
+3. Then species with lower niche values that have no predators yet.
+4. Then species with niche values greater than or equal to that of `i`, including `i` itself.
+5. Then any remaining species with lower niche values, so every species gets its full diet.
+
+Step 5 is not in the published description and is rarely needed. With steps 1–4, about 8% of
+links go to species with niche values at least that of the predator, as Stouffer et al.
+report (their Fig. 4). Diets are not intervals, unlike the niche model.
+
+Webs are resampled until they are connected and their number of links `L` satisfies
+`abs(L - C S^2) <= max(tol C S^2, 1/2)`: within a relative tolerance `tol` of `C S^2`, widened
+for small webs to include the whole number of links nearest `C S^2`. With `basal_paths = true`
+they are also resampled until every species has a feeding path up from a basal species (see
+[`disconnected_from_basal`](@ref)).
+"""
+function nested_hierarchy_network(
+        rng::AbstractRNG, S::Int, C::Real; tol = 0.03, maxiter = 10_000,
+        basal_paths = false
+    )
+    check_niche_connectance(S, C)
+    return accept_web(S, C, tol, maxiter, basal_paths) do
+        _, r, _ = niche_parameters(rng, S, C)
+        # r ≤ η ≤ 1, so no species needs more than S prey, and the lowest species has r = 0
+        n_prey = round.(Int, r * S)
+        adj = zeros(Bool, S, S)
+        for i in 2:S
+            n_prey[i] == 0 && continue
+            j = rand(rng, 1:(i - 1))
+            adj[j, i] = true
+            consumers = [c for c in 1:S if c != i && adj[j, c]]
+            if !isempty(consumers)
+                group = [c for c in 1:S if c != i && any(adj[p, c] && any(view(adj, p, consumers)) for p in 1:S)]
+                pool = [p for p in 1:(i - 1) if any(view(adj, p, group))]
+                add_prey!(rng, adj, i, pool, n_prey[i])
+            end
+            add_prey!(rng, adj, i, [p for p in 1:(i - 1) if !any(view(adj, p, :))], n_prey[i])
+            add_prey!(rng, adj, i, i:S, n_prey[i])
+            add_prey!(rng, adj, i, 1:(i - 1), n_prey[i])
+        end
+        adj
+    end
+end
+function nested_hierarchy_network(S::Int, C::Real; kwargs...)
+    return nested_hierarchy_network(Random.default_rng(), S, C; kwargs...)
+end
+
+# Add random prey of `i` from `candidates` until it has `n_prey` prey or no candidates are left
+function add_prey!(rng, adj, i, candidates, n_prey)
+    new = [p for p in candidates if !adj[p, i]]
+    k = min(length(new), n_prey - count(view(adj, :, i)))
+    k > 0 && (adj[sample(rng, new, k; replace = false), i] .= true)
+    return adj
+end

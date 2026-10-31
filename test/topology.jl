@@ -3,7 +3,7 @@ using Test
 using Random: Xoshiro
 using LinearAlgebra: diag, istriu
 using Graphs: DiGraph, is_connected, is_cyclic
-using Statistics: mean, std
+using Statistics: mean, quantile, std
 
 # generators taking (rng, S, C; kwargs...)
 const GENERATORS = Dict(
@@ -12,6 +12,7 @@ const GENERATORS = Dict(
     "generalized cascade" => generalized_cascade_network,
     "niche" => niche_network,
     "generalized niche" => (rng, S, C; kw...) -> generalized_niche_network(rng, S, C, 0.5; kw...),
+    "nested hierarchy" => nested_hierarchy_network,
 )
 
 # species are sorted by niche value, so an interval diet is a contiguous run of row indices
@@ -190,4 +191,41 @@ end
         mean(n_interval(generalized_niche_network(rng, 50, 0.15, 1.0)) for _ in 1:20)
     @test_throws ArgumentError generalized_niche_network(rng, 20, 0.1, 1.5)
     @test_throws ArgumentError generalized_niche_network(rng, 20, 0.1, -0.1)
+end
+
+# mean Jaccard similarity of the prey sets of consumer pairs that share at least one prey
+function prey_overlap(web)
+    S = size(web, 1)
+    J = Float64[]
+    for a in 1:S, b in (a + 1):S
+        shared = count(web[:, a] .& web[:, b])
+        shared > 0 && push!(J, shared / count(web[:, a] .| web[:, b]))
+    end
+    return mean(J)
+end
+
+@testset "nested hierarchy network" begin
+    rng = Xoshiro(10)
+    # diet sizes are drawn as in the niche model
+    diets(web) = [count(web[:, j]) for j in axes(web, 2)]
+    nhm = reduce(vcat, diets(nested_hierarchy_network(rng, 100, 0.1; tol = Inf)) for _ in 1:300)
+    niche = reduce(vcat, diets(niche_network(rng, 100, 0.1; tol = Inf)) for _ in 1:300)
+    @test isapprox(mean(nhm), mean(niche), rtol = 0.05)
+    @test isapprox(std(nhm), std(niche), rtol = 0.05)
+    @test all(abs(quantile(nhm, q) - quantile(niche, q)) <= 2 for q in (0.25, 0.5, 0.75, 0.9))
+
+    # every consumer's first prey has a lower niche value, and diets need not be intervals
+    webs = [nested_hierarchy_network(rng, 100, 0.08) for _ in 1:50]
+    @test all(any(web[1:(j - 1), j]) for web in webs for j in 2:100 if any(web[:, j]))
+    @test any(!is_interval(findall(web[:, j])) for web in webs for j in 1:100)
+    # Stouffer et al. (2005, Fig. 4) report 92% of links going to species with lower niche
+    # values at S = 100, C = 0.08, and very little cannibalism
+    L = sum(sum, webs)
+    @test 0.88 <= sum(sum(web[i, j] for j in 1:100 for i in 1:(j - 1)) for web in webs) / L <= 0.95
+    @test sum(sum(diag(web)) for web in webs) / L < 0.01
+
+    # prey picked from the consumer group's diets make consumers that share prey more alike
+    # than in the generalized cascade model, which has the same diet sizes and random prey
+    @test mean(prey_overlap(nested_hierarchy_network(rng, 60, 0.1)) for _ in 1:30) >
+        mean(prey_overlap(generalized_cascade_network(rng, 60, 0.1)) for _ in 1:30) + 0.02
 end
