@@ -38,13 +38,14 @@ seed they were written with.
 ## Commands
 
 ```sh
-just setup      # install Runic and JETLS as Julia apps, instantiate environments
+just setup      # install Runic and JETLS as Julia apps, instantiate environments, enable hooks
 just fmt        # format with Runic
-just check      # formatting check, JETLS lint, tests (what CI runs)
+just ci         # formatting check, JETLS lint, tests (run by the pre-push hook)
 ```
 
-`main` is protected: changes go through a PR with green CI (tests on Linux and macOS,
-format, lint).
+`main` is protected: changes go through a PR. GitHub Actions runs nothing automatically; run
+`just ci` before pushing or merging. The pre-push hook (`.githooks/pre-push`, enabled by
+`just setup`) runs it on every branch push. The CI workflow can still be run by hand.
 
 ## Commits
 

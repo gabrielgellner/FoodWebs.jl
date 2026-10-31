@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Run the checks that CI used to run before pushing a branch. Tag pushes and branch
+# deletions skip them. Bypass with `git push --no-verify`.
+set -euo pipefail
+
+zero=0000000000000000000000000000000000000000
+needs_check=false
+while read -r local_ref local_sha _remote_ref _remote_sha; do
+    if [[ "${local_sha}" != "${zero}" && "${local_ref}" == refs/heads/* ]]; then
+        needs_check=true
+    fi
+done
+"${needs_check}" || exit 0
+
+# `just ci` checks the working tree, so it must match the commits being pushed
+if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
+    echo "pre-push: the working tree has uncommitted changes; commit or stash them first" >&2
+    exit 1
+fi
+exec just ci

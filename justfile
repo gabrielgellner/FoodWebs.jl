@@ -9,10 +9,11 @@ julia := "julia --startup-file=no"
 default:
     @just --list
 
-# Install the formatter and linter as Julia apps and instantiate all environments
+# Install the formatter and linter as Julia apps, instantiate all environments and enable the pre-push hook
 setup:
     {{ julia }} -e 'using Pkg; Pkg.Apps.add("Runic"); Pkg.Apps.add(url = "https://github.com/aviatesk/JETLS.jl", rev = "release")'
     {{ julia }} --project -e 'using Pkg; Pkg.instantiate()'
+    git config core.hooksPath .githooks
 
 # Format all Julia files in place with Runic
 fmt:
@@ -30,8 +31,10 @@ lint:
 test:
     {{ julia }} --project -e 'using Pkg; Pkg.test()'
 
-# Run every check that CI runs
-check: fmt-check lint test
+# Run every check (format, lint, tests); the pre-push hook runs this
+ci: fmt-check lint test
+
+alias check := ci
 
 # ── Release ───────────────────────────────────────────────────────────────────
 
@@ -88,7 +91,7 @@ release-3-pr:
     git push -u origin "${BRANCH}"
     NOTES=$(just release-notes "${VER}")
     gh pr create --base main --head "${BRANCH}" --title "chore(release): ${VER}" --body "${NOTES}"
-    echo "When CI is green on the PR, run: just release-4-merge"
+    echo "Run just ci, then: just release-4-merge"
 
 # Step 4 — Merge the release PR, tag its merge commit, create the GitHub release
 [group('release')]
