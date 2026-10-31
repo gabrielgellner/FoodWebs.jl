@@ -16,4 +16,5 @@ using ExplicitImports: test_explicit_imports
     include("stability.jl")
     include("elliptic_law.jl")
     include("layout.jl")
+    include("data.jl")
 end

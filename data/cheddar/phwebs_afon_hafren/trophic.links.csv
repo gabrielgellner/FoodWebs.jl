@@ -1,0 +1,136 @@
+resource,consumer
+Achnanthes austriaca var. helvetica,Amphinemura sulcicollis
+Achnanthes austriaca var. minor,Amphinemura sulcicollis
+Achnanthes austriaca var. helvetica,Brachyptera risi
+Achnanthes austriaca var. helvetica,Chironomidae undet.
+Achnanthes austriaca var. helvetica,Ecclisopteryx gluttalata
+Achnanthes austriaca var. helvetica,Leuctra inermis
+Achnanthes austriaca var. helvetica,Limnius volckmari Ad.
+Achnanthes austriaca var. helvetica,Protonemura meyeri
+Achnanthes austriaca var. helvetica,Simuliidae grc
+Achnanthes austriaca var. helvetica,Simuliidae grd
+Achnanthes austriaca var. helvetica,Simuliidae undet.
+Achnanthes austriaca var. helvetica,Tipulidae undet.
+Achnanthes austriaca var. minor,Brachyptera risi
+Achnanthes austriaca var. minor,Chironomidae undet.
+Achnanthes austriaca var. minor,Ecclisopteryx gluttalata
+Achnanthes austriaca var. minor,Leuctra inermis
+Achnanthes austriaca var. minor,Limnius volckmari Ad.
+Achnanthes austriaca var. minor,Protonemura meyeri
+Achnanthes austriaca var. minor,Simuliidae grc
+Achnanthes austriaca var. minor,Simuliidae grd
+Achnanthes austriaca var. minor,Simuliidae undet.
+Achnanthes austriaca var. minor,Tipulidae undet.
+Amphinemura sulcicollis,Salmo trutta
+Chironomidae undet.,Chloroperla tripunctata
+Chironomidae undet.,Isoperla grammatica
+Chironomidae undet.,Salmo trutta
+Chironomidae undet.,Siphonoperla torrentium
+Chloroperla tripunctata,Chloroperla tripunctata
+Chloroperla tripunctata,Siphonoperla torrentium
+Eunotia  exigua,Amphinemura sulcicollis
+Eunotia  exigua,Brachyptera risi
+Eunotia  exigua,Chironomidae undet.
+Eunotia  exigua,Ecclisopteryx gluttalata
+Eunotia  exigua,Leuctra inermis
+Eunotia  exigua,Limnius volckmari Ad.
+Eunotia  exigua,Protonemura meyeri
+Eunotia  exigua,Simuliidae grc
+Eunotia  exigua,Simuliidae grd
+Eunotia  exigua,Simuliidae undet.
+Eunotia  exigua,Tipulidae undet.
+Eunotia rhomboidea,Amphinemura sulcicollis
+Eunotia rhomboidea,Brachyptera risi
+Eunotia rhomboidea,Chironomidae undet.
+Eunotia rhomboidea,Ecclisopteryx gluttalata
+Eunotia rhomboidea,Leuctra inermis
+Eunotia rhomboidea,Limnius volckmari Ad.
+Eunotia rhomboidea,Protonemura meyeri
+Eunotia rhomboidea,Simuliidae grc
+Eunotia rhomboidea,Simuliidae grd
+Eunotia rhomboidea,Simuliidae undet.
+Eunotia rhomboidea,Tipulidae undet.
+Eunotia vanheurckii,Amphinemura sulcicollis
+Eunotia vanheurckii,Brachyptera risi
+Eunotia vanheurckii,Chironomidae undet.
+Eunotia vanheurckii,Ecclisopteryx gluttalata
+Eunotia vanheurckii,Leuctra inermis
+Eunotia vanheurckii,Limnius volckmari Ad.
+Eunotia vanheurckii,Protonemura meyeri
+Eunotia vanheurckii,Simuliidae grc
+Eunotia vanheurckii,Simuliidae grd
+Eunotia vanheurckii,Simuliidae undet.
+Eunotia vanheurckii,Tipulidae undet.
+Fragilaria vaucheriae,Amphinemura sulcicollis
+Fragilaria vaucheriae,Brachyptera risi
+Fragilaria vaucheriae,Chironomidae undet.
+Fragilaria vaucheriae,Ecclisopteryx gluttalata
+Fragilaria vaucheriae,Leuctra inermis
+Fragilaria vaucheriae,Limnius volckmari Ad.
+Fragilaria vaucheriae,Protonemura meyeri
+Fragilaria vaucheriae,Simuliidae grc
+Fragilaria vaucheriae,Simuliidae grd
+Fragilaria vaucheriae,Simuliidae undet.
+Fragilaria vaucheriae,Tipulidae undet.
+Isoperla grammatica,Isoperla grammatica
+Isoperla grammatica,Salmo trutta
+Leuctra inermis,Chloroperla tripunctata
+Leuctra inermis,Isoperla grammatica
+Leuctra inermis,Salmo trutta
+Leuctra inermis,Siphonoperla torrentium
+Limnius volckmari Ad.,Salmo trutta
+Pinnularia subcapitata,Amphinemura sulcicollis
+Pinnularia subcapitata,Brachyptera risi
+Pinnularia subcapitata,Chironomidae undet.
+Pinnularia subcapitata,Ecclisopteryx gluttalata
+Pinnularia subcapitata,Leuctra inermis
+Pinnularia subcapitata,Limnius volckmari Ad.
+Pinnularia subcapitata,Protonemura meyeri
+Pinnularia subcapitata,Simuliidae grc
+Pinnularia subcapitata,Simuliidae grd
+Pinnularia subcapitata,Simuliidae undet.
+Pinnularia subcapitata,Tipulidae undet.
+Protonemura meyeri,Salmo trutta
+Salmo trutta,Salmo trutta
+Simuliidae grc,Chloroperla tripunctata
+Simuliidae grc,Isoperla grammatica
+Simuliidae grc,Salmo trutta
+Simuliidae grc,Siphonoperla torrentium
+Simuliidae grd,Chloroperla tripunctata
+Simuliidae grd,Isoperla grammatica
+Simuliidae grd,Salmo trutta
+Simuliidae grd,Siphonoperla torrentium
+Simuliidae undet.,Chloroperla tripunctata
+Simuliidae undet.,Isoperla grammatica
+Simuliidae undet.,Salmo trutta
+Simuliidae undet.,Siphonoperla torrentium
+Siphonoperla torrentium,Chloroperla tripunctata
+Siphonoperla torrentium,Siphonoperla torrentium
+Tabellaria flocculosa,Amphinemura sulcicollis
+Tabellaria flocculosa,Brachyptera risi
+Tabellaria flocculosa,Chironomidae undet.
+Tabellaria flocculosa,Ecclisopteryx gluttalata
+Tabellaria flocculosa,Leuctra inermis
+Tabellaria flocculosa,Limnius volckmari Ad.
+Tabellaria flocculosa,Protonemura meyeri
+Tabellaria flocculosa,Simuliidae grc
+Tabellaria flocculosa,Simuliidae grd
+Tabellaria flocculosa,Simuliidae undet.
+Tabellaria flocculosa,Tipulidae undet.
+Tipulidae undet.,Salmo trutta
+CPOM,Amphinemura sulcicollis
+CPOM,Chironomidae undet.
+CPOM,Leuctra inermis
+CPOM,Protonemura meyeri
+CPOM,Tipulidae undet.
+FPOM,Amphinemura sulcicollis
+FPOM,Brachyptera risi
+FPOM,Chironomidae undet.
+FPOM,Ecclisopteryx gluttalata
+FPOM,Leuctra inermis
+FPOM,Limnius volckmari Ad.
+FPOM,Protonemura meyeri
+FPOM,Simuliidae grc
+FPOM,Simuliidae grd
+FPOM,Simuliidae undet.
+FPOM,Tipulidae undet.

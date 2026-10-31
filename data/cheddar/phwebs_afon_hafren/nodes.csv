@@ -1,0 +1,26 @@
+node,M,N,category
+CPOM,,,""
+FPOM,,,""
+Eunotia  exigua,1.58807568270525e-12,3.26613152121285e9,producer
+Eunotia rhomboidea,1.18710458844841e-11,2.54503754899701e8,producer
+Eunotia vanheurckii,5.68049892981316e-12,6.36259387249255e8,producer
+Achnanthes austriaca var. minor,1.80615928391516e-11,3.88825181096769e8,producer
+Achnanthes austriaca var. helvetica,4.94948158459494e-12,4.31242473580049e8,producer
+Fragilaria vaucheriae,3.63428730625883e-12,9.19041337137809e7,producer
+Tabellaria flocculosa,9.42004436530281e-12,1.55530072438706e9,producer
+Pinnularia subcapitata,4.37587888442674e-11,9.89736824609946e7,producer
+Amphinemura sulcicollis,0.479358241400525,1.6,invertebrate
+Brachyptera risi,1.44896822044705,4.8,invertebrate
+Chironomidae undet.,0.0927638758214154,1.6,invertebrate
+Chloroperla tripunctata,0.763379494336853,1.6,invertebrate
+Ecclisopteryx gluttalata,3.66929666761924,1.6,invertebrate
+Isoperla grammatica,3.61211188217151,57.5999999999997,invertebrate
+Leuctra inermis,1.07669104389781,49.6000000000003,invertebrate
+Limnius volckmari Ad.,4.05372128308014,4.8,invertebrate
+Protonemura meyeri,0.6708713832561,1.6,invertebrate
+Simuliidae grc,0.028858628014331,4.8,invertebrate
+Simuliidae grd,0.224037670161325,1.6,invertebrate
+Simuliidae undet.,0.0224337286264496,1.6,invertebrate
+Siphonoperla torrentium,0.683141481065335,35.1999999999999,invertebrate
+Tipulidae undet.,0.131553020914522,1.6,invertebrate
+Salmo trutta,20000.0,0.16,vert.ecto

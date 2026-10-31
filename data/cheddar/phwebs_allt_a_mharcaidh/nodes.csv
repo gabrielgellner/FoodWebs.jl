@@ -1,0 +1,41 @@
+node,M,N,category
+CPOM,,,""
+FPOM,,,""
+Eunotia vanheurckii,4.29017297610507e-12,2.79781607244513e9,producer
+Eunotia incisa,2.40855757903772e-11,1.25167550609386e9,producer
+Eunotia sp.,3.48858440977009e-11,1.32527754115821e9,producer
+Achnanthes minutissima,4.11264617488311e-13,1.16155936151016e10,producer
+Achnanthes saxonica,1.06548506810973e-12,1.39898203622255e9,producer
+Achnanthes modestifor.,8.92084287963604e-11,8.83518062772151e8,producer
+Fragilaria vaucheriae,1.63700087581996e-10,1.08969072295226e10,producer
+Gomphonema angustatum,1.47167700107371e-11,6.99456718111277e9,producer
+Tabellaria flocculosa,5.5054918184672e-11,8.98241233785015e9,producer
+Hannaea arcus,8.23827863250537e-11,1.76703674154428e9,producer
+Diatoma hyemale,2.25502028814452e-10,4.19671970866773e9,producer
+Synedra miniscula,1.18517853333033e-11,2.42231262061689e10,producer
+Amphinemura sulcicollis,0.57275894220031,20.7999999999999,invertebrate
+Baetis rhodani,1.33310184199525,563.200000000006,invertebrate
+Brachyptera risi,1.01271411160371,49.6000000000003,invertebrate
+Chironomidae,0.177319525979513,51.1999999999999,invertebrate
+Chloroperla tripunctata,0.687382130465037,11.2,invertebrate
+Dicranota sp.,0.669879005660978,12.8000000000001,invertebrate
+Ecdyonurus sp.,1.30280734528369,1.6,invertebrate
+Elmis aenea Ad.,2.74105488893422,4.8,invertebrate
+Elmis aenea Lv.,0.195874234390066,17.6,invertebrate
+Isoperla grammatica,4.57243703780938,51.1999999999999,invertebrate
+Leuctra hippopus,0.92728484092864,19.2,invertebrate
+Leuctra inermis,0.819120419920396,244.799999999998,invertebrate
+Limnius volckmari,3.58760043008638,3.2,invertebrate
+Oreodytes sanmarkii,9.05953353442522,1.6,invertebrate
+Plectrocnemia geniculata,2.37455828159659,9.59999999999999,invertebrate
+Protonemura meyeri,0.773681083885242,44.7999999999996,invertebrate
+Rhithrogena semicolorata,0.984277465361214,28.7999999999999,invertebrate
+Rhyacophila septentrionis,1.6186882651381,30.3999999999997,invertebrate
+Simuliidae grc,0.173290975852509,11.2,invertebrate
+Simuliidae grd,0.418302961660282,9.59999999999999,invertebrate
+Simuliidae undet.,0.542580112031988,60.7999999999993,invertebrate
+Siphonoperla torrentium,0.786146217464699,14.4,invertebrate
+Tipulidae undet.,0.434495164165469,24.0000000000002,invertebrate
+Leuctra sp.,,,invertebrate
+Baetis sp.,,,invertebrate
+Salmo trutta,13749.9999999999,0.0299999999999998,vert.ecto

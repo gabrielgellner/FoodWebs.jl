@@ -6,6 +6,7 @@ using LinearAlgebra: Diagonal, I, LinearAlgebra, Symmetric, diag, diagind, diagm
 using Random: AbstractRNG, Random
 using SpecialFunctions: gamma
 using Statistics: cov, mean
+using TOML: TOML
 
 include("topology.jl")
 export PredationMatrix
@@ -26,6 +27,10 @@ export λ_stability, ν_stability
 include("utils.jl")
 export connectance, trophic_incoherence, trophic_levels
 export basal_species, disconnected_from_basal, top_species
+
+include("data.jl")
+export FoodWeb, foodweb, foodweb_ids, read_foodweb
+public foodweb_cache
 
 include("layout.jl")
 export foodwebplot, foodwebplot!, trophic_layout

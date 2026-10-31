@@ -1,0 +1,100 @@
+resource,consumer
+Eunotia  exigua,Amphinemura sulcicollis
+Eunotia  exigua,Chironomidae undet.
+Eunotia  exigua,Dugesia sp.
+Eunotia  exigua,Leuctra hippopus
+Eunotia  exigua,Leuctra inermis
+Eunotia  exigua,Plectrocnemia conspersa
+Eunotia  exigua,Protonemura meyeri
+Eunotia  exigua,Tipulidae undet.
+Eunotia naegelii,Amphinemura sulcicollis
+Eunotia naegelii,Chironomidae undet.
+Eunotia naegelii,Dugesia sp.
+Eunotia naegelii,Leuctra hippopus
+Eunotia naegelii,Leuctra inermis
+Eunotia naegelii,Plectrocnemia conspersa
+Eunotia naegelii,Protonemura meyeri
+Eunotia naegelii,Tipulidae undet.
+Eunotia incisa,Amphinemura sulcicollis
+Eunotia incisa,Chironomidae undet.
+Eunotia incisa,Dugesia sp.
+Eunotia incisa,Leuctra hippopus
+Eunotia incisa,Leuctra inermis
+Eunotia incisa,Plectrocnemia conspersa
+Eunotia incisa,Protonemura meyeri
+Eunotia incisa,Tipulidae undet.
+Eunotia denticula,Amphinemura sulcicollis
+Eunotia denticula,Chironomidae undet.
+Eunotia denticula,Dugesia sp.
+Eunotia denticula,Leuctra hippopus
+Eunotia denticula,Leuctra inermis
+Eunotia denticula,Plectrocnemia conspersa
+Eunotia denticula,Protonemura meyeri
+Eunotia denticula,Tipulidae undet.
+Tabellaria flocculosa,Amphinemura sulcicollis
+Tabellaria flocculosa,Chironomidae undet.
+Tabellaria flocculosa,Dugesia sp.
+Tabellaria flocculosa,Leuctra hippopus
+Tabellaria flocculosa,Leuctra inermis
+Tabellaria flocculosa,Plectrocnemia conspersa
+Tabellaria flocculosa,Protonemura meyeri
+Tabellaria flocculosa,Tipulidae undet.
+Peronia fibula,Amphinemura sulcicollis
+Peronia fibula,Chironomidae undet.
+Peronia fibula,Dugesia sp.
+Peronia fibula,Leuctra hippopus
+Peronia fibula,Leuctra inermis
+Peronia fibula,Plectrocnemia conspersa
+Peronia fibula,Protonemura meyeri
+Peronia fibula,Tipulidae undet.
+Brachysira brebi,Amphinemura sulcicollis
+Brachysira brebi,Chironomidae undet.
+Brachysira brebi,Dugesia sp.
+Brachysira brebi,Leuctra hippopus
+Brachysira brebi,Leuctra inermis
+Brachysira brebi,Plectrocnemia conspersa
+Brachysira brebi,Protonemura meyeri
+Brachysira brebi,Tipulidae undet.
+Amphinemura sulcicollis,Plectrocnemia conspersa
+Amphinemura sulcicollis,Salmo trutta
+Chironomidae undet.,Isoperla grammatica
+Chironomidae undet.,Plectrocnemia conspersa
+Chironomidae undet.,Salmo trutta
+Chironomidae undet.,Siphonoperla torrentium
+Chironomidae undet.,Dicranota sp.
+Dicranota sp.,Plectrocnemia conspersa
+Dicranota sp.,Dicranota sp.
+Dicranota sp.,Salmo trutta
+Isoperla grammatica,Isoperla grammatica
+Isoperla grammatica,Salmo trutta
+Leuctra hippopus,Dicranota sp.
+Leuctra hippopus,Isoperla grammatica
+Leuctra hippopus,Plectrocnemia conspersa
+Leuctra hippopus,Salmo trutta
+Leuctra hippopus,Siphonoperla torrentium
+Leuctra inermis,Dicranota sp.
+Leuctra inermis,Isoperla grammatica
+Leuctra inermis,Plectrocnemia conspersa
+Leuctra inermis,Salmo trutta
+Leuctra inermis,Siphonoperla torrentium
+Plectrocnemia conspersa,Plectrocnemia conspersa
+Plectrocnemia conspersa,Salmo trutta
+Protonemura meyeri,Plectrocnemia conspersa
+Protonemura meyeri,Salmo trutta
+Salmo trutta,Salmo trutta
+Siphonoperla torrentium,Plectrocnemia conspersa
+Siphonoperla torrentium,Siphonoperla torrentium
+Tipulidae undet.,Plectrocnemia conspersa
+Tipulidae undet.,Salmo trutta
+CPOM,Amphinemura sulcicollis
+CPOM,Chironomidae undet.
+CPOM,Leuctra hippopus
+CPOM,Leuctra inermis
+CPOM,Protonemura meyeri
+CPOM,Tipulidae undet.
+Salmo trutta,Amphinemura sulcicollis
+FPOM,Chironomidae undet.
+FPOM,Leuctra hippopus
+FPOM,Leuctra inermis
+FPOM,Protonemura meyeri
+FPOM,Tipulidae undet.

@@ -1,0 +1,74 @@
+resource,consumer
+Free bacteria in water column,Heterotrophic microflagellates
+Phytoplankton,Microzooplankton
+Bacteria attached to suspended particles,Microzooplankton
+Heterotrophic microflagellates,Microzooplankton
+Phytoplankton,Zooplankton
+Bacteria attached to suspended particles,Zooplankton
+Microzooplankton,Zooplankton
+Bacteria attached to suspended particles,Ctenophores
+Microzooplankton,Ctenophores
+Zooplankton,Ctenophores
+Zooplankton,Chrysaora quinquecirrha
+Ctenophores,Chrysaora quinquecirrha
+Phytoplankton,Other suspension feeders
+Bacteria attached to suspended particles,Other suspension feeders
+Microzooplankton,Other suspension feeders
+Phytoplankton,Mya
+Bacteria attached to suspended particles,Mya
+Microzooplankton,Mya
+Phytoplankton,Crassostrea virginica
+Bacteria attached to suspended particles,Crassostrea virginica
+Microzooplankton,Crassostrea virginica
+Sediment bacteria,Other polychaetes
+Sediment bacteria,Nereis
+Sediment bacteria,Macoma spp
+Sediment bacteria,Meiofauna
+Benthic algae,Meiofauna
+Sediment bacteria,Crustacean deposit feeders
+Sediment bacteria,Callinectes sapidus
+Other suspension feeders,Callinectes sapidus
+Mya,Callinectes sapidus
+Nereis,Callinectes sapidus
+Macoma spp,Callinectes sapidus
+Crustacean deposit feeders,Callinectes sapidus
+Callinectes sapidus,Callinectes sapidus
+Zooplankton,Fish larvae
+Zooplankton,Clupeidae
+Phytoplankton,Anchoa mitchilli
+Bacteria attached to suspended particles,Anchoa mitchilli
+Zooplankton,Anchoa mitchilli
+Phytoplankton,Brevoortia tyrannus
+Bacteria attached to suspended particles,Brevoortia tyrannus
+Zooplankton,Brevoortia tyrannus
+Zooplankton,Alosa sapidissima
+Other polychaetes,Micropogonius undulatus
+Nereis,Micropogonius undulatus
+Crustacean deposit feeders,Micropogonius undulatus
+Mya,Trinectes maculatus
+Other polychaetes,Trinectes maculatus
+Nereis,Trinectes maculatus
+Crustacean deposit feeders,Trinectes maculatus
+Other polychaetes,Leiostomus xanthurus
+Nereis,Leiostomus xanthurus
+Macoma spp,Leiostomus xanthurus
+Crustacean deposit feeders,Leiostomus xanthurus
+Anchoa mitchilli,Leiostomus xanthurus
+Other polychaetes,Morone americana
+Nereis,Morone americana
+Anchoa mitchilli,Morone americana
+Other polychaetes,Arius felis
+Nereis,Arius felis
+Crustacean deposit feeders,Arius felis
+Anchoa mitchilli,Pomatomus saltatrix
+Brevoortia tyrannus,Pomatomus saltatrix
+Leiostomus xanthurus,Pomatomus saltatrix
+Anchoa mitchilli,Cynoscion aregalis
+Crustacean deposit feeders,Paralichthys dentatus
+Anchoa mitchilli,Paralichthys dentatus
+Brevoortia tyrannus,Paralichthys dentatus
+Cynoscion aregalis,Paralichthys dentatus
+Callinectes sapidus,Morone saxatilis
+Clupeidae,Morone saxatilis
+Anchoa mitchilli,Morone saxatilis
+Brevoortia tyrannus,Morone saxatilis

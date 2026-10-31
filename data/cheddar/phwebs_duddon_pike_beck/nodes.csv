@@ -1,0 +1,36 @@
+node,M,N,category
+CPOM,,,""
+FPOM,,,""
+Tabellaria flocculosa,3.69789502463974e-12,1.06658418904048e8,producer
+Eunotia exigua,1.06548506810948e-12,1.05647438630075e8,producer
+Eunotia rhomboidea,2.6964182484935e-12,2.17360758903981e7,producer
+Eunotia incisa,5.68049892981316e-12,5.20654841095589e7,producer
+Eunotia pectinalis,4.29017297610507e-12,1.4153723835608e7,producer
+Frustulia rhomboides var saxonnica,1.99290752874042e-11,6.06588164383206e6,producer
+Pinnularia subcapitata,3.42685623828501e-11,1.9714115342454e7,producer
+Perionia fibula,2.63875352981789e-11,6.97576389040684e7,producer
+Achnanthes sp.,5.3409486869456e-13,1.263725342465e7,producer
+Eunotia sp. (L),2.27856629950786e-12,3.18458786301185e7,producer
+Fragilaria sp.,2.19349339390371e-11,1.81976449314961e7,producer
+Amphinemura sulcicollis,0.479358241400525,3.2,invertebrate
+Annelidae undet.,0.587266466368314,79.9999999999993,invertebrate
+Baetis rhodani,0.152413538866891,11.2,invertebrate
+Baetis vernus,0.113976981173216,4.8,invertebrate
+Calopteryx splendens,6.01266252934825,19.2,invertebrate
+Ceratopogonidae undet.,0.18357324692402,19.2,invertebrate
+Chironomidae,0.112578778717026,1259.2,invertebrate
+Cordulegaster boltonii,17.7114812159259,9.59999999999999,invertebrate
+Dicranota sp.,0.335430798044174,6.4,invertebrate
+Halesus radiatus,5.09163651481378,73.6000000000002,invertebrate
+Heptagenia lateralis,1.48750984520086,1.6,invertebrate
+Oulimnius sp. Lv.,0.129377705909161,1.6,invertebrate
+Oxyethira sp.,0.00486996064553207,27.2000000000001,invertebrate
+Plectrocnemia conspersa,2.63022832276788,4.8,invertebrate
+Simuliidae gra,0.388598276681915,36.8000000000002,invertebrate
+Simuliidae grb,0.478006839078888,6.4,invertebrate
+Simuliidae grd,0.3493557371032,25.6,invertebrate
+Siphonoperla torrentium,0.737972819332764,30.3999999999997,invertebrate
+Tanypodinae undet.,0.189695747254444,182.400000000001,invertebrate
+Tinodes waeneri,0.52025806013741,44.7999999999996,invertebrate
+Tipulidae undet.,0.891767351177388,1.6,invertebrate
+Salmo trutta,14999.9999999999,0.0199999999999999,vert.ecto

@@ -1,0 +1,58 @@
+node,category,M,N,kingdom,phylum,class,order,family,genus,species,resolved_to
+Anabaena circinalis,producer,1.91e-13,6.0e6,Bacteria,Cyanobacteria,Cyanophyceae,Nostocales,Nostocaceae,Anabaena,circinalis,Species
+Ankyra judayi,producer,1.53e-13,1.3e7,Plantae,Chlorophyta,Chlorophyceae,Sphaeropleales,Characiaceae,Ankyra,judayi,Species
+Cryptomonas sp. 1,producer,2.85e-13,3.3e7,Chromista,Cryptophyta,Cryptophyceae,Cryptomonadales,Cryptomonadaceae,Cryptomonas,"",Species
+Cryptomonas sp. 3,producer,6.72e-13,1.8e7,Chromista,Cryptophyta,Cryptophyceae,Cryptomonadales,Cryptomonadaceae,Cryptomonas,"",Species
+Cryptomonas sp. 4,producer,1.64e-12,2.8e7,Chromista,Cryptophyta,Cryptophyceae,Cryptomonadales,Cryptomonadaceae,Cryptomonas,"",Species
+Chroococcus dispersus,producer,2.39e-13,5.0e6,Bacteria,Cyanobacteria,Cyanophyceae,Chroococcales,Chroococcaceae,Chroococcus,dispersus,Species
+Chroococcus limneticus,producer,1.31e-12,1.6e7,Bacteria,Cyanobacteria,Cyanophyceae,Chroococcales,Chroococcaceae,Chroococcus,limneticus,Species
+Cosmarium sp.,producer,3.71e-12,1.0e6,Plantae,Charophyta,Zygnematophyceae,Desmidiales,Desmidiaceae,Cosmarium,"",Species
+Closteriopsis longissimus,producer,1.98e-13,1.0e6,Plantae,Chlorophyta,Trebouxiophyceae,Chlorellales,Chlorellaceae,Closteriopsis,longissimus,Species
+Chrysosphaerella longispina,producer,4.4e-11,1.0e6,Chromista,Ochrophyta,Chrysophyceae,Chromulinales,Paraphysomonadaceae,Chrysosphaerella,longispina,Species
+Dinobryon bavaricum,producer,5.29e-12,8.0e6,Chromista,Ochrophyta,Chrysophyceae,Chromulinales,Dinobryaceae,Dinobryon,bavaricum,Species
+Dinobryon cylindricum,producer,4.48e-12,6.7e7,Chromista,Ochrophyta,Chrysophyceae,Chromulinales,Dinobryaceae,Dinobryon,cylindricum,Species
+Dactylococcopsis fascicularis,producer,1.32e-13,1.0e6,Bacteria,Cyanobacteria,Cyanophyceae,Chroococcales,Chroococcaceae,Dactylococcopsis,fascicularis,Species
+Diceras sp.,producer,1.53e-13,1.0e6,Chromista,Ochrophyta,Chrysophyceae,Hibberdiales,Stylococcaceae,Diceras,"",Species
+Dictyosphaerium pulchellum,producer,4.07e-13,1.0e6,Plantae,Chlorophyta,Trebouxiophyceae,Chlorellales,Chlorellaceae,Dictyosphaerium,pulchellum,Species
+Dinobryon sertularia,producer,6.28e-12,2.0e6,Chromista,Ochrophyta,Chrysophyceae,Chromulinales,Dinobryaceae,Dinobryon,sertularia,Species
+Sphaerocystis schroeteri,producer,1.08e-11,2.0e6,Plantae,Chlorophyta,Chlorophyceae,Tetrasporales,Sphaerocystidaceae,Sphaerocystis,schroeteri,Species
+Gloeocystis sp.,producer,9.46e-11,5.0e6,Plantae,Chlorophyta,Chlorophyceae,Sphaeropleales,Radiococcaceae,Gloeocystis,"",Species
+Glenodinium pulvisculus,producer,5.2e-12,8.0e6,Protozoa,Myzozoa,Dinophyceae,Peridiniales,Peridiniaceae,Glenodinium,pulvisculus,Species
+Microcystis aeruginosa,producer,1.62e-11,2.0e6,Bacteria,Cyanobacteria,Cyanophyceae,Chroococcales,Microcystaceae,Microcystis,aeruginosa,Species
+Mallomonas-spiny sp. 1,producer,2.22e-12,2.1e7,Chromista,Ochrophyta,Synurophyceae,Synurales,Mallomonadaceae,Mallomonas,"",Species
+Mallomonas-spiny sp. 2,producer,2.22e-12,2.6e7,Chromista,Ochrophyta,Synurophyceae,Synurales,Mallomonadaceae,Mallomonas,"",Species
+Unclassified microflagellates,producer,1.02e-13,1.26e8,"","","","","","","",""
+Oocystis sp. 1,producer,3.86e-12,2.4e7,Plantae,Chlorophyta,Trebouxiophyceae,Chlorellales,Oocystaceae,Oocystis,"",Species
+Oocystis sp. 2,producer,6.32e-12,3.0e6,Plantae,Chlorophyta,Trebouxiophyceae,Chlorellales,Oocystaceae,Oocystis,"",Species
+Oscillatoria sp.,producer,1.61e-12,6.0e6,Bacteria,Cyanobacteria,Cyanophyceae,Oscillatoriales,Oscillatoriaceae,Oscillatoria,"",Species
+Peridinium limbatum,producer,6.46e-11,1.0e6,Protozoa,Myzozoa,Dinophyceae,Peridiniales,Peridiniaceae,Peridinium,limbatum,Species
+Peridinium pulsillum,producer,1.58e-12,1.0e6,Protozoa,Myzozoa,Dinophyceae,Peridiniales,Peridiniaceae,Peridinium,pulsillum,Species
+Quadrigula lacustris,producer,7.13e-12,1.03e8,Plantae,Chlorophyta,Chlorophyceae,Sphaeropleales,Selenastraceae,Quadrigula,lacustris,Species
+Quadrigula sp. 2,producer,9.48e-13,1.1e7,Plantae,Chlorophyta,Chlorophyceae,Sphaeropleales,Selenastraceae,Quadrigula,"",Species
+Chromulina sp.,producer,3.03e-14,2.09e8,Chromista,Ochrophyta,Chrysophyceae,Chromulinales,Chromulinaceae,Chromulina,"",Species
+Schroederia setigera,producer,6.37e-13,8.9e7,Plantae,Chlorophyta,Chlorophyceae,Sphaeropleales,Characiaceae,Schroederia,setigera,Species
+Selenastrum minutum,producer,2.72e-13,1.1e7,Plantae,Chlorophyta,Chlorophyceae,Sphaeropleales,Selenastraceae,Selenastrum,minutum,Species
+Synedra sp.,producer,3.62e-13,2.0e6,Chromista,Ochrophyta,Bacillariophyceae,Fragilariales,Fragilariaceae,Synedra,"",Species
+Synura sp.,producer,5.07e-12,1.0e6,Chromista,Ochrophyta,Synurophyceae,Synurales,Synuraceae,Synura,"",Species
+Ascomorpha eucadis,invertebrate,4.0e-10,21000.0,Animalia,Rotifera,Monogonata,Ploima,Gastropodidae,Ascomorpha,eucadis,Species
+Conochilus (colonial),invertebrate,1.46e-8,4200.0,Animalia,Rotifera,Monogonata,Flosculariaceae,Conochilidae,Conochilus,"",Genus
+Conochiloides dossuarius,invertebrate,1.6e-10,1800.0,Animalia,Rotifera,Monogonata,Flosculariaceae,Conochilidae,Conochiloides,dossuarius,Species
+Cyclops varians rubellus,invertebrate,2.44e-8,2400.0,Animalia,Arthropoda,Maxillopoda,Cyclopoida,Cyclopidae,Cyclops,varians,Species
+Diaptomus oregonensis,invertebrate,1.44e-8,600.0,Animalia,Arthropoda,Maxillopoda,Calanoida,Diaptomidae,Diaptomus,oregonensis,Species
+Daphnia pulex,invertebrate,4.57e-8,15600.0,Animalia,Arthropoda,Branchiopoda,Diplostraca,Daphniidae,Daphnia,pulex,Species
+Daphnia rosea,invertebrate,1.36e-8,2400.0,Animalia,Arthropoda,Branchiopoda,Diplostraca,Daphniidae,Daphnia,rosea,Species
+Gastropus hyptopus,invertebrate,1.35e-10,1800.0,Animalia,Rotifera,Monogonata,Ploima,Gastropodidae,Gastropus,hyptopus,Species
+Gastropus stylifer,invertebrate,1.0e-10,11400.0,Animalia,Rotifera,Monogonata,Ploima,Gastropodidae,Gastropus,stylifer,Species
+Holopedium gibberum,invertebrate,4.89e-8,4200.0,Animalia,Arthropoda,Branchiopoda,Diplostraca,Holopediidae,Holopedium,gibberum,Species
+Kellicottia bostoniensis,invertebrate,2.0e-11,31800.0,Animalia,Rotifera,Monogonata,Ploima,Brachionidae,Kellicottia,bostoniensis,Species
+Kellicottia longispina,invertebrate,4.5e-11,3000.0,Animalia,Rotifera,Monogonata,Ploima,Brachionidae,Kellicottia,longispina,Species
+Keratella cochlearis,invertebrate,1.0e-11,52800.0,Animalia,Rotifera,Monogonata,Ploima,Brachionidae,Keratella,cochlearis,Species
+Keratella testudo,invertebrate,1.5e-11,69600.0,Animalia,Rotifera,Monogonata,Ploima,Brachionidae,Keratella,testudo,Species
+Orthocyclops modestus,invertebrate,3.22e-8,600.0,Animalia,Arthropoda,Maxillopoda,Cyclopoida,Cyclopidae,Orthocyclops,modestus,Species
+Polyarthra vulgaris,invertebrate,2.6e-10,75600.0,Animalia,Rotifera,Monogonata,Ploima,Synchaetidae,Polyarthra,vulgaris,Species
+Synchaeta sp.,invertebrate,3.7e-10,29400.0,Animalia,Rotifera,Monogonata,Ploima,Synchaetidae,Synchaeta,"",Species
+Trichocerca cylindrica,invertebrate,5.9e-10,22200.0,Animalia,Rotifera,Monogonata,Ploima,Trichocercidae,Trichocerca,cylindrica,Species
+Trichocerca multicrinis,invertebrate,7.0e-11,4200.0,Animalia,Rotifera,Monogonata,Ploima,Trichocercidae,Trichocerca,multicrinis,Species
+Tropocyclops prasinus,invertebrate,8.95e-9,1200.0,Animalia,Arthropoda,Maxillopoda,Cyclopoida,Cyclopidae,Tropocyclops,prasinus,Species
+Chaoborus punctipennis,invertebrate,2.1e-7,12000.0,Animalia,Arthropoda,Insecta,Diptera,Chaoboridae,Chaoborus,punctipennis,Species
+Micropterus salmoides,vert.ecto,0.2,0.03,Animalia,Chordata,Actinopterygii,Perciformes,Centrarchidae,Micropterus,salmoides,Species

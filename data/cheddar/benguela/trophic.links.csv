@@ -1,0 +1,204 @@
+resource,consumer
+Phytoplankton,Bacteria
+Benthic filter feeders,Benthic carnivores
+Phytoplankton,Microzooplankton
+Bacteria,Microzooplankton
+Microzooplankton,Microzooplankton
+Phytoplankton,Mesozooplankton
+Microzooplankton,Mesozooplankton
+Phytoplankton,Macrozooplankton
+Mesozooplankton,Macrozooplankton
+Phytoplankton,Gelatinous zoolplankton
+Bacteria,Gelatinous zoolplankton
+Microzooplankton,Gelatinous zoolplankton
+Mesozooplankton,Gelatinous zoolplankton
+Phytoplankton,Anchovy
+Microzooplankton,Anchovy
+Mesozooplankton,Anchovy
+Macrozooplankton,Anchovy
+Phytoplankton,Pilchard
+Mesozooplankton,Pilchard
+Macrozooplankton,Pilchard
+Mesozooplankton,Round herring
+Macrozooplankton,Round herring
+Mesozooplankton,Lightfish
+Macrozooplankton,Lightfish
+Mesozooplankton,Lanternfish
+Macrozooplankton,Lanternfish
+Phytoplankton,Goby
+Microzooplankton,Goby
+Mesozooplankton,Goby
+Macrozooplankton,Goby
+Benthic carnivores,Other pelagics
+Mesozooplankton,Other pelagics
+Macrozooplankton,Other pelagics
+Gelatinous zoolplankton,Other pelagics
+Benthic carnivores,Horse mackerel
+Mesozooplankton,Horse mackerel
+Macrozooplankton,Horse mackerel
+Lanternfish,Horse mackerel
+Benthic carnivores,Chub mackerel
+Mesozooplankton,Chub mackerel
+Macrozooplankton,Chub mackerel
+Anchovy,Chub mackerel
+Round herring,Chub mackerel
+Lanternfish,Chub mackerel
+Benthic carnivores,Other groundfish
+Mesozooplankton,Other groundfish
+Macrozooplankton,Other groundfish
+Anchovy,Other groundfish
+Round herring,Other groundfish
+Lightfish,Other groundfish
+Lanternfish,Other groundfish
+Goby,Other groundfish
+Other pelagics,Other groundfish
+Other groundfish,Other groundfish
+Hakes,Other groundfish
+Squid,Other groundfish
+Mesozooplankton,Hakes
+Macrozooplankton,Hakes
+Anchovy,Hakes
+Pilchard,Hakes
+Round herring,Hakes
+Lightfish,Hakes
+Lanternfish,Hakes
+Goby,Hakes
+Horse mackerel,Hakes
+Chub mackerel,Hakes
+Other groundfish,Hakes
+Hakes,Hakes
+Squid,Hakes
+Benthic carnivores,Squid
+Macrozooplankton,Squid
+Anchovy,Squid
+Pilchard,Squid
+Round herring,Squid
+Lightfish,Squid
+Goby,Squid
+Horse mackerel,Squid
+Other groundfish,Squid
+Hakes,Squid
+Squid,Squid
+Benthic carnivores,Tunas
+Anchovy,Tunas
+Pilchard,Tunas
+Round herring,Tunas
+Lightfish,Tunas
+Lanternfish,Tunas
+Goby,Tunas
+Other pelagics,Tunas
+Horse mackerel,Tunas
+Chub mackerel,Tunas
+Hakes,Tunas
+Squid,Tunas
+Benthic carnivores,Snoek
+Macrozooplankton,Snoek
+Anchovy,Snoek
+Pilchard,Snoek
+Round herring,Snoek
+Lightfish,Snoek
+Lanternfish,Snoek
+Goby,Snoek
+Horse mackerel,Snoek
+Hakes,Snoek
+Squid,Snoek
+Benthic carnivores,Kob
+Macrozooplankton,Kob
+Anchovy,Kob
+Pilchard,Kob
+Goby,Kob
+Horse mackerel,Kob
+Chub mackerel,Kob
+Other groundfish,Kob
+Hakes,Kob
+Squid,Kob
+Kob,Kob
+Macrozooplankton,Yellowtail
+Anchovy,Yellowtail
+Pilchard,Yellowtail
+Round herring,Yellowtail
+Goby,Yellowtail
+Other pelagics,Yellowtail
+Horse mackerel,Yellowtail
+Chub mackerel,Yellowtail
+Other groundfish,Yellowtail
+Squid,Yellowtail
+Benthic carnivores,Geelbek
+Anchovy,Geelbek
+Pilchard,Geelbek
+Round herring,Geelbek
+Goby,Geelbek
+Other pelagics,Geelbek
+Horse mackerel,Geelbek
+Other groundfish,Geelbek
+Hakes,Geelbek
+Squid,Geelbek
+Macrozooplankton,Whales and dolphins
+Anchovy,Whales and dolphins
+Pilchard,Whales and dolphins
+Round herring,Whales and dolphins
+Lanternfish,Whales and dolphins
+Goby,Whales and dolphins
+Other pelagics,Whales and dolphins
+Horse mackerel,Whales and dolphins
+Hakes,Whales and dolphins
+Squid,Whales and dolphins
+Benthic carnivores,Birds
+Mesozooplankton,Birds
+Macrozooplankton,Birds
+Anchovy,Birds
+Pilchard,Birds
+Round herring,Birds
+Lightfish,Birds
+Lanternfish,Birds
+Goby,Birds
+Other pelagics,Birds
+Horse mackerel,Birds
+Chub mackerel,Birds
+Other groundfish,Birds
+Hakes,Birds
+Squid,Birds
+Snoek,Birds
+Birds,Birds
+Seals,Birds
+Benthic carnivores,Seals
+Anchovy,Seals
+Pilchard,Seals
+Round herring,Seals
+Lightfish,Seals
+Lanternfish,Seals
+Goby,Seals
+Other pelagics,Seals
+Horse mackerel,Seals
+Chub mackerel,Seals
+Other groundfish,Seals
+Hakes,Seals
+Squid,Seals
+Snoek,Seals
+Birds,Seals
+Sharks,Seals
+Benthic carnivores,Sharks
+Mesozooplankton,Sharks
+Macrozooplankton,Sharks
+Gelatinous zoolplankton,Sharks
+Anchovy,Sharks
+Pilchard,Sharks
+Round herring,Sharks
+Lightfish,Sharks
+Lanternfish,Sharks
+Goby,Sharks
+Other pelagics,Sharks
+Horse mackerel,Sharks
+Chub mackerel,Sharks
+Other groundfish,Sharks
+Hakes,Sharks
+Squid,Sharks
+Tunas,Sharks
+Snoek,Sharks
+Kob,Sharks
+Yellowtail,Sharks
+Geelbek,Sharks
+Whales and dolphins,Sharks
+Birds,Sharks
+Seals,Sharks
+Sharks,Sharks
