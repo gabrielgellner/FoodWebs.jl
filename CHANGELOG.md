@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2026-10-31
+
+### Breaking Changes
+
+- License the package under GPL-3.0-or-later, so that code adapted from GPL-licensed ecology software can be brought in; versions up to 0.3.0 remain available under MIT (#38)
+
+### Bug Fixes
+
+- **topology**: Accept a web when its number of links is within `tol` of `C S^2` or is the whole number of links nearest it, so that small webs reach every connectance; throw an `ArgumentError` up front when the target allows too few links to connect `S` species (#26)
+
+### Features
+
+- **utils**: Add MacKay–Johnson–Sansom trophic levels, `trophic_levels(web; method = :mackay)`, defined for every web including those without basal species, and `trophic_incoherence` (`F₀`); both accept weighted webs (#14)
+- **topology**: Add the nested-hierarchy model, `nested_hierarchy_network`, following Cattin et al. (2004) as described in Stouffer et al. (2005) (#16)
+- **topology**: Add the minimum potential niche model, `minimum_potential_niche_network`, with niche intervals drawn at a potential connectance that keeps the expected connectance at `C` after forbidding links (#17)
+- **topology**: Add the probabilistic niche model: `probabilistic_niche_probabilities` gives the link probabilities, with a kernel exponent `p` (the Gaussian is `p = 2`), and `probabilistic_niche_network` draws webs from given parameters or for a target `S` and `C` (#18)
+- **data**: Bundle 26 empirical food webs, the 19 webs of the R package cheddar and the 7 webs of Williams & Martinez (2000), each with its citation, source and license in a catalog and a Frictionless data package; add the `FoodWeb` type, `foodweb`, `foodweb_ids` and `read_foodweb`, and scripts that download the Web of Life and Mangal food webs (#19, #35)
+- **properties**: Add the structural properties of Williams & Martinez (2000), `structural_properties` and its parts (`intermediate_species`, `cannibals`, `species_in_loops`, `omnivores`, `generality`, `vulnerability`, `trophic_similarity`, `mean_max_similarity`), `characteristic_path_length`, and shortest and short-weighted trophic levels; tested against their Table 2 and the path lengths of Dunne et al. (2002) (#19, #37)
+- **plotting**: End arrows at node edges in screen space, draw all arrows in one call, scale node size, edge opacity and arrowhead size with the size of the web, and colour labels by node luminance; `trophic_layout` measures bands from their lowest species, so layouts can differ from 0.3.0; add a Quarto gallery of the bundled webs, rendered by `just gallery` (#36, #39)
+
 ## [0.3.0] - 2026-10-31
 
 ### Features
