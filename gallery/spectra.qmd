@@ -1,0 +1,188 @@
+---
+title: "Random community matrices"
+subtitle: "Eigenvalues against the elliptic law, from May's matrices to structured food webs"
+engine: julia
+julia:
+  exeflags: ["--project=@."]
+format:
+  html:
+    toc: true
+    embed-resources: true
+execute:
+  echo: false
+---
+
+Each panel is drawn with `eigenplot!`: the eigenvalues of one matrix (points), the ellipse that
+`elliptic_law` predicts from the moments of its off-diagonal pairs (line), the predicted outlier
+from a nonzero mean where there is one (open circle), and the stability boundary `Re λ = 0`
+(dashed). The cases follow chapter 4 of Allesina's
+*Theoretical Community Ecology* notes; `test/elliptic_law.jl` checks the same cases. Rebuild with
+`just gallery`.
+
+```{julia}
+using FoodWebs, CairoMakie
+using Distributions: Normal
+using LinearAlgebra: eigvals
+using Random: Xoshiro
+using Statistics: mean
+using Printf: @sprintf
+
+# off-diagonal pairs zero with probability 1 - C, otherwise with mean μ, variance σ² and
+# correlation ρ, from normal or uniform marginals
+function sparse_pairs(rng, S, C, d; σ = 1.0, ρ = 0.0, μ = 0.0, uniform = false)
+    M = zeros(S, S)
+    draw() = uniform ? sqrt(12) * (rand(rng) - 0.5) : randn(rng)
+    for i in 1:(S - 1), j in (i + 1):S
+        rand(rng) < C || continue
+        z1, z2 = draw(), draw()
+        M[i, j] = μ + σ * z1
+        M[j, i] = μ + σ * (ρ * z1 + sqrt(1 - ρ^2) * z2)
+    end
+    M[CartesianIndex.(1:S, 1:S)] .= d
+    return M
+end
+
+# the mean matrix of a matrix whose upper and lower triangles have different means
+function triangle_means(J)
+    S = size(J, 1)
+    upper = mean(J[i, j] for i in 1:S for j in (i + 1):S)
+    lower = mean(J[i, j] for j in 1:S for i in (j + 1):S)
+    return [i < j ? upper : i > j ? lower : 0.0 for i in 1:S, j in 1:S]
+end
+
+fmt(x) = @sprintf("%.2f", x)
+nothing
+```
+
+## May's matrices
+
+Off-diagonal entries are zero with probability `1 - C` and otherwise have mean zero and variance
+`σ²`. The eigenvalues fill a disc of radius `√(SCσ²)` around the diagonal value, whatever the
+distribution of the entries (May 1972; the circular law). Here `S = 500`, `C = 0.2`, `σ = 1`,
+so the radius is 10.
+
+```{julia}
+rng = Xoshiro(1)
+fig = Figure(size = (900, 450))
+for (k, uniform) in enumerate((false, true))
+    ax = Axis(fig[1, k]; title = uniform ? "uniform entries" : "normal entries", xlabel = "Re λ", ylabel = "Im λ")
+    eigenplot!(ax, sparse_pairs(rng, 500, 0.2, -10.0; uniform))
+end
+fig
+```
+
+## Interaction types
+
+With pair correlation `ρ` the disc stretches to an ellipse with semi-axes `√(SCσ²)(1 ± ρ)`
+(Sommers et al. 1988). Predator–prey pairs have opposite signs and `ρ < 0`, so their spectra are
+narrower along the real axis and their matrices are easier to stabilize than those of
+competition or mutualism, with `ρ > 0` (Allesina & Tang 2012).
+
+```{julia}
+fig = Figure(size = (1200, 450))
+for (k, ρ) in enumerate((-0.5, 0.0, 0.5))
+    ax = Axis(fig[1, k]; title = "ρ = $ρ", xlabel = "Re λ", ylabel = "Im λ")
+    eigenplot!(ax, sparse_pairs(rng, 500, 0.2, -10.0; ρ))
+    limits!(ax, -27, 7, -17, 17)
+end
+fig
+```
+
+`random_predprey` pairs a negative entry `-|a|` with a positive entry `f |b|`, with `a` and `b`
+independent normals. With `f = 1` the pair correlation is `-E|a| E|b| / E[a²] = -2/π ≈ -0.64`
+and the mean is zero; with `f < 1` the mean is negative and adds an outlier on the stable side.
+
+```{julia}
+web = may_network(rng, 400, 0.1)
+fig = Figure(size = (900, 450))
+for (k, f) in enumerate((1.0, 0.3))
+    J = random_predprey(rng, web, Normal(), f)
+    sol = elliptic_law(J)
+    ax = Axis(fig[1, k]; title = "f = $f: ρ = $(fmt(sol.ρ)), outlier at $(isnan(sol.outlier) ? "none" : fmt(sol.outlier))",
+        xlabel = "Re λ", ylabel = "Im λ")
+    eigenplot!(ax, J)
+end
+fig
+```
+
+## Outliers from a nonzero mean
+
+A mean `μ` of the off-diagonal entries adds the rank-one matrix `μ(11ᵀ - I)`, with eigenvalue
+`θ = (S - 1)μ`. When `|θ|` exceeds the radius `√(Sσ²)` it appears as an outlier, shifted by the
+pair correlation to `θ + ρSσ²/θ` from the center (O'Rourke & Renfrew 2014). Without the
+correction the prediction is off by `ρSσ²/θ`, here about 1.4.
+
+```{julia}
+fig = Figure(size = (900, 450))
+for (k, ρ) in enumerate((0.0, 0.5))
+    M = sparse_pairs(rng, 500, 0.2, -5.0; ρ, μ = 0.5)
+    sol = elliptic_law(M)
+    observed = maximum(real, eigvals(M))
+    ax = Axis(fig[1, k]; title = "ρ = $ρ: outlier $(fmt(observed)), predicted $(fmt(sol.outlier)), uncorrected $(fmt(sol.μ_diag + (sol.S - 1) * sol.μ))",
+        xlabel = "Re λ", ylabel = "Im λ")
+    eigenplot!(ax, M)
+end
+fig
+```
+
+## Structured food webs
+
+The elliptic law assumes the pairs are exchangeable: any pair of entries is as likely to hold the
+predator's effect above the diagonal as below. Food web models break this. In a cascade web,
+species eat only lower-ranked species, so every predator's negative effect lies above the
+diagonal and every prey's positive effect below. The mean matrix then has one constant in each
+triangle, and its eigenvalues (crosses) are large and nearly imaginary. They predict the
+imaginary extent of the cascade spectrum, which reaches several times the ellipse.
+
+The shuffled panels are a null model, not a food web. `shuffle_prey = true` keeps which pairs of
+species interact and the sizes of their effects, but flips a coin for which one of each pair is
+the predator, so about half the links point down the hierarchy and the web has no consistent
+direction of energy flow. That makes the two triangles statistically alike, which is what the
+elliptic law assumes, and the spectrum fills the ellipse. Comparing the two columns isolates
+what the trophic hierarchy itself does to the spectrum.
+
+The niche model only partly follows this: its imaginary extent goes beyond even the
+triangle-mean prediction, and its spectral abscissa beyond the bulk. In the niche model the
+probability of a link depends on the species' niche values, so the mean structure varies within
+each triangle. Allesina et al. (2015) study the stability of these structured webs.
+
+```{julia}
+S = 400
+fig = Figure(size = (1100, 900))
+rows = []
+for (r, (name, gen)) in enumerate((("cascade", cascade_network), ("niche", niche_network)))
+    w = gen(rng, S, 0.1)
+    for (c, shuffle) in enumerate((false, true))
+        J = random_predprey(rng, w, Normal(), 1.0; shuffle_prey = shuffle)
+        means = eigvals(triangle_means(J))
+        ax = Axis(fig[r, c]; title = "$name, $(shuffle ? "shuffled" : "structured")", xlabel = "Re λ", ylabel = "Im λ")
+        eigenplot!(ax, J)
+        shuffle || scatter!(ax, real.(means), imag.(means); marker = :xcross, markersize = 9, color = :darkorange)
+        sol, λ = elliptic_law(J), eigvals(J)
+        push!(rows, (name, shuffle, maximum(imag, λ), sol.y_semi_axis, maximum(imag, means), maximum(real, λ) + 1, sol.x_semi_axis))
+    end
+end
+fig
+```
+
+```{julia}
+#| output: asis
+println("| Web | Pairs | Max Im λ | Ellipse Im semi-axis | Triangle-mean max Im | Max Re λ − d | Ellipse Re semi-axis |")
+println("|---|---|--:|--:|--:|--:|--:|")
+for (name, shuffle, im, y, m, re, x) in rows
+    println("| $name | $(shuffle ? "shuffled" : "structured") | ", join(fmt.((im, y, m, re, x)), " | "), " |")
+end
+```
+
+## References
+
+- May, R. M. Will a large complex system be stable? Nature 238, 413–414 (1972).
+- Sommers, H. J., Crisanti, A., Sompolinsky, H. & Stein, Y. Spectrum of large random asymmetric
+  matrices. Phys. Rev. Lett. 60, 1895–1898 (1988).
+- Allesina, S. & Tang, S. Stability criteria for complex ecosystems. Nature 483, 205–208 (2012).
+- O'Rourke, S. & Renfrew, D. Low rank perturbations of large elliptic random matrices.
+  Electron. J. Probab. 19, 1–65 (2014).
+- Allesina, S. et al. Predicting the stability of large structured food webs. Nat. Commun. 6,
+  7842 (2015).
+- Allesina, S. Theoretical Community Ecology, chapter 4,
+  <https://github.com/StefanoAllesina/Theoretical_Community_Ecology>.

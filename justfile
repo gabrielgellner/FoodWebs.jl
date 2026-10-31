@@ -36,10 +36,11 @@ ci: fmt-check lint test
 
 alias check := ci
 
-# Render the Quarto gallery of the bundled food webs to gallery/webs.html
+# Render the Quarto notes in gallery/ (the bundled food webs and random community matrices)
 gallery:
     {{ julia }} --project=gallery -e 'using Pkg; Pkg.instantiate()'
     quarto render gallery/webs.qmd
+    quarto render gallery/spectra.qmd
 
 # ── Release ───────────────────────────────────────────────────────────────────
 

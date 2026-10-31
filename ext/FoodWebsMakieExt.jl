@@ -1,8 +1,9 @@
 module FoodWebsMakieExt
 
-using FoodWebs: FoodWebs, trophic_layout, trophic_levels
-using Makie: Makie, Axis, Figure, Point2f, Vec2f, arrows2d!, hidespines!, hidexdecorations!, limits!,
-    lift, scatter!, text!
+using FoodWebs: FoodWebs, elliptic_law, trophic_layout, trophic_levels
+using LinearAlgebra: LinearAlgebra, eigvals
+using Makie: Makie, Axis, DataAspect, Figure, Point2f, Vec2f, arrows2d!, hidespines!, hidexdecorations!,
+    limits!, lift, lines!, scatter!, text!, vlines!
 
 function FoodWebs.foodwebplot(web::AbstractMatrix; size = (500, 500), title = "", kwargs...)
     fig = Figure(; size)
@@ -95,6 +96,53 @@ function FoodWebs.foodwebplot!(
     # only the trophic level axis carries information
     hidespines!(ax, :t, :r, :b)
     hidexdecorations!(ax)
+    return ax
+end
+
+
+function FoodWebs.eigenplot(M::AbstractMatrix; size = (500, 500), title = "", kwargs...)
+    fig = Figure(; size)
+    ax = Axis(fig[1, 1]; title, xlabel = "Re λ", ylabel = "Im λ")
+    FoodWebs.eigenplot!(ax, M; kwargs...)
+    return fig, ax
+end
+
+function FoodWebs.eigenplot!(
+        ax, M::AbstractMatrix; ellipse = true, outlier = true, stability = true,
+        law = nothing, color = (:steelblue, 0.6), markersize = 5, ellipsecolor = :black,
+        outliercolor = :firebrick, equal_aspect = true,
+    )
+    λ = eigvals(M)
+    # points the window must contain: the eigenvalues and whatever else is drawn
+    xs, ys = collect(real.(λ)), collect(imag.(λ))
+    stability && (vlines!(ax, [0.0]; color = :gray60, linestyle = :dash); push!(xs, 0.0); push!(ys, 0.0))
+    if ellipse || outlier
+        law = something(law, elliptic_law(M))
+        if ellipse
+            t = range(0, 2π; length = 200)
+            ex, ey = law.μ_diag .+ law.x_semi_axis .* cos.(t), law.y_semi_axis .* sin.(t)
+            lines!(ax, ex, ey; color = ellipsecolor)
+            append!(xs, ex)
+            append!(ys, ey)
+        end
+        if outlier && !isnan(law.outlier)
+            scatter!(
+                ax, [law.outlier], [0.0]; markersize = 16, color = :transparent,
+                strokecolor = outliercolor, strokewidth = 2,
+            )
+            push!(xs, law.outlier)
+            push!(ys, 0.0)
+        end
+    end
+    scatter!(ax, real.(λ), imag.(λ); color, markersize)
+    if equal_aspect
+        # a square window with equal scales keeps the ellipse's shape without squeezing a narrow
+        # spectrum into a thin axis
+        cx, cy = (minimum(xs) + maximum(xs)) / 2, (minimum(ys) + maximum(ys)) / 2
+        half = 0.55 * max(maximum(xs) - minimum(xs), maximum(ys) - minimum(ys), 1.0e-9)
+        limits!(ax, cx - half, cx + half, cy - half, cy + half)
+        ax.aspect = DataAspect()
+    end
     return ax
 end
 
