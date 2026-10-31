@@ -13,7 +13,7 @@ end
 function FoodWebs.foodwebplot!(
         ax, web::AbstractMatrix; levels = trophic_levels(web), layout = trophic_layout(web; levels),
         color = levels, colormap = :viridis, markersize = 22, edgecolor = (:gray30, 0.6),
-        edgewidth = 1.2, labels = string.(axes(web, 1)), highlight_cannibals = true,
+        edgewidth = 1.2, labels = string.(axes(web, 1)), fontsize = 10, highlight_cannibals = true,
     )
     S = size(web, 1)
     xs, ys = first.(layout), last.(layout)
@@ -35,7 +35,7 @@ function FoodWebs.foodwebplot!(
     scatter!(ax, xs, ys; color, colormap, markersize, strokewidth, strokecolor = :black)
     # a light glow keeps the labels readable on dark and light nodes alike
     labels === nothing || text!(
-        ax, xs, ys; text = labels, align = (:center, :center), fontsize = 10, glowwidth = 2,
+        ax, xs, ys; text = labels, align = (:center, :center), fontsize, glowwidth = 2,
         glowcolor = (:white, 0.8),
     )
     # pad the limits so that nodes at the edges are not clipped

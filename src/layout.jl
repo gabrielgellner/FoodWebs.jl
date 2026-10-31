@@ -102,7 +102,8 @@ Keywords:
   `colormap`;
 - `markersize`: one per species or a single size;
 - `edgecolor` and `edgewidth`: for the arrows;
-- `labels`: text drawn on each node (`nothing` for none; by default the species indices);
+- `labels` and `fontsize`: text drawn on each node (`nothing` for none; by default the species
+  indices) and its size;
 - `highlight_cannibals`: draw cannibals with a thick outline (default `true`).
 """
 function foodwebplot end
