@@ -34,6 +34,9 @@ export cannibals, intermediate_species, omnivores, species_in_loops
 export generality, vulnerability, mean_max_similarity, trophic_similarity
 export characteristic_path_length, structural_properties
 
+include("motifs.jl")
+export motif_census, motif_ids, motif_name, motif_roles, motif_zscores, rewire_links
+
 include("data.jl")
 export FoodWeb, foodweb, foodweb_ids, read_foodweb
 public foodweb_cache
