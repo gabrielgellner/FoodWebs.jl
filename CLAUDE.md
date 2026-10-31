@@ -10,6 +10,10 @@ predictions. The research code in
   generalized cascade, niche, generalized niche), with Williams & Martinez style acceptance.
 - `src/utils.jl`: connectance, basal and top species, trophic levels,
   `disconnected_from_basal`.
+- `src/properties.jl`: the structural properties of Williams & Martinez (2000) and the
+  characteristic path length, tested against their published tables.
+- `src/data.jl`: the `FoodWeb` type and readers for the empirical webs in `data/` (see
+  `data/README.md`).
 - `src/randcmat.jl`: random community matrices with a web's structure (`random_predprey`).
 - `src/stability.jl`: spectral and numerical abscissa.
 - `src/elliptic_law.jl`: elliptic-law predictions and off-diagonal pair utilities.

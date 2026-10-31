@@ -11,6 +11,7 @@ title = "Bridge Brook Lake"
 citation = "Baird, D. & Ulanowicz, R. E. The seasonal dynamics of the Chesapeake Bay ecosystem. Ecol. Monogr. 59, 329–364 (1989)."
 license = "No license given; redistributed with citation of the original data."
 links = 68
+notes = "68 links (C = 0.071, as in Dunne et al. 2002); Williams & Martinez (2000) list C = 0.072."
 source = "Trophic-species web as compiled by Williams, R. J. & Martinez, N. D. Simple rules yield complex food webs. Nature 404, 180–183 (2000); Dunne, J. A., Williams, R. J. & Martinez, N. D. Food-web structure and network theory: the role of connectance and size. PNAS 99, 12917–12922 (2002)."
 species = 31
 title = "Chesapeake Bay"
@@ -51,6 +52,7 @@ title = "St. Martin Island"
 citation = "Hall, S. J. & Raffaelli, D. Food-web patterns: lessons from a species-rich web. J. Anim. Ecol. 60, 823–841 (1991)."
 license = "No license given; redistributed with citation of the original data."
 links = 395
+notes = "The 83-species version of Dunne et al. (2002) (Ythan Estuary 2, C = 0.057). Williams & Martinez (2000) used a 78-species version of the same 92 taxa (C = 0.061)."
 source = "Trophic-species web as compiled by Williams, R. J. & Martinez, N. D. Simple rules yield complex food webs. Nature 404, 180–183 (2000); Dunne, J. A., Williams, R. J. & Martinez, N. D. Food-web structure and network theory: the role of connectance and size. PNAS 99, 12917–12922 (2002)."
 species = 83
 title = "Ythan Estuary"
