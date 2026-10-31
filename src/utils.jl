@@ -51,18 +51,38 @@ function disconnected_from_basal(web::AbstractMatrix)
 end
 
 """
-    trophic_levels(web)
+    trophic_levels(web; method = :prey_averaged)
 
-The prey-averaged trophic levels of the species in `web`, where `web[i, j] != 0` means
-species `j` eats species `i`. Basal species have trophic level 1 and every other species has
-1 plus the mean trophic level of its prey (Levine 1980), that is, the solution of
+The trophic levels of the species in `web`, where `web[i, j] != 0` means species `j` eats
+species `i`.
+
+With `method = :prey_averaged`, basal species have trophic level 1 and every other species
+has 1 plus the mean trophic level of its prey (Levine 1980), that is, the solution of
 `(I - P) t = 1` where `P` is the diet matrix with predators as rows normalized to sum to 1.
+Links are unweighted and cannibalistic links are ignored. Throws an `ArgumentError` if some
+species have no path of feeding links up from a basal species (see
+[`disconnected_from_basal`](@ref)), as their trophic levels are then undefined.
 
-Cannibalistic links are ignored. Throws an `ArgumentError` if some species have no path of
-feeding links up from a basal species (see [`disconnected_from_basal`](@ref)), as their
-trophic levels are then undefined.
+With `method = :mackay`, the levels `h` solve `Λ h = v` (MacKay, Johnson & Sansom 2020), where
+`W = web` holds the link weights in the direction of energy flow (prey to predator),
+`Λ = Diagonal(u) - W - W'`, `u = w_in + w_out` and `v = w_in - w_out`, with `w_in` and `w_out`
+the column and row sums of `W`. This is a least-squares fit of `h[j] - h[i] = 1` over the
+links, so it is defined for every web, with or without basal species. The levels are unique
+up to a constant within each weakly connected component; each component is shifted so its
+lowest level is 1. With this shift the two methods agree on webs with no loops and no
+omnivory, where every link spans exactly one level. `web` may be any non-negative weighted matrix, and
+cannibalistic links do not change the levels.
+
+MacKay, R. S., Johnson, S. & Sansom, B. How directed is a directed network? R. Soc. Open
+Sci. 7, 201138 (2020).
 """
-function trophic_levels(web::AbstractMatrix)
+function trophic_levels(web::AbstractMatrix; method::Symbol = :prey_averaged)
+    method === :prey_averaged && return prey_averaged_trophic_levels(web)
+    method === :mackay && return mackay_trophic_levels(web)
+    throw(ArgumentError("method must be :prey_averaged or :mackay, given :$method"))
+end
+
+function prey_averaged_trophic_levels(web::AbstractMatrix)
     S = LinearAlgebra.checksquare(web)
     unfed = disconnected_from_basal(web)
     if !isempty(unfed)
@@ -78,4 +98,44 @@ function trophic_levels(web::AbstractMatrix)
     P[diagind(P)] .= 0
     P ./= max.(sum(P, dims = 2), 1)
     return (I - P) \ ones(S)
+end
+
+function mackay_trophic_levels(web::AbstractMatrix)
+    S = LinearAlgebra.checksquare(web)
+    all(>=(0), web) || throw(ArgumentError("link weights must be non-negative"))
+    W = Matrix{Float64}(web)
+    w_in = vec(sum(W, dims = 1))
+    w_out = vec(sum(W, dims = 2))
+    Λ = Diagonal(w_in + w_out) - W - W'
+    v = w_in - w_out
+    h = ones(S)
+    # Λ is singular, with the constant vector on each weakly connected component in its null
+    # space. Fix the first species of each component at 0, solve for the rest, then shift.
+    for comp in weakly_connected_components(DiGraph(W .!= 0))
+        rest = comp[2:end]
+        h[comp[1]] = 0
+        h[rest] = Λ[rest, rest] \ v[rest]
+        h[comp] .+= 1 - minimum(h[comp])
+    end
+    return h
+end
+
+"""
+    trophic_incoherence(web)
+
+The trophic incoherence `F₀` of `web` (MacKay, Johnson & Sansom 2020), the weighted mean of
+`(h[j] - h[i] - 1)^2` over the links `web[i, j] != 0`, with `h` the levels from
+`trophic_levels(web; method = :mackay)`. `F₀` lies in `[0, 1]`: it is 0 when every link spans
+exactly one level, as in a food chain, and 1 when every link joins species at the same level,
+as in a web with no net direction such as a feeding loop. Each cannibalistic link adds its
+weight to the numerator. `web` may be any non-negative weighted matrix with at least one link.
+
+MacKay, R. S., Johnson, S. & Sansom, B. How directed is a directed network? R. Soc. Open
+Sci. 7, 201138 (2020).
+"""
+function trophic_incoherence(web::AbstractMatrix)
+    h = mackay_trophic_levels(web)
+    total = sum(web)
+    total > 0 || throw(ArgumentError("the web has no links, so its trophic incoherence is undefined"))
+    return sum(web[i, j] * (h[j] - h[i] - 1)^2 for i in axes(web, 1), j in axes(web, 2)) / total
 end

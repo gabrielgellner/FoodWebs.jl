@@ -1,8 +1,8 @@
 module FoodWebs
 
 using Distributions: Beta, Distribution, Uniform, sample
-using Graphs: DiGraph, is_connected
-using LinearAlgebra: I, LinearAlgebra, Symmetric, diag, diagind, diagm, eigmax, eigvals
+using Graphs: DiGraph, is_connected, weakly_connected_components
+using LinearAlgebra: Diagonal, I, LinearAlgebra, Symmetric, diag, diagind, diagm, eigmax, eigvals
 using Random: AbstractRNG, Random
 using Statistics: cov, mean
 
@@ -21,7 +21,7 @@ export numerical_abscissa, spectral_abscissa
 export λ_stability, ν_stability
 
 include("utils.jl")
-export connectance, trophic_levels
+export connectance, trophic_incoherence, trophic_levels
 export basal_species, disconnected_from_basal, top_species
 
 include("layout.jl")
