@@ -13,6 +13,7 @@ const GENERATORS = Dict(
     "niche" => niche_network,
     "generalized niche" => (rng, S, C; kw...) -> generalized_niche_network(rng, S, C, 0.5; kw...),
     "nested hierarchy" => nested_hierarchy_network,
+    "minimum potential niche" => (rng, S, C; kw...) -> minimum_potential_niche_network(rng, S, C, 0.3; kw...),
 )
 
 # species are sorted by niche value, so an interval diet is a contiguous run of row indices
@@ -228,4 +229,56 @@ end
     # than in the generalized cascade model, which has the same diet sizes and random prey
     @test mean(prey_overlap(nested_hierarchy_network(rng, 60, 0.1)) for _ in 1:30) >
         mean(prey_overlap(generalized_cascade_network(rng, 60, 0.1)) for _ in 1:30) + 0.02
+end
+
+@testset "minimum potential niche network" begin
+    # with f = 0 this is the niche model, draw for draw
+    for seed in 1:5
+        @test minimum_potential_niche_network(Xoshiro(seed), 40, 0.1, 0.0) ==
+            niche_network(Xoshiro(seed), 40, 0.1)
+    end
+
+    # with f > 0 the web keeps both ends of every niche interval of the same draw and a
+    # fraction 1 - f of the species inside it. Compare first draws, before any resampling.
+    rng = Xoshiro(11)
+    S, C, f = 60, 0.1, 0.4
+    Cp = FoodWebs.potential_connectance(S, C, f)
+    subset, ends_kept, kept, inside = true, true, 0, 0
+    for seed in 1:300
+        mpn = try
+            minimum_potential_niche_network(Xoshiro(seed), S, C, f; tol = Inf, maxiter = 1)
+        catch err
+            err isa ErrorException || rethrow()
+            continue
+        end
+        niche = niche_network(Xoshiro(seed), S, Cp; tol = Inf, maxiter = 1)
+        subset &= all(mpn .<= niche)
+        for j in 1:S
+            prey = findall(niche[:, j])
+            isempty(prey) && continue
+            ends_kept &= mpn[first(prey), j] && mpn[last(prey), j]
+            kept += count(mpn[prey[2:(end - 1)], j])
+            inside += max(length(prey) - 2, 0)
+        end
+    end
+    @test subset
+    @test ends_kept
+    @test isapprox(kept / inside, 1 - f, atol = 0.02)
+
+    # forbidden links break up diet intervals
+    webs = [minimum_potential_niche_network(rng, 60, 0.1, 0.5) for _ in 1:20]
+    @test any(!is_interval(findall(web[:, j])) for web in webs for j in 1:60)
+
+    # the potential connectance accounts for the kept ends of each interval, so mean
+    # connectance stays on target for several f. Drawing intervals at C / (1 - f) would overshoot
+    # by 2-28% here, and at C = 0.1, f = 0.8 it would need connectance 0.5.
+    for f in (0.2, 0.5, 0.8), C in (0.05, 0.1)
+        mC = mean(connectance(minimum_potential_niche_network(rng, 100, C, f; tol = Inf)) for _ in 1:200)
+        @test isapprox(mC, C, rtol = 0.05)
+    end
+
+    @test_throws ArgumentError minimum_potential_niche_network(rng, 20, 0.1, 1.0)
+    @test_throws ArgumentError minimum_potential_niche_network(rng, 20, 0.1, -0.1)
+    # 0.3 links per species pair cannot survive forbidding 80% of the interior links
+    @test_throws ArgumentError minimum_potential_niche_network(rng, 50, 0.3, 0.8)
 end

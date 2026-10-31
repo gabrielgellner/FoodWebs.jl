@@ -278,6 +278,97 @@ function generalized_niche_network(S::Int, C::Real, diet::Real; kwargs...)
     return generalized_niche_network(Random.default_rng(), S, C, diet; kwargs...)
 end
 
+# Expected links of the minimum potential niche model whose niche ranges are drawn at
+# connectance `Cp`: the `Cp S^2` potential links of the niche model, of which the `E` extremes
+# are kept and the rest forbidden with probability `f`. A species with range `r = x η` has about
+# `k ~ Binomial(S, r)` species in range and keeps `min(k, 2)` extremes. Averaging over
+# `η ~ U(0, 1)` in closed form gives `E[min(k, 2) | x] = 2 - 3A + (1 - x)^S` with
+# `A = (1 - (1 - x)^(S + 1)) / ((S + 1) x)`; the average over `x ~ Beta(1, β)` is a midpoint
+# rule on its quantiles.
+function expected_mpn_links(S, Cp, f; n = 200)
+    β = 1 / (2Cp) - 1
+    function kept_extremes(x)
+        A = -expm1((S + 1) * log1p(-x)) / ((S + 1) * x)
+        return 2 - 3A + (1 - x)^S
+    end
+    E = (S - 1) * sum(kept_extremes(1 - (1 - (k - 0.5) / n)^(1 / β)) for k in 1:n) / n
+    return (1 - f) * Cp * S^2 + f * E
+end
+
+# The connectance at which to draw the niche ranges so that the minimum potential niche model
+# has `C S^2` links on average after forbidding links, found by bisection
+function potential_connectance(S, C, f)
+    f == 0 && return C
+    lo, hi = float(C), 0.5 - 1.0e-9
+    expected_mpn_links(S, hi, f) >= C * S^2 || throw(
+        ArgumentError(
+            "connectance $C is out of reach with f = $f: the niche ranges would need a " *
+                "connectance of 0.5 or more"
+        )
+    )
+    for _ in 1:60
+        mid = (lo + hi) / 2
+        expected_mpn_links(S, mid, f) < C * S^2 ? (lo = mid) : (hi = mid)
+    end
+    return (lo + hi) / 2
+end
+
+"""
+    minimum_potential_niche_network([rng], S, C, f; tol = 0.03, maxiter = 10_000, basal_paths = false)
+
+Generate a minimum potential niche model web with `S` species, connectance `C` and fraction
+`f ∈ [0, 1)` of forbidden links, following:
+Allesina, S., Alonso, D. & Pascual, M. A general model for food web structure. Science 320,
+658–661 (2008).
+
+Each species has a niche interval as in [`niche_network`](@ref). The species at the two ends
+of the interval are always prey, and each species inside it is a prey with probability
+`1 - f`, so diets need not be intervals. With `f = 0` this is the niche model, and the same rng
+gives the same web.
+
+The niche intervals are drawn at a potential connectance above `C`, chosen so that the
+expected connectance after forbidding links is `C`. It accounts for the kept ends of each
+interval (Johnson et al. 2014, SI 1.5), using a binomial approximation for the number of
+species in an interval. Mean connectance is within a few percent of `C` while the potential
+connectance stays below about 0.3, beyond which the niche model's intervals lose range past
+niche value 1. Throws an `ArgumentError` if `C` needs a potential connectance of 0.5 or more.
+
+Webs are resampled until they are connected and their number of links `L` satisfies
+`abs(L - C S^2) <= max(tol C S^2, 1/2)`: within a relative tolerance `tol` of `C S^2`, widened
+for small webs to include the whole number of links nearest `C S^2`. With `basal_paths = true`
+they are also resampled until every species has a feeding path up from a basal species (see
+[`disconnected_from_basal`](@ref)).
+
+Johnson, S., Domínguez-García, V., Donetti, L. & Muñoz, M. A. Trophic coherence determines
+food-web stability. PNAS 111, 17923–17928 (2014).
+"""
+function minimum_potential_niche_network(
+        rng::AbstractRNG, S::Int, C::Real, f::Real; tol = 0.03, maxiter = 10_000,
+        basal_paths = false
+    )
+    check_niche_connectance(S, C)
+    0 <= f < 1 || throw(ArgumentError("f must be in [0, 1), given $f"))
+    Cp = potential_connectance(S, C, f)
+    return accept_web(S, C, tol, maxiter, basal_paths) do
+        η, r, centers = niche_parameters(rng, S, Cp)
+        adj = zeros(Bool, S, S)
+        for i in 1:S
+            # species are sorted by niche value, so the interval is a run of indices
+            prey = [j for j in 1:S if centers[i] - r[i] / 2 <= η[j] <= centers[i] + r[i] / 2]
+            isempty(prey) && continue
+            adj[first(prey), i] = true
+            adj[last(prey), i] = true
+            for j in prey[2:(end - 1)]
+                adj[j, i] = f == 0 || rand(rng) >= f
+            end
+        end
+        adj
+    end
+end
+function minimum_potential_niche_network(S::Int, C::Real, f::Real; kwargs...)
+    return minimum_potential_niche_network(Random.default_rng(), S, C, f; kwargs...)
+end
+
 """
     nested_hierarchy_network([rng], S, C; tol = 0.03, maxiter = 10_000, basal_paths = false)
 

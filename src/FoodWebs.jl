@@ -11,7 +11,8 @@ export PredationMatrix
 export food_chain_network
 export may_network
 export cascade_network, generalized_cascade_network
-export generalized_niche_network, nested_hierarchy_network, niche_network
+export generalized_niche_network, minimum_potential_niche_network, nested_hierarchy_network,
+    niche_network
 
 include("randcmat.jl")
 export random_predprey
