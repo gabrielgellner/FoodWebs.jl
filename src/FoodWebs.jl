@@ -43,7 +43,7 @@ export foodwebplot, foodwebplot!, trophic_layout
 public edge_crossings
 
 include("elliptic_law.jl")
-export elliptic_law
+export eigenplot, eigenplot!, elliptic_law
 export offdiag_pairs, offdiag_pairs_nz, shuffle_pairs
 public EllipticLaw
 
