@@ -40,6 +40,34 @@ favours; values above 1 favour smaller groups. The modularity of a web's best pa
 negative and is high even for random webs (Guimerà, Sales-Pardo & Amaral 2004), so its
 significance has to be judged against null webs.
 
+## Finding compartments
+
+[`compartments`](@ref) searches for a partition of high modularity, by the Louvain method or by
+simulated annealing, and combines repeated searches by consensus. In the two-chain web the best
+partition puts the top predator with the top of one chain, which scores slightly more than the
+two channels:
+
+```@example compartments
+using Random: Xoshiro
+
+compartments(Xoshiro(1), web)
+```
+
+Many partitions of a real web have nearly the highest modularity (Good, de Montjoye & Clauset
+2010), so a single search is one of many answers. The modularity of each search and the fraction
+of searches that put each pair of species together show how well defined the compartments are:
+
+```@example compartments
+r = compartments(Xoshiro(2026), fw; runs = 20)
+maximum(r.groups), r.modularity, extrema(r.run_modularity)
+```
+
+```@example compartments
+# the fraction of species pairs whose grouping differs between searches
+count(x -> 0 < x < 1, r.coassignment) / length(r.coassignment)
+```
+
 ```@docs
 web_modularity
+compartments
 ```
