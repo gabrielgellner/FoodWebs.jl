@@ -3,7 +3,7 @@
 # crossings. Plotting itself is in the Makie extension (`foodwebplot`).
 
 """
-    trophic_layout(web; levels = trophic_levels(web), band = 0.3, sweeps = 20)
+    trophic_layout(web; levels = trophic_levels(web), band = 0.3, sweeps = 20, groups = nothing)
 
 Positions `(x, y)` for drawing `web`, where `web[i, j] != 0` means species `j` eats species `i`.
 `y` is the trophic level `levels[i]`; prey-averaged levels by default, or any vector of levels.
@@ -19,16 +19,27 @@ the barycenter heuristic: `sweeps` passes, alternately up and down the bands, ea
 band by the mean `x` of every species' prey and predators in other bands, keeping the ordering
 with the fewest edge crossings ([`FoodWebs.edge_crossings`](@ref)). The starting order is the
 order of the species in `web`, so the layout is deterministic, and `sweeps = 0` keeps it.
+
+With `groups`, a partition of the species such as the compartments from
+[`compartments`](@ref), each band is ordered by group first, groups placed by the mean `x` of
+their members, and by the barycenter within each group, so that compartments line up as
+vertical channels across the bands.
 """
 function trophic_layout(
         web::AbstractMatrix; levels::AbstractVector = trophic_levels(web), band::Real = 0.3,
-        sweeps::Integer = 20,
+        sweeps::Integer = 20, groups::Union{Nothing, AbstractVector} = nothing,
     )
     S = LinearAlgebra.checksquare(web)
     length(levels) == S || throw(DimensionMismatch("levels must have length $S"))
+    groups === nothing || length(groups) == S || throw(DimensionMismatch("groups must have length $S"))
     bands = trophic_bands(levels, band)
     neighbours = [[j for j in 1:S if j != i && (web[i, j] != 0 || web[j, i] != 0)] for i in 1:S]
     x = zeros(S)
+    if groups !== nothing
+        # start with each band ordered by group, in order of first appearance
+        rank = Dict(g => k for (k, g) in enumerate(unique(groups)))
+        foreach(members -> sort!(members; by = i -> (rank[groups[i]], i)), bands)
+    end
     place!(x, bands, levels, band)
     positions() = [(x[i], float(levels[i])) for i in 1:S]
     # the heuristic can add crossings on a sweep, so keep the best ordering seen
@@ -38,7 +49,13 @@ function trophic_layout(
         for b in order
             members = bands[b]
             centre(i) = isempty(neighbours[i]) ? x[i] : mean(x[j] for j in neighbours[i])
-            sort!(members; by = i -> (centre(i), x[i]))
+            if groups === nothing
+                sort!(members; by = i -> (centre(i), x[i]))
+            else
+                # groups at the mean x of all their members, then the barycenter within each
+                position = Dict(g => mean(x[i] for i in 1:S if groups[i] == g) for g in unique(groups))
+                sort!(members; by = i -> (position[groups[i]], centre(i), x[i]))
+            end
             place!(x, bands, levels, band)
         end
         n = edge_crossings(web, positions())
@@ -120,7 +137,18 @@ Keywords:
 - `labels` and `fontsize`: text drawn on each node (`nothing` for none; by default the species
   indices for webs of up to 60 species and none for larger ones) and its size. Labels are
   white on dark nodes and black on light ones;
-- `highlight_cannibals`: draw cannibals with a thick outline (default `true`).
+- `highlight_cannibals`: draw cannibals with a thick outline (default `true`);
+- `groups`: a partition of the species, such as the compartments from [`compartments`](@ref):
+  nodes are coloured by group from `palette` (by default `Makie.wong_colors()`, cycling when there
+  are more groups than colours), groups of one species in grey, species of a
+  group are kept together in the layout ([`trophic_layout`](@ref) with `groups`), and links
+  between groups are drawn in `betweencolor` (default `:firebrick`) and more opaque, so the
+  coupling links stand out; `show_within = false` hides the links within groups;
+- `roles`: one role per species, such as `species_roles(web, groups).role`, drawn as marker
+  shapes: circles for peripheral species, diamonds for connectors, squares for module hubs and
+  stars for network hubs;
+- `legend` (`foodwebplot` only): a legend of the groups and roles, shown by default when either
+  is given.
 """
 function foodwebplot end
 

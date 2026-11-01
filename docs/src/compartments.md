@@ -204,7 +204,44 @@ p = block_spectrum(M, [fill(1, 300); fill(2, 500)])
 p.outliers, p.abscissa, maximum(real, eigvals(M))
 ```
 
+## Drawing compartments
+
+With Makie loaded, [`foodwebplot`](@ref) colours species by group, keeps each group together within
+its trophic band, draws the links between groups in red, and marks species roles by shape;
+`show_within = false` keeps only the coupling links:
+
+```@example compartments
+using CairoMakie
+
+fig, ax = foodwebplot(binary; groups, roles = roles.role, show_within = false, labels = nothing,
+    size = (750, 480))
+fig
+```
+
+[`blockplot`](@ref) orders a matrix by group and draws the block boundaries, here the random
+community matrix of Tuesday Lake from above and the co-assignment of 20 searches:
+
+```@example compartments
+r = compartments(Xoshiro(2026), fw; runs = 20)
+fig = Figure(size = (900, 400))
+blockplot!(Axis(fig[1, 1]; title = "community matrix", aspect = DataAspect(), yreversed = true), J, groups)
+blockplot!(Axis(fig[1, 2]; title = "co-assignment", aspect = DataAspect(), yreversed = true), r.coassignment, r.groups)
+fig
+```
+
+[`eigenplot`](@ref) with `groups` draws the bulk and outliers of [`block_spectrum`](@ref) in place
+of the elliptic law, here for an anti-modular matrix whose outlier to the right sets its
+stability:
+
+```@example compartments
+M = modular_random_matrix(Xoshiro(4), 600; α = 0.25, C = 0.2, Q = -0.3, μ = -1.0)
+fig, ax = eigenplot(M; groups = [fill(1, 150); fill(2, 450)])
+fig
+```
+
 ```@docs
+blockplot
+blockplot!
 web_modularity
 compartments
 modularity_zscore

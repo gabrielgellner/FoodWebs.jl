@@ -189,3 +189,25 @@ function spectrum_from_moments(sizes, μ, v, ρ, d)
     abscissa = max(center + horizontal, maximum(outliers; init = -Inf))
     return (; center, horizontal, vertical, exact, means, outliers, abscissa)
 end
+
+"""
+    blockplot(M, groups; size = (520, 450), title = "", colormap, linecolor = :black, linewidth = 1)
+    blockplot!(ax, M, groups; colormap, linecolor = :black, linewidth = 1)
+
+A heatmap of the square matrix `M` (a web, a community matrix or the `coassignment` of
+[`compartments`](@ref)) with the species ordered by group, groups in order of first appearance in
+`groups`, and lines at the boundaries between groups, so that block structure shows as blocks
+(Guimerà et al. 2010, Fig. 1D). Rows run down and columns across, as the matrix is written. A
+matrix with negative entries gets a diverging colour scale symmetric about 0 (`:RdBu`), any other
+a sequential one (`:Blues`). Requires Makie: load a Makie backend such as CairoMakie to enable it.
+`blockplot` returns the figure and axis, with a colour bar; `blockplot!` draws into an existing
+axis and returns the heatmap.
+"""
+function blockplot end
+
+"""
+    blockplot!(ax, M, groups; kwargs...)
+
+Draw [`blockplot`](@ref) into the Makie axis `ax`.
+"""
+function blockplot! end

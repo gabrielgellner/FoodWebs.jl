@@ -1,15 +1,60 @@
 module FoodWebsMakieExt
 
-using FoodWebs: FoodWebs, elliptic_law, trophic_layout, trophic_levels
+using FoodWebs: FoodWebs, block_spectrum, elliptic_law, trophic_layout, trophic_levels
 using LinearAlgebra: LinearAlgebra, eigvals
-using Makie: Makie, Axis, DataAspect, Figure, Point2f, Vec2f, arrows2d!, hidespines!, hidexdecorations!,
-    limits!, lift, lines!, scatter!, text!, vlines!
+using Makie: Makie, Axis, Colorbar, DataAspect, Figure, Legend, MarkerElement, Point2f, Vec2f, arrows2d!,
+    heatmap!, hidespines!, hidexdecorations!, hlines!, limits!, lift, lines!, scatter!, text!, vlines!
 
-function FoodWebs.foodwebplot(web::AbstractMatrix; size = (500, 500), title = "", kwargs...)
+function FoodWebs.foodwebplot(
+        web::AbstractMatrix; size = (500, 500), title = "", groups = nothing, roles = nothing,
+        palette = Makie.wong_colors(), legend = groups !== nothing || roles !== nothing, kwargs...
+    )
     fig = Figure(; size)
     ax = Axis(fig[1, 1]; title, ylabel = "trophic level")
-    FoodWebs.foodwebplot!(ax, web; kwargs...)
+    FoodWebs.foodwebplot!(ax, web; groups, roles, palette, kwargs...)
+    if legend
+        elements, names = Any[], String[]
+        if groups !== nothing
+            colors = group_colors(groups, palette)
+            for g in unique(groups)
+                count(==(g), groups) > 1 || continue
+                push!(elements, MarkerElement(; marker = :circle, color = colors[g], strokecolor = :black, strokewidth = 0.75))
+                push!(names, "group $g")
+            end
+            if any(g -> count(==(g), groups) == 1, groups)
+                push!(elements, MarkerElement(; marker = :circle, color = SINGLE_COLOR, strokecolor = :black, strokewidth = 0.75))
+                push!(names, "single species")
+            end
+        end
+        if roles !== nothing
+            for role in intersect(keys(ROLE_MARKERS), unique(roles))
+                push!(elements, MarkerElement(; marker = ROLE_MARKERS[role], color = :white, strokecolor = :black, strokewidth = 0.75))
+                push!(names, replace(string(role), "_" => " "))
+            end
+        end
+        isempty(elements) || Legend(fig[1, 2], elements, names; framevisible = false)
+    end
     return fig, ax
+end
+
+# markers for the species roles of Olesen et al. (2007)
+const ROLE_MARKERS = Dict(:peripheral => :circle, :connector => :diamond, :module_hub => :rect, :network_hub => :star5)
+
+# Group colours: groups of two or more species take the colours of `palette` in order of first
+# appearance, cycling when there are more groups than colours; single-species groups are grey
+const SINGLE_COLOR = Makie.RGBf(0.8, 0.8, 0.8)
+function group_colors(groups, palette)
+    colors = Dict{eltype(groups), Any}()
+    k = 0
+    for g in unique(groups)
+        if count(==(g), groups) > 1
+            k += 1
+            colors[g] = palette[mod1(k, length(palette))]
+        else
+            colors[g] = SINGLE_COLOR
+        end
+    end
+    return colors
 end
 
 # Defaults that thin out the drawing as webs grow: smaller nodes for more species, fainter
@@ -57,14 +102,31 @@ function node_colors(color, colormap, S)
 end
 
 function FoodWebs.foodwebplot!(
-        ax, web::AbstractMatrix; levels = trophic_levels(web), layout = trophic_layout(web; levels),
-        color = levels, colormap = :viridis, markersize = nothing, edgecolor = :gray30,
+        ax, web::AbstractMatrix; levels = trophic_levels(web), layout = nothing,
+        color = nothing, colormap = :viridis, markersize = nothing, edgecolor = :gray30,
         edgealpha = nothing, edgewidth = 1.2, tipsize = nothing, labels = :auto, fontsize = 10,
-        highlight_cannibals = true,
+        highlight_cannibals = true, groups = nothing, palette = Makie.wong_colors(),
+        betweencolor = :firebrick, show_within = true, roles = nothing,
     )
     S = size(web, 1)
+    groups === nothing || length(groups) == S || throw(DimensionMismatch("groups must have length $S"))
+    roles === nothing || length(roles) == S || throw(DimensionMismatch("roles must have length $S"))
+    if groups !== nothing && layout === nothing
+        layout = trophic_layout(web; levels, groups)
+    end
+    layout = something(layout, trophic_layout(web; levels))
+    if color === nothing
+        color = if groups === nothing
+            levels
+        else
+            colors = group_colors(groups, palette)
+            [colors[g] for g in groups]
+        end
+    end
     xs, ys = first.(layout), last.(layout)
     links = [(i, j) for i in 1:S, j in 1:S if i != j && web[i, j] != 0]
+    between = groups === nothing ? falses(length(links)) : [groups[i] != groups[j] for (i, j) in links]
+    show_within || (links = links[between]; between = trues(length(links)))
     L = length(links)
     markersize = something(markersize, default_markersize(S))
     edgealpha = something(edgealpha, default_edgealpha(L))
@@ -81,13 +143,16 @@ function FoodWebs.foodwebplot!(
         scale = Vec2f(viewport.widths ./ limits.widths)
         arrow_geometry(a, b, ra, rb, scale)
     end
+    # links between groups are drawn in `betweencolor`, and more opaque
+    edgecolors = [b ? Makie.RGBAf(Makie.to_color(betweencolor), min(1, 2edgealpha)) : Makie.RGBAf(Makie.to_color(edgecolor), edgealpha) for b in between]
     isempty(links) || arrows2d!(
-        ax, lift(first, geometry), lift(last, geometry); color = (edgecolor, edgealpha),
+        ax, lift(first, geometry), lift(last, geometry); color = edgecolors,
         shaftwidth = edgewidth, tipwidth = tipsize, tiplength = tipsize,
     )
     cannibal = [web[i, i] != 0 for i in 1:S]
     strokewidth = highlight_cannibals ? [c ? 2.5 : 0.75 for c in cannibal] : 0.75
-    scatter!(ax, xs, ys; color, colormap, markersize, strokewidth, strokecolor = :black)
+    marker = roles === nothing ? :circle : [get(ROLE_MARKERS, r, :circle) for r in roles]
+    scatter!(ax, xs, ys; color, colormap, markersize, strokewidth, strokecolor = :black, marker)
     labels === :auto && (labels = S <= 60 ? string.(axes(web, 1)) : nothing)
     labels === nothing || text!(
         ax, xs, ys; text = labels, align = (:center, :center), fontsize,
@@ -111,12 +176,31 @@ function FoodWebs.eigenplot!(
         ax, M::AbstractMatrix; ellipse = true, outlier = true, stability = true,
         law = nothing, color = (:steelblue, 0.6), markersize = 5, ellipsecolor = :black,
         outliercolor = :firebrick, equal_aspect = true, expected = nothing, expectedcolor = :darkorange,
+        groups = nothing,
     )
     λ = eigvals(M)
     # points the window must contain: the eigenvalues and whatever else is drawn
     xs, ys = collect(real.(λ)), collect(imag.(λ))
     stability && (vlines!(ax, [0.0]; color = :gray60, linestyle = :dash); push!(xs, 0.0); push!(ys, 0.0))
-    if ellipse || outlier
+    if groups !== nothing && (ellipse || outlier)
+        # the predictions of block_spectrum for the partition `groups`
+        p = block_spectrum(M, groups)
+        if ellipse
+            t = range(0, 2π; length = 200)
+            ex, ey = p.center .+ p.horizontal .* cos.(t), p.vertical .* sin.(t)
+            lines!(ax, ex, ey; color = ellipsecolor)
+            append!(xs, ex)
+            append!(ys, ey)
+        end
+        if outlier && !isempty(p.outliers)
+            scatter!(
+                ax, p.outliers, zeros(length(p.outliers)); markersize = 16, color = :transparent,
+                strokecolor = outliercolor, strokewidth = 2,
+            )
+            append!(xs, p.outliers)
+            append!(ys, zeros(length(p.outliers)))
+        end
+    elseif ellipse || outlier
         law = something(law, elliptic_law(M))
         if ellipse
             t = range(0, 2π; length = 200)
@@ -150,6 +234,35 @@ function FoodWebs.eigenplot!(
         ax.aspect = DataAspect()
     end
     return ax
+end
+
+
+function FoodWebs.blockplot(M::AbstractMatrix, groups::AbstractVector; size = (520, 450), title = "", kwargs...)
+    fig = Figure(; size)
+    ax = Axis(fig[1, 1]; title, aspect = DataAspect(), yreversed = true)
+    hm = FoodWebs.blockplot!(ax, M, groups; kwargs...)
+    Colorbar(fig[1, 2], hm)
+    return fig, ax
+end
+
+function FoodWebs.blockplot!(
+        ax, M::AbstractMatrix, groups::AbstractVector; colormap = nothing, linecolor = :black, linewidth = 1,
+    )
+    S = LinearAlgebra.checksquare(M)
+    length(groups) == S || throw(DimensionMismatch("groups must have length $S"))
+    rank = Dict(g => k for (k, g) in enumerate(unique(groups)))
+    order = sortperm(1:S; by = i -> (rank[groups[i]], i))
+    A = float.(M[order, order])
+    signed = any(<(0), A)
+    m = maximum(abs, A; init = 0.0)
+    colorrange = signed ? (-max(m, eps()), max(m, eps())) : (0.0, max(m, eps()))
+    colormap = something(colormap, signed ? :RdBu : :Blues)
+    # rows of M down the y axis and columns across x, as the matrix is written
+    hm = heatmap!(ax, 1:S, 1:S, permutedims(A); colormap, colorrange)
+    sizes = [count(==(g), groups) for g in unique(groups)]
+    edges = cumsum(sizes)[1:(end - 1)] .+ 0.5
+    isempty(edges) || (vlines!(ax, edges; color = linecolor, linewidth); hlines!(ax, edges; color = linecolor, linewidth))
+    return hm
 end
 
 end

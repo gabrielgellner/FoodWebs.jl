@@ -128,6 +128,8 @@ Keywords:
 - `outlier`: mark the predicted outlier from a nonzero mean, when there is one (default `true`);
 - `stability`: draw the stability boundary `Re λ = 0` (default `true`);
 - `law`: the [`EllipticLaw`](@ref) to draw, by default `elliptic_law(M)`;
+- `groups`: a partition of the species; the bulk and outliers drawn are then those of
+  [`block_spectrum`](@ref)`(M, groups)` in place of the elliptic law;
 - `expected`: a matrix whose eigenvalues to mark as crosses, such as the
   [`expected_community_matrix`](@ref) of a structured web, whose eigenvalues give the
   imaginary spread of the spectrum (default `nothing`), with `expectedcolor`;
