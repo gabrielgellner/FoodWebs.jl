@@ -16,13 +16,15 @@ Each ensemble here is a uniform sample, drawn with `sample_communities`, from a
 `FeasibleCommunities` polytope: the interaction strengths, self-regulation and growth rates
 that make a given biomass vector `x` an equilibrium of Lotka–Volterra dynamics on a given web.
 The growth rates are coordinates, basal rates in `[0, 5]` and consumer rates in `[-1, 0]`, every
-species may self-regulate, and every magnitude is in `[0, 5]`. The stable fraction is the share
-of sampled community matrices `J = diag(x) A` whose eigenvalues all have negative real part.
-Rebuild with `just gallery`.
+species may self-regulate, and the per capita rate of every interaction and self-regulation term
+is in `[0, 5]` (`per_capita_bounds = (0, 5)`). The stable fraction is the share of sampled
+community matrices `J = diag(x) A` whose eigenvalues all have negative real part. Rebuild with
+`just gallery`.
 
-Biomasses are divided by their geometric mean before sampling. The equilibrium rows divide the
-growth rates by biomasses, so the scale of `x` against the rate intervals and the bounds changes
-the polytope.
+`J` has the eigenvalues of `A diag(x)`, the matrix of per capita rates, and the equilibrium, the
+rate intervals and the per capita bounds all constrain per capita rates. Rescaling `x` therefore
+changes nothing, and without an efficiency band neither does the shape of the pyramid; the
+biomasses act on stability together with the efficiency bands.
 
 ```{julia}
 using FoodWebs, CairoMakie, PolytopeSamplers
@@ -54,14 +56,23 @@ webs = [generalized_cascade_network(Xoshiro(10 + k), 15, 0.15; basal_paths = tru
 ratios = exp.(range(log(0.2), log(5.0); length = 9))
 caps = (1.0, 0.3)
 sweep = Dict(
-    (cap, k, ρ) => let x = geometric_unit(ρ .^ (trophic_levels(web) .- 1))
-        fc = FeasibleCommunities(web, x; efficiency = (0.0, cap), bounds = (0.0, 5.0))
+    (cap, k, ρ) => let x = ρ .^ (trophic_levels(web) .- 1)
+        fc = FeasibleCommunities(web, x; efficiency = (0.0, cap), per_capita_bounds = (0.0, 5.0))
         sample_communities(Xoshiro(k), fc; target_ess = 300)
     end
     for cap in caps for (k, web) in enumerate(webs) for ρ in ratios
 )
+# the cap 0.3 with magnitude bounds (0, 5) on biomasses divided by their geometric mean, the
+# setting of the first version of this note
+magnitude = Dict(
+    (k, ρ) => let x = geometric_unit(ρ .^ (trophic_levels(web) .- 1))
+        fc = FeasibleCommunities(web, x; efficiency = (0.0, 0.3), bounds = (0.0, 5.0))
+        sample_communities(Xoshiro(k), fc; target_ess = 300)
+    end
+    for (k, web) in enumerate(webs) for ρ in ratios
+)
 baseline = [mean(stable(random_predprey(Xoshiro(100 + k), web, Uniform(0, 1), 0.3)) for _ in 1:1000) for (k, web) in enumerate(webs)]
-@assert all(res.converged for res in values(sweep))
+@assert all(res.converged for res in values(sweep)) && all(res.converged for res in values(magnitude))
 nothing
 ```
 
@@ -77,6 +88,8 @@ for (c, cap) in enumerate(caps)
     lines!(ax, ratios, [mean(stable_fraction(sweep[(cap, k, ρ)]) for k in eachindex(webs)) for ρ in ratios];
         color = colors[c], linewidth = 3, label = "feasible, efficiency cap $cap")
 end
+lines!(ax, ratios, [mean(stable_fraction(magnitude[(k, ρ)]) for k in eachindex(webs)) for ρ in ratios];
+    color = colors[2], linewidth = 2, linestyle = :dot, label = "cap 0.3, magnitude bounds")
 hlines!(ax, [mean(baseline)]; color = :gray, linestyle = :dash, label = @sprintf("random_predprey, %.3f", mean(baseline)))
 vlines!(ax, [1.0]; color = :black, linewidth = 0.5)
 axislegend(ax; position = :lb)
@@ -86,15 +99,23 @@ fig
 
 The thin lines are single webs and the thick lines their mean. The stable fractions have a Monte
 Carlo standard error of about 0.03 at an effective sample size of 300. With the gain free up to
-the loss, the stable fraction stays near 0.95 at every ratio. With the cap at 0.3 it falls from
-about 0.9 at `ρ = 0.2` to about 0.7 at `ρ = 5`, most of the fall coming before `ρ = 1`, and
-varies between webs by up to 0.3.
+the loss, the stable fraction stays between 0.93 and 0.97 at every ratio. With the cap at 0.3 it
+falls from 0.82 at `ρ = 0.2` to about 0.72 at `ρ = 5`, and varies between webs by up to 0.3.
+
+The dotted line repeats the cap 0.3 with magnitude bounds `(0, 5)` on biomasses divided by their
+geometric mean, the setting of the first version of this note. A magnitude bound caps the per
+capita rate of a term at `A[i, j]` at `5 x_j`, which changes with the pyramid. The two settings
+agree from `ρ = 1` up and differ below it, by 0.07 at `ρ = 0.2`, so the first version overstated
+the fall.
 
 ### Spectral geometry
 
 The eigenvalues of every tenth sampled matrix, for one web under the efficiency cap 0.3, for an
 Eltonian and an inverted pyramid. The inverted pyramid shrinks the eigenvalues towards the origin
-(note the axis scales), and the unstable matrices have a real eigenvalue just above zero:
+(note the axis scales); under per capita bounds the spectra do not depend on the scale of `x`, so
+the shrinkage comes from the shape of the pyramid together with the efficiency band. At `ρ = 5`
+the unstable matrices have a real eigenvalue just above zero, and at `ρ = 0.2` some have complex
+eigenvalues with real parts up to about 0.5:
 
 ```{julia}
 fig = Figure(size = (900, 450))
@@ -132,12 +153,12 @@ cheddar = map(["cheddar/tl84", "cheddar/tl86"]) do name
     fw = foodweb(name)
     web, _ = remove_cannibalism(fw)
     sets = (
-        observed = geometric_unit(Float64.(biomass(fw))),
-        steady_state = geometric_unit(steady_state_biomass(fw; efficiency = 0.1, turnover = :allometric)),
+        observed = Float64.(biomass(fw)),
+        steady_state = steady_state_biomass(fw; efficiency = 0.1, turnover = :allometric),
     )
     map(collect(pairs(sets))) do (label, x)
         fractions = map(caps) do cap
-            fc = FeasibleCommunities(web, x; efficiency = (0.0, cap), bounds = (0.0, 5.0))
+            fc = FeasibleCommunities(web, x; efficiency = (0.0, cap), per_capita_bounds = (0.0, 5.0))
             stable_fraction(sample_communities(Xoshiro(7), fc; target_ess = 200))
         end
         (; name = fw.name, label, slope = pyramid_slope(web, x), dimension = dimension(FeasibleCommunities(web, x)), fractions)
@@ -151,5 +172,5 @@ The observed Tuesday Lake pyramids are top-heavy (positive slope), and the stead
 from the same webs are Eltonian. These webs have over 500 dimensions, so each stable fraction
 comes from 200 effective samples, with a standard error of about 0.035. The pyramid shape has no
 consistent effect across the two webs. Under the cap 0.3 the observed TL84 biomasses are more
-stable than the steady-state ones (0.58 against 0.42), and under the cap 1 less stable (0.38
-against 0.58); TL86 differs little between its two biomass vectors under either cap.
+stable than the steady-state ones (0.70 against 0.47), and under the cap 1 less stable (0.45
+against 0.74); TL86 differs by at most 0.04 between its two biomass vectors under either cap.

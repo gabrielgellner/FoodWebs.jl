@@ -80,6 +80,41 @@ isnonempty(P) = lp_point(P, zeros(length(P.lower))) !== nothing
     @test_throws ArgumentError FeasibleCommunities(chain, ones(3); self_share = (0.6, 0.4))
     @test_throws ArgumentError FeasibleCommunities(chain, ones(3); self_regulation = :some)
     @test_throws ArgumentError FeasibleCommunities(chain, ones(3); bounds = (-1.0, 1.0))
+    @test_throws ArgumentError FeasibleCommunities(chain, ones(3); per_capita_bounds = (2.0, 1.0))
+    @test_throws ArgumentError FeasibleCommunities(chain, ones(3); per_capita_bounds = (-1.0, 1.0))
+end
+
+@testset "per capita bounds" begin
+    # a coordinate at A[i, j] has the per capita rate θ x[j], so (lo, hi) bounds it by lo / x[j]
+    # and hi / x[j]; growth rates keep their intervals
+    chain = food_chain_network(3)
+    x = [4.0, 2.0, 0.5]
+    fc = FeasibleCommunities(chain, x; per_capita_bounds = (0.5, 2.0))
+    P, P0 = halfspaces(fc), halfspaces(FeasibleCommunities(chain, x))
+    for (k, c) in enumerate(coordinates(fc))
+        if c.kind === :growth
+            @test (P.lower[k], P.upper[k]) == (P0.lower[k], P0.upper[k])
+        else
+            @test P.lower[k] ≈ 0.5 / x[c.j] && P.upper[k] ≈ 2.0 / x[c.j]
+        end
+    end
+    # with magnitude bounds, the tighter of the two applies
+    P = halfspaces(FeasibleCommunities(chain, x; bounds = (0.0, 1.0), per_capita_bounds = (0.0, 2.0)))
+    for (k, c) in enumerate(coordinates(fc))
+        c.kind === :growth || @test P.upper[k] ≈ min(1.0, 2.0 / x[c.j])
+    end
+    # rescaling x scales the box by its inverse and leaves the equilibrium rows of the per capita
+    # rates unchanged
+    P1, P5 = halfspaces(fc), halfspaces(FeasibleCommunities(chain, 5 .* x; per_capita_bounds = (0.5, 2.0)))
+    interaction = [c.kind !== :growth for c in coordinates(fc)]
+    @test P5.upper[interaction] ≈ P1.upper[interaction] ./ 5
+    @test P5.C[:, interaction] ≈ 5 .* P1.C[:, interaction]
+    # finite per capita bounds always bound the polytope; a mutual-feeding loop with no
+    # efficiency band is unbounded without them
+    loop = Bool[0 1; 1 0]
+    @test !isbounded(FeasibleCommunities(loop, ones(2); self_regulation = :none))
+    @test isbounded(FeasibleCommunities(loop, ones(2); self_regulation = :none, per_capita_bounds = (0.0, 3.0)))
+    @test !isbounded(FeasibleCommunities(loop, ones(2); self_regulation = :none, per_capita_bounds = (0.0, Inf)))
 end
 
 @testset "the PolytopeSamplers.jl example" begin

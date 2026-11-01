@@ -16,7 +16,7 @@ using FoodWebs, Random
 rng = Xoshiro(2026)
 web = generalized_cascade_network(rng, 15, 0.15; basal_paths = true)
 x = steady_state_biomass(web; efficiency = 0.2)
-fc = FeasibleCommunities(web, x; efficiency = (0.0, 0.3), bounds = (0.0, 5.0))
+fc = FeasibleCommunities(web, x; efficiency = (0.0, 0.3), per_capita_bounds = (0.0, 5.0))
 ```
 
 ```@example feasible
@@ -31,11 +31,34 @@ dimension(fc), isbounded(fc), structurally_singular(fc), diagnose(fc)
   of 0 is allowed; `:all_but_top` reproduces Gellner, McCann & Hastings).
 - `efficiency`: a band `e_min λ ≤ γ ≤ e_max λ` on each link's gain against its loss.
 - `self_share`: self-regulation as a share of each species' turnover.
+- `per_capita_bounds`: a box on the per capita rate of every loss, gain and self-regulation term,
+  on the scale of the growth rates.
 - `bounds`: a box on every magnitude.
 
 [`halfspaces`](@ref) gives the polytope as plain arrays, `lower ≤ θ ≤ upper`, `A θ ≤ b`,
 `C θ = d`, and [`interaction_matrix`](@ref), [`growth_rates`](@ref),
 [`community_matrix`](@ref) and [`fluxes`](@ref) turn a point into a model.
+
+## How the biomasses enter
+
+The community matrix `J = diag(x) A` has the eigenvalues of `B = A diag(x)`, whose entry
+`A_ij x_j` is the per capita effect of species `j` on the growth rate of species `i`, and the
+equilibrium `r + A x = 0` is `r + B 1 = 0`. The rate intervals, the equilibrium, `self_share` and
+`per_capita_bounds` constrain `B` without reference to `x`, so:
+
+- rescaling `x` by a constant leaves the spectra unchanged;
+- without efficiency bands, the spectra do not depend on `x` at all.
+
+With efficiency bands, `x` matters, and which constraint carries it depends on the coordinates.
+In `B`, the band on a link where predator `j` eats prey `i` bounds the per capita gain over the
+per capita loss by `e x_i / x_j`. `J` is also similar to `M = diag(√x) A diag(√x)`, in which the
+band bounds the gain over the loss by `e` whatever `x` is, and `x` enters through the equilibrium
+`M √x = -diag(√x) r`.
+
+Magnitude `bounds` add a dependence on the scale and shape of `x`: a bound `hi` on a coordinate at
+`A[i, j]` caps its per capita rate at `hi x_j`. `per_capita_bounds` bound the interactions on the
+scale of the growth rates instead. The tests check the scale invariance, and the equivalence of a
+pyramid with per capita efficiency bands on `x = 1`, on sampled points.
 
 ## Structure without a solver
 
@@ -87,11 +110,11 @@ res.converged, stable
 
 The published constrained food web studies fix the growth rates instead, drawing them by role
 with [`draw_growth_rates`](@ref) and redrawing until the polytope has a point;
-[`feasible_growth_rates`](@ref) runs this loop. The biomasses must be on a scale where the rates
-divided by them fit within `bounds`:
+[`feasible_growth_rates`](@ref) runs this loop. With magnitude `bounds` the biomasses must be on
+a scale where the rates divided by them fit within the bounds; per capita bounds fit at any scale:
 
 ```@example feasible
-found = feasible_growth_rates(rng, web, 20 .* x; efficiency = (0.0, 0.3), bounds = (0.0, 5.0))
+found = feasible_growth_rates(rng, web, x; efficiency = (0.0, 0.3), per_capita_bounds = (0.0, 5.0))
 found.draws, dimension(found.communities)
 ```
 
@@ -112,8 +135,8 @@ using Distributions: Uniform
 
 stability(Js) = count(J -> maximum(real, eigvals(J)) < 0, Js) / length(Js)
 unconstrained = stability([random_predprey(rng, web, Uniform(0, 1), 0.3) for _ in 1:1000])
-feasible = sample_communities(rng, FeasibleCommunities(web, x; bounds = (0.0, 5.0)); target_ess = 200)
-energetic = sample_communities(rng, FeasibleCommunities(web, x; efficiency = (0.0, 0.3), bounds = (0.0, 5.0)); target_ess = 200)
+feasible = sample_communities(rng, FeasibleCommunities(web, x; per_capita_bounds = (0.0, 5.0)); target_ess = 200)
+energetic = sample_communities(rng, FeasibleCommunities(web, x; efficiency = (0.0, 0.3), per_capita_bounds = (0.0, 5.0)); target_ess = 200)
 (; unconstrained, feasible = stability([c.J for c in feasible.communities]),
     energetic = stability([c.J for c in energetic.communities]))
 ```
