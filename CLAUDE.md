@@ -54,7 +54,7 @@ seed they were written with.
 just setup      # install Runic and JETLS as Julia apps, instantiate environments, enable hooks
 just fmt        # format with Runic
 just ci         # formatting check, JETLS lint, tests (run by the pre-push hook)
-just gallery    # render the Quarto gallery of the bundled webs to gallery/webs.html
+just gallery    # render the Quarto notes in gallery/ (webs, spectra, equilibria)
 just docs       # build the Documenter site to docs/build
 ```
 

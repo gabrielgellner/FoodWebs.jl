@@ -41,11 +41,12 @@ docs:
     {{ julia }} --project=docs -e 'using Pkg; Pkg.instantiate()'
     {{ julia }} --project=docs docs/make.jl
 
-# Render the Quarto notes in gallery/ (the bundled food webs and random community matrices)
+# Render the Quarto notes in gallery/ (the bundled food webs, random community matrices and feasible communities)
 gallery:
     {{ julia }} --project=gallery -e 'using Pkg; Pkg.instantiate()'
     quarto render gallery/webs.qmd
     quarto render gallery/spectra.qmd
+    quarto render gallery/equilibria.qmd
 
 # ── Release ───────────────────────────────────────────────────────────────────
 
