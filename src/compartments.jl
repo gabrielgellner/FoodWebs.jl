@@ -739,3 +739,87 @@ function pair_weights(J::AbstractMatrix{<:Real}; method::Symbol = :geometric)
     end
     return [i == j ? 0.0 : float(weight(J[i, j], J[j, i])) for i in 1:S, j in 1:S]
 end
+
+"""
+    source_reliance(W; sources = basal species)
+
+The fraction of the energy of each species that comes from each basal source, the reliance of
+Rooney et al. (2008) used by Zhao et al. (2018), for the web or flux matrix `W` (`W[i, j]` the
+flux from prey `i` to predator `j`). Returns an `S × B` matrix, one row per species and one
+column per source in `sources` (by default the species that eat nothing; give them to include
+detritus that receives inputs, for example). A source relies only on itself, and every other
+species on its prey in proportion to its diet,
+
+    R_i = Σ_k p_ki R_k,   p_ki = W_ki / Σ_l W_li,
+
+so `R = (I − Pᵀ)⁻¹ E` with `E` the indicator of the sources. In a binary web the diet is split
+equally among the prey. Rows sum to 1. Cannibalistic links are left out. Throws an `ArgumentError`
+if some species get no energy from any source, or if the system is singular, as for a feeding
+loop that no source enters.
+
+Rooney, N., McCann, K. S. & Moore, J. C. A landscape theory for food web architecture. Ecol.
+Lett. 11, 867–881 (2008). Zhao, L., Zhang, H., Tian, W. & Xu, X. Identifying compartments in
+ecological networks based on energy channels. Ecol. Evol. 8, 309–318 (2018).
+"""
+function source_reliance(W::AbstractMatrix; sources::AbstractVector{<:Integer} = default_sources(W))
+    S = LinearAlgebra.checksquare(W)
+    w = link_weights(W, true)
+    isempty(sources) && throw(ArgumentError("no sources"))
+    all(s -> 1 <= s <= S, sources) || throw(ArgumentError("sources must be species indices"))
+    intake = vec(sum(w; dims = 1))
+    is_source = falses(S)
+    is_source[sources] .= true
+    for i in 1:S
+        is_source[i] || intake[i] > 0 || throw(ArgumentError("species $i eats nothing but is not a source"))
+    end
+    # P[k, i]: the share of species i's diet from species k, for species that are not sources
+    P = [is_source[i] ? 0.0 : w[k, i] / intake[i] for k in 1:S, i in 1:S]
+    E = [float(sources[b] == i) for i in 1:S, b in eachindex(sources)]
+    A = I - P'
+    LinearAlgebra.rank(A) == S ||
+        throw(ArgumentError("the reliance is undefined: some species are on a feeding loop that no source enters"))
+    R = A \ E
+    all(r -> isapprox(sum(r), 1; atol = 1.0e-8), eachrow(R)) ||
+        throw(ArgumentError("some species get no energy from any source"))
+    return R
+end
+default_sources(W) = [j for j in axes(W, 2) if !any(i != j && W[i, j] != 0 for i in axes(W, 1))]
+
+"""
+    energy_channels(W; sources = basal species, merge = true, γ = 1)
+
+Compartments as energy channels (Zhao et al. 2018): each species joins the channel of the source
+it relies on most ([`source_reliance`](@ref); ties go to the first source), and then, with
+`merge = true`, the two channels whose merging raises the directed modularity of `W`
+([`web_modularity`](@ref), resolution `γ`) the most are merged, until no merging raises it.
+Returns a named tuple: the channels `groups`, labelled `1, 2, …` in order of first appearance,
+their `modularity`, the `reliance` matrix and the `dominant` source of each species (an index
+into `sources`).
+
+The channels follow the flow of energy from the sources, an ecological definition to compare
+with the partitions of highest modularity from [`compartments`](@ref).
+"""
+function energy_channels(
+        W::AbstractMatrix; sources::AbstractVector{<:Integer} = default_sources(W), merge::Bool = true, γ::Real = 1
+    )
+    R = source_reliance(W; sources)
+    dominant = [argmax(r) for r in eachrow(R)]
+    groups = copy(dominant)
+    Q = web_modularity(W, groups; γ)
+    while merge
+        labels = unique(groups)
+        length(labels) > 1 || break
+        best, pair = 0.0, nothing
+        for (k, a) in enumerate(labels), b in labels[(k + 1):end]
+            merged = [g == b ? a : g for g in groups]
+            ΔQ = web_modularity(W, merged; γ) - Q
+            ΔQ > best && ((best, pair) = (ΔQ, (a, b)))
+        end
+        pair === nothing && break
+        a, b = pair
+        groups = [g == b ? a : g for g in groups]
+        Q += best
+    end
+    groups = relabel(groups)
+    return (; groups, modularity = web_modularity(W, groups; γ), reliance = R, dominant)
+end

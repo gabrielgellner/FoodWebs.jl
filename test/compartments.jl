@@ -433,3 +433,52 @@ end
     @test_throws ArgumentError pair_weights(J; method = :product)
     @test_throws ArgumentError modularity_zscore(pair_weights(J))
 end
+
+@testset "energy channels" begin
+    # two chains 1 → 2 → 3 and 4 → 5 → 6, joined by 7, which takes three times as much from 3 as
+    # from 6: 7 gets 3/4 of its energy from source 1 and joins its channel
+    F = zeros(7, 7)
+    F[1, 2] = F[2, 3] = F[4, 5] = F[5, 6] = 1
+    F[3, 7], F[6, 7] = 3, 1
+    r = energy_channels(F)
+    @test r.reliance[7, :] ≈ [0.75, 0.25]
+    @test r.reliance[1:6, :] == [1 0; 1 0; 1 0; 0 1; 0 1; 0 1]
+    @test r.groups == [1, 1, 1, 2, 2, 2, 1] && r.dominant == [1, 1, 1, 2, 2, 2, 1]
+    @test r.modularity ≈ web_modularity(F, r.groups)
+    # a binary web splits each diet equally
+    @test source_reliance(F .> 0)[7, :] ≈ [0.5, 0.5]
+
+    # the reliance solves R = PᵀR + E on a flux web, and each row sums to 1
+    rng = Xoshiro(90)
+    web = niche_network(rng, 30, 0.15; basal_paths = true)
+    W = rand(rng, 30, 30) .* web
+    sources = [j for j in 1:30 if !any(i != j && web[i, j] for i in 1:30)]
+    R = source_reliance(W)
+    w = [i == j ? 0.0 : W[i, j] for i in 1:30, j in 1:30]
+    for i in 1:30
+        expected = i in sources ? float.(sources .== i) : sum(w[k, i] .* R[k, :] for k in 1:30) ./ sum(w[:, i])
+        @test R[i, :] ≈ expected
+    end
+    # merging never lowers the modularity, and stops when no pair of channels would raise it
+    merged, unmerged = energy_channels(W), energy_channels(W; merge = false)
+    @test merged.modularity >= unmerged.modularity
+    labels = unique(merged.groups)
+    @test all(
+        web_modularity(W, [g == b ? a : g for g in merged.groups]) <= merged.modularity + 1.0e-12
+            for a in labels for b in labels if a != b
+    )
+
+    # detritus that eats (receives) from consumers is a source when named
+    D = zeros(5, 5)
+    D[1, 2] = D[2, 3] = 1   # producer 1 → 2 → 3
+    D[3, 4] = 1             # 3 → detritus 4
+    D[4, 5] = 1             # detritus 4 → detritivore 5
+    @test source_reliance(D)[5, :] ≈ [1]
+    @test source_reliance(D; sources = [1, 4])[5, :] ≈ [0, 1]
+
+    # errors: a species that eats nothing but is not a source, and a loop no source enters
+    @test_throws ArgumentError source_reliance(F; sources = [1])
+    loop = zeros(3, 3)
+    loop[2, 3] = loop[3, 2] = 1
+    @test_throws ArgumentError source_reliance(loop; sources = [1])
+end

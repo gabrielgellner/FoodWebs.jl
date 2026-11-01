@@ -164,6 +164,33 @@ couplers = blocks.coupling .> 0
 count(couplers), extrema(levels[couplers]), extrema(levels[.!couplers])
 ```
 
+## Energy channels
+
+Energy channels are an ecological definition of compartments: the pathways of energy from each
+basal source up the web (Moore & Hunt 1988). [`source_reliance`](@ref) gives the fraction of each
+species' energy that comes from each source, following its diet (Rooney et al. 2008), and
+[`energy_channels`](@ref) puts each species in the channel of the source it relies on most, then
+merges channels while modularity rises (Zhao et al. 2018). In two chains joined by a top predator
+that takes three times as much from the first, the predator gets three quarters of its energy
+from the first source and joins its channel:
+
+```@example compartments
+F = zeros(7, 7)
+F[1, 2] = F[2, 3] = F[4, 5] = F[5, 6] = 1
+F[3, 7], F[6, 7] = 3, 1
+channels = energy_channels(F)
+channels.groups, channels.reliance[7, :]
+```
+
+In Tuesday Lake, the channels from its 31 basal species merge into eight, about half as modular
+as the partition of highest modularity, which need not follow the flow of energy:
+
+```@example compartments
+channels = energy_channels(binary)
+(channels = (maximum(channels.groups), round(channels.modularity; digits = 3)),
+    highest = (maximum(groups), round(web_modularity(binary, groups); digits = 3)))
+```
+
 ## Compartments of interaction strengths
 
 Modularity needs non-negative weights, and a community matrix is signed: a predator–prey pair has
@@ -266,6 +293,8 @@ modularity_zscore
 species_roles
 compartment_homogeneity
 block_structure
+source_reliance
+energy_channels
 pair_weights
 shuffle_weights
 block_random_matrix
