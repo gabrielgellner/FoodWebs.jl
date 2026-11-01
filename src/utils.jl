@@ -178,3 +178,77 @@ function trophic_incoherence(web::AbstractMatrix)
     total > 0 || throw(ArgumentError("the web has no links, so its trophic incoherence is undefined"))
     return sum(web[i, j] * (h[j] - h[i] - 1)^2 for i in axes(web, 1), j in axes(web, 2)) / total
 end
+
+# A web of the same type as `web` with the links of the Bool matrix `A`
+rebuild_web(web::PredationMatrix, A) = PredationMatrix(A)
+rebuild_web(web::AbstractMatrix, A) = Matrix{Bool}(A)
+
+"""
+    remove_cannibalism(web)
+
+`web` without its cannibalistic links, and the removed links as `(i, i)` pairs. The result has
+the type of `web`: a [`PredationMatrix`](@ref), a [`FoodWeb`](@ref) keeping its species and
+metadata, or a `Matrix{Bool}`. Removing links lowers connectance.
+"""
+function remove_cannibalism(web::AbstractMatrix)
+    S = LinearAlgebra.checksquare(web)
+    A = Matrix{Bool}(web .!= 0)
+    removed = [(i, i) for i in 1:S if A[i, i]]
+    foreach(((i, _),) -> A[i, i] = false, removed)
+    return rebuild_web(web, A), removed
+end
+
+"""
+    orient_two_way_links([rng], web; keep)
+
+`web` with one link kept from each pair of species that eat each other, and the removed links
+as `(prey, predator)` pairs, where `web[i, j] != 0` means species `j` eats species `i`. `keep`
+chooses the link:
+
+- `:up`: the species at the higher trophic level eats the other, by the MacKay levels of `web`,
+  which are defined for every web; ties go to the higher index;
+- `:index`: the higher-indexed species eats the other, the order of cascade and niche webs;
+- `:random`: a fair coin for each pair, from `rng`;
+- `:drop`: both links are removed.
+
+No rule for this is established in the literature. Two-way links arise from life stages that
+eat each other (intraguild predation), from aggregating taxa into trophic species, and by design
+in the niche model, so each rule changes the web; comparing results under several rules, and
+against keeping both links, shows how much the choice matters. Removing links lowers
+connectance, and can disconnect species or cut them off from basal species (see
+[`disconnected_from_basal`](@ref)). Cannibalistic links are left as they are (see
+[`remove_cannibalism`](@ref)). The result has the type of `web`.
+"""
+function orient_two_way_links(rng::AbstractRNG, web::AbstractMatrix; keep::Symbol)
+    keep in (:up, :index, :random, :drop) ||
+        throw(ArgumentError("keep must be :up, :index, :random or :drop, given :$keep"))
+    S = LinearAlgebra.checksquare(web)
+    A = Matrix{Bool}(web .!= 0)
+    levels = keep === :up ? trophic_levels(web; method = :mackay) : nothing
+    removed = Tuple{Int, Int}[]
+    for i in 1:S, j in (i + 1):S
+        A[i, j] && A[j, i] || continue
+        # whether j, the higher-indexed species, is kept as the predator of i
+        j_eats_i = if keep === :up
+            levels[j] >= levels[i]
+        elseif keep === :index
+            true
+        elseif keep === :random
+            rand(rng, Bool)
+        end
+        if keep === :drop
+            A[i, j] = A[j, i] = false
+            push!(removed, (i, j), (j, i))
+        elseif j_eats_i
+            A[j, i] = false
+            push!(removed, (j, i))
+        else
+            A[i, j] = false
+            push!(removed, (i, j))
+        end
+    end
+    return rebuild_web(web, A), removed
+end
+function orient_two_way_links(web::AbstractMatrix; keep::Symbol)
+    return orient_two_way_links(Random.default_rng(), web; keep)
+end

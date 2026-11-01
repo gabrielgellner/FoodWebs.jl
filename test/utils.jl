@@ -162,3 +162,60 @@ end
     @test_throws ArgumentError trophic_incoherence(zeros(Bool, 3, 3))
     @test_throws DimensionMismatch trophic_levels([0 1 0; 0 0 1]; method = :mackay)
 end
+
+@testset "remove cannibalism and orient two-way links" begin
+    # 1 and 2 eat each other, 3 eats 1 and itself
+    web = Bool[0 1 1; 1 0 0; 0 0 1]
+    w, removed = remove_cannibalism(web)
+    @test removed == [(3, 3)]
+    @test w == Bool[0 1 1; 1 0 0; 0 0 0]
+    @test remove_cannibalism(w)[2] == Tuple{Int, Int}[]
+
+    # by index, 2 eats 1 and the link where 1 eats 2 is removed; the cannibal link stays
+    w, removed = orient_two_way_links(web; keep = :index)
+    @test w == Bool[0 1 1; 0 0 0; 0 0 1]
+    @test removed == [(2, 1)]
+    w, removed = orient_two_way_links(web; keep = :drop)
+    @test w == Bool[0 0 1; 0 0 0; 0 0 1]
+    @test sort(removed) == [(1, 2), (2, 1)]
+    @test_throws ArgumentError orient_two_way_links(web; keep = :mass)
+    @test_throws UndefKeywordError orient_two_way_links(web)
+
+    # up the hierarchy: 1 and 2 eat each other, 3 eats 2 and 4 eats 3, so 2 sits above 1 and
+    # keeps eating it
+    up = zeros(Bool, 4, 4)
+    up[1, 2] = up[2, 1] = up[2, 3] = up[3, 4] = true
+    w, removed = orient_two_way_links(up; keep = :up)
+    @test removed == [(2, 1)]
+    @test w[1, 2] && !w[2, 1]
+
+    rng = Xoshiro(21)
+    for _ in 1:20
+        nw = niche_network(rng, 40, 0.2)
+        pairs = [(i, j) for i in 1:40 for j in (i + 1):40 if nw[i, j] && nw[j, i]]
+        oneway = [(i, j) for i in 1:40, j in 1:40 if i != j && nw[i, j] && !nw[j, i]]
+        for keep in (:up, :index, :random, :drop)
+            w, removed = orient_two_way_links(rng, nw; keep)
+            @test w isa PredationMatrix
+            # no two-way pairs remain, every one-way link and cannibal link is kept
+            @test !any(w[i, j] && w[j, i] for i in 1:40, j in 1:40 if i < j)
+            @test all(w[i, j] for (i, j) in oneway)
+            @test all(w[i, i] == nw[i, i] for i in 1:40)
+            @test length(removed) == (keep === :drop ? 2 : 1) * length(pairs)
+            # applying the rule again changes nothing
+            @test orient_two_way_links(rng, w; keep)[1] == w
+        end
+        # in niche order the higher-niche species is kept as the predator
+        w, _ = orient_two_way_links(nw; keep = :index)
+        @test all(w[i, j] && !w[j, i] for (i, j) in pairs)
+    end
+    nw = niche_network(Xoshiro(22), 40, 0.2)
+    @test orient_two_way_links(Xoshiro(1), nw; keep = :random) == orient_two_way_links(Xoshiro(1), nw; keep = :random)
+
+    # a FoodWeb keeps its species, name and metadata
+    fw = foodweb("williams_martinez_2000/coachella_valley")
+    w, removed = remove_cannibalism(fw)
+    @test w isa FoodWeb && w.species == fw.species && w.name == fw.name
+    @test length(removed) == length(cannibals(fw))
+    @test isempty(cannibals(w))
+end

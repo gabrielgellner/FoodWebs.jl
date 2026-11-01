@@ -29,6 +29,13 @@ trophic_levels(web), trophic_levels(web; method = :mackay), trophic_incoherence(
 The prey-averaged levels call P an omnivore at 2.5. The MacKay levels lift B2 to level 2 so that
 every link spans one level, and the web is perfectly coherent.
 
+## Cannibalism and two-way links
+
+Many community-matrix studies simplify a web before using it: [`remove_cannibalism`](@ref)
+drops self-links and [`orient_two_way_links`](@ref) keeps one link of each pair of species that
+eat each other, by a rule the caller chooses. No rule is established, so comparing results
+under several rules, and against keeping both links, shows how much the choice matters.
+
 ## Structural properties
 
 [`structural_properties`](@ref) returns the properties of Williams & Martinez (2000) and the
@@ -48,6 +55,8 @@ top_species
 intermediate_species
 cannibals
 disconnected_from_basal
+remove_cannibalism
+orient_two_way_links
 trophic_levels
 trophic_incoherence
 species_in_loops
