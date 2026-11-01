@@ -164,6 +164,24 @@ couplers = blocks.coupling .> 0
 count(couplers), extrema(levels[couplers]), extrema(levels[.!couplers])
 ```
 
+## Compartments of interaction strengths
+
+Modularity needs non-negative weights, and a community matrix is signed: a predator–prey pair has
+one negative and one positive entry. [`pair_weights`](@ref) gives each pair a symmetric weight,
+`√|J_ij J_ji|` by default, which does not depend on the abundance units of each species, or
+`|J_ij| + |J_ji|`. Two nulls then separate the sources of compartments: rewiring tests the
+topology, and [`shuffle_weights`](@ref) (`null = :shuffle`) permutes the strengths among the
+interacting pairs, testing whether they are arranged in compartments beyond what the topology
+gives. In the random community matrix of Tuesday Lake the topology is strongly compartmented, but
+the strengths, drawn independently, add nothing:
+
+```@example compartments
+W = pair_weights(J)
+strengths = modularity_zscore(Xoshiro(2), W; null = :shuffle, samples = 30, runs = 3)
+topology = modularity_zscore(Xoshiro(2), web; samples = 30, runs = 3)
+(strengths = round(strengths.z; digits = 2), topology = round(topology.z; digits = 1))
+```
+
 ## Block-structured random matrices
 
 [`block_random_matrix`](@ref) draws community matrices whose species fall into groups, with the
@@ -248,6 +266,8 @@ modularity_zscore
 species_roles
 compartment_homogeneity
 block_structure
+pair_weights
+shuffle_weights
 block_random_matrix
 modular_random_matrix
 modular_connectances

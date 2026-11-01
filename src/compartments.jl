@@ -370,7 +370,7 @@ end
     modularity_zscore([rng], web; null = :rewire, samples = 100, swaps = 10 * L, view = :density,
                       directed = true, γ = 1, method = :louvain, runs = 5)
 
-How much more modular the binary `web` is than webs from a null model, with the modularity of
+How much more modular `web` is than webs from a null model, with the modularity of
 each web, in the `view` of [`web_modularity`](@ref), the highest found by [`compartments`](@ref)
 in `runs` searches by `method`. Random webs
 have high modularity from fluctuations alone (Guimerà, Sales-Pardo & Amaral 2004), so the same
@@ -379,6 +379,10 @@ the test towards significance.
 
 - `null = :rewire`: [`rewire_links`](@ref) with `swaps` swaps, keeping each species' numbers of
   prey and predators and of one-way and two-way links;
+- `null = :shuffle`: the weights of a weight matrix, such as [`pair_weights`](@ref) of a
+  community matrix, permuted at random among its links (among pairs when it is symmetric),
+  keeping the topology; this tests whether the strengths are arranged in compartments beyond
+  what the topology gives;
 - `null = f`, a function `f(rng, S, C)` returning a web with `S` species and connectance about `C`,
   such as `niche_network`, `cascade_network` or `(rng, S, C) -> generalized_niche_network(rng, S,
   C, 0.6)`: a structural model at the species richness and connectance of `web`. Guimerà et al.
@@ -397,17 +401,20 @@ function modularity_zscore(
         swaps::Integer = 10 * count(!iszero, web), view::Symbol = :density, directed::Bool = true, γ::Real = 1,
         method::Symbol = :louvain, runs::Integer = 5
     )
-    all(x -> x == 0 || x == 1, web) ||
-        throw(ArgumentError("modularity_zscore needs a binary web; its null models generate binary webs"))
     samples >= 2 || throw(ArgumentError("samples must be at least 2"))
     S = LinearAlgebra.checksquare(web)
+    binary = all(x -> x == 0 || x == 1, web)
+    null === :shuffle || binary ||
+        throw(ArgumentError("the $null null generates binary webs, so it needs a binary web; use null = :shuffle for weights"))
     draw = if null === :rewire
         () -> rewire_links(rng, web; swaps)
+    elseif null === :shuffle
+        () -> shuffle_weights(rng, web)
     elseif null isa Function
         C = connectance(web)
         () -> null(rng, S, C)
     else
-        throw(ArgumentError("null must be :rewire or a function (rng, S, C) -> web, given $null"))
+        throw(ArgumentError("null must be :rewire, :shuffle or a function (rng, S, C) -> web, given $null"))
     end
     best(W) = compartments(rng, W; view, directed, γ, method, runs)
     found = best(web)
@@ -671,4 +678,64 @@ function block_structure(M::AbstractMatrix{<:Real}, groups::AbstractVector)
         labels, sizes = length.(members), connectance, mean = μ, variance, correlation,
         predator_prey, competition, mutualism, one_way, diagonal, coupling,
     )
+end
+
+
+"""
+    shuffle_weights([rng], W)
+
+A copy of the weight matrix `W` with its nonzero off-diagonal weights permuted at random among
+the same positions, keeping which species interact. When `W` is symmetric, as for
+[`pair_weights`](@ref), the weights are permuted among pairs so that the copy stays symmetric.
+The diagonal is kept. The null model of `modularity_zscore(...; null = :shuffle)`.
+"""
+function shuffle_weights(rng::AbstractRNG, W::AbstractMatrix)
+    S = LinearAlgebra.checksquare(W)
+    shuffled = Matrix{Float64}(W)
+    if W == W'
+        positions = [(i, j) for i in 1:S for j in (i + 1):S if W[i, j] != 0]
+        values = Random.shuffle(rng, [float(W[i, j]) for (i, j) in positions])
+        for ((i, j), v) in zip(positions, values)
+            shuffled[i, j] = shuffled[j, i] = v
+        end
+    else
+        positions = [(i, j) for i in 1:S for j in 1:S if i != j && W[i, j] != 0]
+        values = Random.shuffle(rng, [float(W[i, j]) for (i, j) in positions])
+        for ((i, j), v) in zip(positions, values)
+            shuffled[i, j] = v
+        end
+    end
+    return shuffled
+end
+shuffle_weights(W::AbstractMatrix) = shuffle_weights(Random.default_rng(), W)
+
+"""
+    pair_weights(J; method = :geometric)
+
+Symmetric, non-negative weights for the pairs of species of a community (Jacobian) matrix `J`,
+for [`web_modularity`](@ref), [`compartments`](@ref) and [`modularity_zscore`](@ref). Modularity
+needs non-negative weights, and the signed entries of `J` do not give them: a predator–prey pair
+has one negative and one positive entry, and their sum `J_ij + J_ji` cancels strong trophic
+links. The weight of the pair `(i, j)` is
+
+- `method = :geometric`: `√|J_ij J_ji|`, unchanged by rescaling the abundance units of any
+  species (`J → D J D⁻¹` for diagonal `D`), as for feasible communities `J = diag(x) A`; a pair
+  with only one nonzero entry, such as a donor-controlled link, gets weight 0;
+- `method = :sum`: `|J_ij| + |J_ji|`, which keeps one-way pairs and reduces to the binary web
+  when every magnitude is equal.
+
+The sign of `J_ij J_ji` tells predator–prey pairs (negative) from competition and mutualism
+(positive); [`block_structure`](@ref) counts them by block. Neither weight has been evaluated
+in the literature as a basis for compartments.
+"""
+function pair_weights(J::AbstractMatrix{<:Real}; method::Symbol = :geometric)
+    S = LinearAlgebra.checksquare(J)
+    weight = if method === :geometric
+        (a, b) -> sqrt(abs(a * b))
+    elseif method === :sum
+        (a, b) -> abs(a) + abs(b)
+    else
+        throw(ArgumentError("method must be :geometric or :sum, given :$method"))
+    end
+    return [i == j ? 0.0 : float(weight(J[i, j], J[j, i])) for i in 1:S, j in 1:S]
 end

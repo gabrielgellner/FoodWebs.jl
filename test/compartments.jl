@@ -3,6 +3,7 @@ using Test
 using Random: Random, Xoshiro
 using Statistics: mean, std, var
 using Distributions: Normal, Uniform
+using LinearAlgebra: Diagonal
 
 @testset "modularity by hand" begin
     # two disconnected links, 1 → 2 and 3 → 4: each group holds one link, and the expected
@@ -166,7 +167,7 @@ end
     @test modularity_zscore(Xoshiro(3), base; samples = 10, runs = 2) == modularity_zscore(Xoshiro(3), base; samples = 10, runs = 2)
 
     @test_throws ArgumentError modularity_zscore(rand(Xoshiro(4), 5, 5))
-    @test_throws ArgumentError modularity_zscore(base; null = :shuffle)
+    @test_throws ArgumentError modularity_zscore(base; null = :swap)
     @test_throws ArgumentError modularity_zscore(base; samples = 1)
 end
 
@@ -368,4 +369,67 @@ end
 
     @test_throws ArgumentError web_modularity(rand(Xoshiro(3), 4, 4), [1, 1, 2, 2]; view = :prey)
     @test_throws ArgumentError web_modularity(web, ones(Int, 30); view = :guild)
+end
+
+# a random topology with compartments in the strengths only: each pair of 60 species interacts
+# with probability 0.25 as predator and prey, strongly (magnitude 1 to 2) within the planted halves
+# and weakly (0 to 0.1) between them
+function strength_planted(rng)
+    truth = repeat(1:2, inner = 30)
+    J, web = zeros(60, 60), falses(60, 60)
+    for i in 1:60, j in (i + 1):60
+        rand(rng) < 0.25 || continue
+        m = truth[i] == truth[j] ? 1 + rand(rng) : 0.1 * rand(rng)
+        prey, predator = rand(rng, Bool) ? (i, j) : (j, i)
+        J[prey, predator], J[predator, prey] = -m, 0.3m
+        web[prey, predator] = true
+    end
+    return J, web, truth
+end
+
+@testset "pair weights of community matrices" begin
+    # a predator–prey pair (−2, 0.5), a one-way pair (−1, 0), and a competing pair (−1, −4)
+    J = [-1.0 -2 -1 -1; 0.5 -1 0 0; 0 0 -1 0; -4 0 0 -1]
+    G = pair_weights(J)
+    @test G[1, 2] == G[2, 1] == 1 && G[1, 3] == 0 && G[1, 4] == 2 && all(iszero, G[i, i] for i in 1:4)
+    T = pair_weights(J; method = :sum)
+    @test T[1, 2] == 2.5 && T[1, 3] == 1 && T[1, 4] == 5 && T == T'
+
+    rng = Xoshiro(89)
+    web = niche_network(rng, 30, 0.15)
+    J = random_predprey(rng, web, Uniform(0, 1), 0.3)
+    # the geometric weight does not depend on the abundance units of each species
+    D = Diagonal(exp.(randn(rng, 30)))
+    @test pair_weights(D * J / D) ≈ pair_weights(J)
+    # with equal magnitudes, the summed weights give the undirected modularity of a web without
+    # two-way pairs (a pair that eat each other is two links of the binary web but one pair)
+    web = cascade_network(rng, 30, 0.15)
+    unit = [i == j ? -1.0 : web[i, j] ? -1.0 : web[j, i] ? 1.0 : 0.0 for i in 1:30, j in 1:30]
+    groups = compartments(rng, web).groups
+    @test web_modularity(pair_weights(unit; method = :sum), groups) ≈ web_modularity(web, groups; directed = false)
+
+    # shuffled weights keep who interacts and the set of weights, and symmetry
+    G = pair_weights(J)
+    H = shuffle_weights(rng, G)
+    @test H == H' && (H .!= 0) == (G .!= 0) && sort(vec(H)) == sort(vec(G))
+    flux = rand(rng, 30, 30) .* web
+    F = shuffle_weights(rng, flux)
+    @test (F .!= 0) == (flux .!= 0) && sort(vec(F)) == sort(vec(flux))
+
+    # compartments in the strengths only: the binary web is no more modular than its rewired
+    # versions, while the weights are far more modular than their shuffled versions, and the
+    # weighted groups follow the planted halves (a species with only weak links may join the other)
+    J, web, truth = strength_planted(Xoshiro(90))
+    @test modularity_zscore(Xoshiro(1), web; samples = 30, runs = 3).z < 2
+    r = modularity_zscore(Xoshiro(1), pair_weights(J); null = :shuffle, samples = 30, runs = 3)
+    @test r.z > 3
+    purity = sum(maximum(count(==(h), truth[r.groups .== g]) for h in 1:2) for g in unique(r.groups)) / 60
+    @test purity >= 0.85
+    # weights drawn from the shuffle null itself score z near 0 on average
+    W = pair_weights(J)
+    z = [modularity_zscore(rng, shuffle_weights(rng, W); null = :shuffle, samples = 20, runs = 2).z for _ in 1:12]
+    @test abs(mean(z)) < 0.7
+
+    @test_throws ArgumentError pair_weights(J; method = :product)
+    @test_throws ArgumentError modularity_zscore(pair_weights(J))
 end
