@@ -598,3 +598,39 @@ end
     @test_throws ArgumentError web_modularity(M .> 0, truth; view = :prey, signed = true)
     @test_throws ArgumentError pair_weights(J; method = :difference)
 end
+
+@testset "weighted block model" begin
+    # two groups {1, 2} and {3, 4}: the entries from group 1 to group 2 are −1 and −3, those back
+    # are 0.5 and 0.5, and the rest are 0 (diagonal ignored)
+    M = [-9.0 0 -1 0; 0 -9 0 -3; 0.5 0 -9 0; 0 0.5 0 -9]
+    b = block_model(M, [1, 1, 2, 2])
+    @test b.p == [0 0.5; 0.5 0] && b.μ == [0 -2; 0.5 0]
+    # shrunk variances: s₀² is the variance of all four nonzero entries
+    x = [-1.0, -3, 0.5, 0.5]
+    s02 = mean(abs2, x .- mean(x))
+    @test b.σ[1, 2] ≈ sqrt((2 + s02) / 3) && b.σ[2, 1] ≈ sqrt((0 + s02) / 3) && b.σ[1, 1] ≈ sqrt(s02)
+    normal(x, μ, σ) = -log(2π * σ^2) / 2 - (x - μ)^2 / (2σ^2)
+    # each off-diagonal block has 2 nonzero entries of 4, and the diagonal blocks none of 2
+    ll = 8 * log(0.5) + normal(-1, -2, b.σ[1, 2]) + normal(-3, -2, b.σ[1, 2]) + 2 * normal(0.5, 0.5, b.σ[2, 1])
+    @test b.loglik ≈ ll
+    # with the block means of block_structure: p μ, counting zero entries
+    rng = Xoshiro(92)
+    J = random_predprey(rng, niche_network(rng, 30, 0.15), Uniform(0, 1), 0.3)
+    groups = compartments(rng, J .< 0).groups
+    @test block_model(J, groups).p .* block_model(J, groups).μ ≈ block_structure(J, groups).mean
+
+    # prey eaten by predators, with the same connectance within and between the groups: the
+    # pattern of nonzero entries is random, and the signs and strengths set the two groups apart
+    truth = [fill(1, 20); fill(2, 20)]
+    M = block_random_matrix(rng, [20, 20]; connectance = 0.2, μ = [-0.5 -1.5; 1.0 -0.5], σ = 0.3, diagonal = -1)
+    f = fit_block_model(Xoshiro(1), M; k = 1:4)
+    @test f.k == 2 && f.groups == truth
+    @test f.μ[1, 2] < 0 < f.μ[2, 1]
+    @test f.loglik >= block_model(M, truth).loglik - 1.0e-9
+    # a homogeneous matrix: one group
+    @test fit_block_model(Xoshiro(2), block_random_matrix(rng, [40]; connectance = 0.2, μ = -0.5, σ = 0.5); k = 1:4).k == 1
+    @test fit_block_model(Xoshiro(3), M; k = 2) == fit_block_model(Xoshiro(3), M; k = 2)
+
+    @test_throws DimensionMismatch block_model(M, truth[1:3])
+    @test_throws ArgumentError fit_block_model(M; k = 0:2)
+end

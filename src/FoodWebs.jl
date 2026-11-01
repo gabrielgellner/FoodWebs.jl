@@ -44,7 +44,8 @@ include("motifs.jl")
 export motif_census, motif_ids, motif_name, motif_roles, motif_zscores, rewire_links
 
 include("compartments.jl")
-export block_structure, compartment_homogeneity, compartments, energy_channels, fit_group_model, group_model,
+export block_model, block_structure, compartment_homogeneity, compartments, energy_channels, fit_block_model,
+    fit_group_model, group_model,
     modularity_zscore, pair_weights, shuffle_weights, source_reliance, species_roles, web_modularity
 
 include("blocks.jl")

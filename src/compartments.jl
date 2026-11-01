@@ -1052,3 +1052,188 @@ function anneal_groups_likelihood(rng::AbstractRNG, A::AbstractMatrix{<:Integer}
     end
     return g
 end
+
+"""
+    block_model(M, groups)
+
+A stochastic block model with normal weights for the off-diagonal entries of a signed matrix `M`,
+such as a community matrix, for the partition `groups`: an entry `M[i, j]`, `i` in group `r` and
+`j` in group `s`, is nonzero with probability `p[r, s]`, and a nonzero entry is normal with mean
+`μ[r, s]` and standard deviation `σ[r, s]`, the inferential counterpart of
+[`block_structure`](@ref) and [`block_random_matrix`](@ref) (after the weighted block models of
+Aicher, Jacobs & Clauset 2015 and Peixoto 2018). `μ[r, s]` and `μ[s, r]` are separate, so the
+effects of predators on prey and of prey on predators have their own means. The diagonal is not
+modelled, and the entries are independent: the two entries of a pair, which in a community
+matrix are nonzero together, count as two observations, which overstates the evidence for
+groups in the pattern of nonzero entries. Returns a named tuple with the `labels` of the groups (in order of first appearance),
+`p`, `μ`, `σ`, the log-likelihood and the integrated classification likelihood
+
+    ICL = log L + Σ_r S_r log(S_r / S) − (k² / 2) log m − (2k² / 2) log L − ((k − 1) / 2) log S,
+
+with `m = S(S − 1)` entries and `L` nonzero entries (Daudin, Picard & Robin 2008). The variances
+are shrunk towards the variance `s₀²` of all nonzero entries, `σ² = (Σ (x − μ)² + s₀²) / (L_rs + 1)`,
+so that blocks of one or two entries have a finite likelihood; blocks without nonzero entries take
+`μ = 0` and `σ = s₀`.
+
+Aicher, C., Jacobs, A. Z. & Clauset, A. Learning latent block structure in weighted networks. J.
+Complex Netw. 3, 221–248 (2015). Peixoto, T. P. Nonparametric weighted stochastic block models.
+Phys. Rev. E 97, 012306 (2018).
+"""
+function block_model(M::AbstractMatrix{<:Real}, groups::AbstractVector)
+    S = LinearAlgebra.checksquare(M)
+    length(groups) == S || throw(DimensionMismatch("groups must have length $S, got $(length(groups))"))
+    labels = unique(groups)
+    g = [findfirst(==(groups[i]), labels) for i in 1:S]
+    stats = BlockStats(M, g, length(labels))
+    fit = block_fit(stats)
+    return (; labels, fit...)
+end
+
+# Sufficient statistics of the weighted block model: for each block (r, s), the number of
+# off-diagonal entries m, of nonzero entries L, and the sum and sum of squares of the nonzero
+# entries, with the group sizes n and the variance s0² of all nonzero entries
+struct BlockStats
+    n::Vector{Int}
+    L::Matrix{Int}
+    sum::Matrix{Float64}
+    sumsq::Matrix{Float64}
+    s02::Float64
+    S::Int
+end
+function BlockStats(M::AbstractMatrix, g::AbstractVector{<:Integer}, k::Integer)
+    S = size(M, 1)
+    n = [count(==(r), g) for r in 1:k]
+    L, Σ, Σ2 = zeros(Int, k, k), zeros(k, k), zeros(k, k)
+    for i in 1:S, j in 1:S
+        (i != j && M[i, j] != 0) || continue
+        x = float(M[i, j])
+        L[g[i], g[j]] += 1
+        Σ[g[i], g[j]] += x
+        Σ2[g[i], g[j]] += x^2
+    end
+    nonzero = [float(M[i, j]) for i in 1:S for j in 1:S if i != j && M[i, j] != 0]
+    s02 = length(nonzero) > 1 ? max(mean(abs2, nonzero .- mean(nonzero)), eps()) : 1.0
+    return BlockStats(n, L, Σ, Σ2, s02, S)
+end
+pairs_in(stats::BlockStats, r, s) = r == s ? stats.n[r] * (stats.n[r] - 1) : stats.n[r] * stats.n[s]
+
+# The maximized log-likelihood of one block, with the shrunk variance
+function block_term(L, m, Σ, Σ2, s02)
+    m == 0 && return 0.0
+    ll = block_loglik(L, m)
+    L == 0 && return ll
+    μ = Σ / L
+    σ2 = (max(Σ2 - L * μ^2, 0.0) + s02) / (L + 1)
+    return ll - L / 2 * log(2π * σ2) - (Σ2 - 2μ * Σ + L * μ^2) / (2σ2)
+end
+
+function block_fit(stats::BlockStats)
+    k = length(stats.n)
+    m = [pairs_in(stats, r, s) for r in 1:k, s in 1:k]
+    p = [m[r, s] > 0 ? stats.L[r, s] / m[r, s] : 0.0 for r in 1:k, s in 1:k]
+    μ = [stats.L[r, s] > 0 ? stats.sum[r, s] / stats.L[r, s] : 0.0 for r in 1:k, s in 1:k]
+    σ = [
+        stats.L[r, s] > 0 ?
+            sqrt((max(stats.sumsq[r, s] - stats.L[r, s] * μ[r, s]^2, 0.0) + stats.s02) / (stats.L[r, s] + 1)) :
+            sqrt(stats.s02) for r in 1:k, s in 1:k
+    ]
+    loglik = sum(block_term(stats.L[r, s], m[r, s], stats.sum[r, s], stats.sumsq[r, s], stats.s02) for r in 1:k, s in 1:k)
+    S, Ltot = stats.S, sum(stats.L)
+    icl = loglik + sum(xlogx(x) for x in stats.n) - xlogx(S) - k^2 / 2 * log(max(S * (S - 1), 1)) -
+        k^2 * log(max(Ltot, 1)) - (k - 1) / 2 * log(S)
+    return (; p, μ, σ, loglik, icl)
+end
+
+"""
+    fit_block_model([rng], M; k = 1:min(S, 8), runs = 5, cooling = 0.98, sweeps = 20)
+
+The partition of the species of the signed matrix `M` of highest likelihood under the
+[`block_model`](@ref) for each number of groups in `k`, by simulated annealing with moves of single
+species followed by moves that raise the likelihood until none does, and the number of groups of
+highest ICL. Returns the named tuple of `block_model` for the selected partition, with its
+`groups` (labelled `1, 2, …` in order of first appearance), its `k`, and `icl_by_k`.
+"""
+function fit_block_model(
+        rng::AbstractRNG, M::AbstractMatrix{<:Real}; k = 1:min(size(M, 1), 8), runs::Integer = 5,
+        cooling::Real = 0.98, sweeps::Integer = 20
+    )
+    S = LinearAlgebra.checksquare(M)
+    ks = collect(k)
+    all(x -> 1 <= x <= S, ks) || throw(ArgumentError("k must be between 1 and $S"))
+    runs >= 1 || throw(ArgumentError("runs must be at least 1"))
+    best_by_k = map(ks) do kk
+        candidates = [anneal_block_model(rng, M, kk; cooling, sweeps) for _ in 1:runs]
+        candidates[argmax([block_model(M, c).loglik for c in candidates])]
+    end
+    icl = [block_model(M, g).icl for g in best_by_k]
+    groups = relabel(best_by_k[argmax(icl)])
+    fit = block_model(M, groups)
+    return (; groups, k = maximum(groups), fit..., icl_by_k = Dict(zip(ks, icl)))
+end
+fit_block_model(M::AbstractMatrix; kwargs...) = fit_block_model(Random.default_rng(), M; kwargs...)
+
+# Simulated annealing of the weighted block model log-likelihood for k groups, then moves that
+# raise it until none does; the block statistics are updated by each move
+function anneal_block_model(rng::AbstractRNG, M::AbstractMatrix, k::Integer; cooling, sweeps)
+    S = size(M, 1)
+    k == 1 && return ones(Int, S)
+    g = rand(rng, 1:k, S)
+    stats = BlockStats(M, g, k)
+    total(st) = sum(block_term(st.L[r, s], pairs_in(st, r, s), st.sum[r, s], st.sumsq[r, s], st.s02) for r in 1:k, s in 1:k)
+    # the statistics after moving v to group b
+    function moved(st, v, b)
+        a = g[v]
+        L, Σ, Σ2, n = copy(st.L), copy(st.sum), copy(st.sumsq), copy(st.n)
+        for u in 1:S
+            u == v && continue
+            c = g[u]
+            # only v changes group: its entries move from block (a, c) to (b, c), and (c, a) to (c, b)
+            if M[v, u] != 0
+                x = float(M[v, u])
+                L[a, c] -= 1; Σ[a, c] -= x; Σ2[a, c] -= x^2
+                L[b, c] += 1; Σ[b, c] += x; Σ2[b, c] += x^2
+            end
+            if M[u, v] != 0
+                x = float(M[u, v])
+                L[c, a] -= 1; Σ[c, a] -= x; Σ2[c, a] -= x^2
+                L[c, b] += 1; Σ[c, b] += x; Σ2[c, b] += x^2
+            end
+        end
+        n[a] -= 1; n[b] += 1
+        return BlockStats(n, L, Σ, Σ2, st.s02, S)
+    end
+    current = total(stats)
+    best, bestll = copy(g), current
+    T = 1.0
+    while T > 1.0e-3
+        for _ in 1:(sweeps * S)
+            v = rand(rng, 1:S)
+            b = rand(rng, 1:k)
+            b == g[v] && continue
+            new_stats = moved(stats, v, b)
+            new = total(new_stats)
+            if new >= current || rand(rng) < exp((new - current) / T)
+                g[v], stats, current = b, new_stats, new
+                current > bestll && ((best, bestll) = (copy(g), current))
+            end
+        end
+        T *= cooling
+    end
+    g .= best
+    stats = BlockStats(M, g, k)
+    current = total(stats)
+    improved = true
+    while improved
+        improved = false
+        for v in Random.shuffle(rng, 1:S), b in 1:k
+            b == g[v] && continue
+            new_stats = moved(stats, v, b)
+            new = total(new_stats)
+            if new > current + 1.0e-10
+                g[v], stats, current = b, new_stats, new
+                improved = true
+            end
+        end
+    end
+    return copy(g)
+end
