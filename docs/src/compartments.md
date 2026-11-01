@@ -164,6 +164,26 @@ couplers = blocks.coupling .> 0
 count(couplers), extrema(levels[couplers]), extrema(levels[.!couplers])
 ```
 
+## Groups beyond compartments
+
+Modularity finds only compartments, groups linked mostly among themselves. The group model of
+Allesina & Pascual (2009) is a stochastic block model: a species of group `r` is eaten by one of
+group `s` with probability `p[r, s]`. Dense blocks on the diagonal of `p` are compartments; dense
+blocks off it are guilds, species that eat the same prey or are eaten by the same predators.
+[`fit_group_model`](@ref) searches for the partition of highest likelihood for each number of
+groups and selects the number by the integrated classification likelihood, which, unlike the AIC
+of the paper, picks one group for a random web. Tuesday Lake divides into trophic guilds: two
+basal groups, two of herbivores and two of predators, with the dense blocks above the diagonal:
+
+```@example compartments
+model = fit_group_model(Xoshiro(2026), binary; k = 1:8)
+model.k, [round(sum(levels[model.groups .== r]) / count(==(r), model.groups); digits = 1) for r in 1:model.k]
+```
+
+```@example compartments
+round.(model.p; digits = 2)
+```
+
 ## Energy channels
 
 Energy channels are an ecological definition of compartments: the pathways of energy from each
@@ -293,6 +313,8 @@ modularity_zscore
 species_roles
 compartment_homogeneity
 block_structure
+group_model
+fit_group_model
 source_reliance
 energy_channels
 pair_weights
