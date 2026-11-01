@@ -180,8 +180,8 @@ function trophic_incoherence(web::AbstractMatrix)
 end
 
 # A web of the same type as `web` with the links of the Bool matrix `A`
-rebuild_web(web::PredationMatrix, A) = PredationMatrix(A)
-rebuild_web(web::AbstractMatrix, A) = Matrix{Bool}(A)
+rebuild_web(::PredationMatrix, A) = PredationMatrix(A)
+rebuild_web(::AbstractMatrix, A) = Matrix{Bool}(A)
 
 """
     remove_cannibalism(web)

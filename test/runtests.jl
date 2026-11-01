@@ -18,6 +18,7 @@ using ExplicitImports: test_explicit_imports
     include("layout.jl")
     include("data.jl")
     include("biomass.jl")
+    include("feasible.jl")
     include("properties.jl")
     include("motifs.jl")
 end
