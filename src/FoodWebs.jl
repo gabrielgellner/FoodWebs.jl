@@ -28,6 +28,7 @@ export λ_stability, ν_stability
 include("utils.jl")
 export connectance, trophic_incoherence, trophic_levels
 export basal_species, disconnected_from_basal, top_species
+export orient_two_way_links, remove_cannibalism
 
 include("properties.jl")
 export cannibals, intermediate_species, omnivores, species_in_loops

@@ -158,3 +158,7 @@ function foodweb(id::AbstractString)
     dir, entry = catalog[id]
     return read_foodweb(dir; name = get(entry, "title", id), metadata = entry)
 end
+
+function rebuild_web(fw::FoodWeb, A)
+    return FoodWeb(PredationMatrix(A), fw.species, fw.name, fw.metadata)
+end
