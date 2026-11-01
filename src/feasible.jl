@@ -35,7 +35,7 @@
 
 """
     FeasibleCommunities(web, x; rates, self_regulation = :all, efficiency = nothing,
-                        self_share = nothing, bounds = (0.0, Inf))
+                        self_share = nothing, bounds = (0.0, Inf), per_capita_bounds = nothing)
 
 The Lotka–Volterra parameters on the food web `web` (`web[i, j] != 0` when species `j` eats
 species `i`) that have the equilibrium biomasses `x > 0`: the interaction matrix `A` and growth
@@ -59,6 +59,17 @@ variables.
 - `self_share`: `nothing`, a share `s` or a band `(s_min, s_max)` in `[0, 1]` of each
   self-regulated species' turnover taken by its self-regulation, `s_min T_i ≤ x_i σ_i ≤ s_max T_i`.
 - `bounds`: `(lo, hi)` for every loss, gain and self-regulation magnitude.
+- `per_capita_bounds`: `nothing`, or `(lo, hi)` for the per capita rate of every loss, gain and
+  self-regulation term: a coordinate `θ` at `A[i, j]` contributes `θ x[j]` to species `i`'s per
+  capita growth rate, so the bound is `lo / x[j] ≤ θ ≤ hi / x[j]`. It applies together with
+  `bounds`.
+
+The community matrix `J = diag(x) A` has the eigenvalues of `A diag(x)`, the matrix of per capita
+rates, and the equilibrium, the rate intervals, `self_share` and `per_capita_bounds` constrain per
+capita rates only. Rescaling `x` by a constant therefore leaves the spectra unchanged, and
+without efficiency bands so does any change of `x`. A finite `bounds` caps the per capita rate of
+a coordinate at `A[i, j]` at `hi x[j]`, which depends on the scale and the shape of `x`. Use
+`per_capita_bounds` to bound the interactions on the scale of the growth rates.
 
 Species that eat each other get a loss and a gain at each of their two entries of `A`; only the
 difference enters the equilibrium, so each such pair adds directions that the equilibrium leaves
@@ -76,13 +87,14 @@ struct FeasibleCommunities
     efficiency::Union{Nothing, Tuple{Matrix{Float64}, Matrix{Float64}}}
     self_share::Union{Nothing, Tuple{Float64, Float64}}
     bounds::Tuple{Float64, Float64}
+    per_capita_bounds::Union{Nothing, Tuple{Float64, Float64}}
     coordinates::Vector{@NamedTuple{kind::Symbol, i::Int, j::Int}}
 end
 
 function FeasibleCommunities(
         web::AbstractMatrix, x::AbstractVector{<:Real};
         rates = (basal = (0.0, 5.0), consumer = (-1.0, 0.0)), self_regulation = :all,
-        efficiency = nothing, self_share = nothing, bounds = (0.0, Inf)
+        efficiency = nothing, self_share = nothing, bounds = (0.0, Inf), per_capita_bounds = nothing
     )
     S = LinearAlgebra.checksquare(web)
     length(x) == S || throw(DimensionMismatch("x must have length $S, got $(length(x))"))
@@ -133,6 +145,13 @@ function FeasibleCommunities(
     end
     first(bounds) <= last(bounds) || throw(ArgumentError("bounds must have lo ≤ hi"))
     first(bounds) >= 0 || throw(ArgumentError("magnitudes are non-negative, so the lower bound must be at least 0"))
+    per_capita = if per_capita_bounds === nothing
+        nothing
+    else
+        lo, hi = per_capita_bounds
+        0 <= lo <= hi || throw(ArgumentError("per_capita_bounds must satisfy 0 ≤ lo ≤ hi, got $per_capita_bounds"))
+        (float(lo), float(hi))
+    end
     coords = @NamedTuple{kind::Symbol, i::Int, j::Int}[]
     for i in 1:S
         self_regulated[i] && push!(coords, (kind = :self, i = i, j = i))
@@ -145,7 +164,7 @@ function FeasibleCommunities(
     rate_bounds === nothing || append!(coords, [(kind = :growth, i = i, j = i) for i in 1:S])
     return FeasibleCommunities(
         eats, Vector{Float64}(x), fixed_rates, rate_bounds, self_regulated, band, share,
-        (float(first(bounds)), float(last(bounds))), coords
+        (float(first(bounds)), float(last(bounds))), per_capita, coords
     )
 end
 
@@ -211,6 +230,11 @@ function halfspaces(fc::FeasibleCommunities)
             lower[k], upper[k] = r_lo[c.i], r_hi[c.i]
         else
             C[c.i, k] = coordinate_sign(c) * fc.x[c.j]
+            if fc.per_capita_bounds !== nothing
+                lo, hi = fc.per_capita_bounds
+                lower[k] = max(lower[k], lo / fc.x[c.j])
+                upper[k] = min(upper[k], hi / fc.x[c.j])
+            end
         end
     end
     fixed === nothing || (d .= .-fixed)
@@ -348,7 +372,7 @@ end
     isbounded(fc::FeasibleCommunities)
 
 Whether the polytope of `fc` is bounded, decided from its structure without a solver. With finite
-`bounds` it always is. Without efficiency bands, each coordinate sits in one species' equilibrium
+`bounds` or `per_capita_bounds` it always is. Without efficiency bands, each coordinate sits in one species' equilibrium
 row, and the polytope is bounded unless some row has unbounded coordinates of both signs that can
 grow together; a self-regulated top predator whose self-regulation share is below 1 cannot. With
 efficiency bands, flux is bounded on every link whose band stays below 1, and the polytope is
@@ -357,6 +381,7 @@ draining a positive minimum self-regulation share.
 """
 function isbounded(fc::FeasibleCommunities)
     isfinite(last(fc.bounds)) && return true
+    fc.per_capita_bounds !== nothing && isfinite(last(fc.per_capita_bounds)) && return true
     S = length(fc.x)
     s_min, s_max = fc.self_share === nothing ? (0.0, Inf) : fc.self_share
     if fc.efficiency === nothing
@@ -562,8 +587,9 @@ through PolytopeSamplers.jl (load it to enable this method). Returns the rates `
 `communities` and the number of `draws`, or throws an `ErrorException` after `maxiter` draws.
 This reproduces the redraw loop of the published studies; rates as coordinates need no redraws.
 
-The scale of `x` sets the interaction strengths a point needs: each row of `r + A x = 0` divides
-a rate by biomasses, so with biomasses much smaller than the rates the magnitudes exceed
-`bounds` and no draw is feasible. Scale `x` so that `r ./ x` is within the bounds.
+With magnitude `bounds`, the scale of `x` sets whether a draw can be feasible: each row of
+`r + A x = 0` divides a rate by biomasses, so with biomasses much smaller than the rates the
+magnitudes exceed the bounds. `per_capita_bounds` bound the interactions on the scale of the
+rates and do not depend on `x`.
 """
 function feasible_growth_rates end
