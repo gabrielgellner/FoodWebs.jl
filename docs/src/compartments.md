@@ -113,10 +113,42 @@ across the sink webs:
 compartment_homogeneity(fw, groups), compartment_homogeneity(fw, fw.traits["category"])
 ```
 
+## Links between compartments
+
+The effect of compartments on the eigenvalues of a community matrix depends on the links between
+them: the mean of the between-group entries sets the outlier eigenvalues, and their variance and
+pair correlation the bulk (Grilli, Rogers & Allesina 2016). [`block_structure`](@ref) splits a
+community or flux matrix into these within- and between-group statistics, with the kinds of pairs
+in each block and, for each species, the share of its interaction magnitude with other groups.
+For a random community matrix on Tuesday Lake, 113 of the 263 predator–prey pairs cross
+compartments:
+
+```@example compartments
+using Distributions: Uniform
+
+web = PredationMatrix(first(remove_cannibalism(fw)) .!= 0)
+J = random_predprey(Xoshiro(1), web, Uniform(0, 1), 0.3)
+blocks = block_structure(J, groups)
+k = length(blocks.sizes)
+within = sum(blocks.predator_prey[r, r] for r in 1:k)
+between = sum(blocks.predator_prey[r, s] for r in 1:k for s in (r + 1):k)
+within, between
+```
+
+The 33 coupling species span the web, from basal species eaten in several compartments to
+consumers at trophic level 3.7; the species with no links outside their compartment are all
+basal:
+
+```@example compartments
+couplers = blocks.coupling .> 0
+count(couplers), extrema(levels[couplers]), extrema(levels[.!couplers])
+```
+
 ```@docs
 web_modularity
 compartments
 modularity_zscore
 species_roles
 compartment_homogeneity
+block_structure
 ```

@@ -44,7 +44,7 @@ include("motifs.jl")
 export motif_census, motif_ids, motif_name, motif_roles, motif_zscores, rewire_links
 
 include("compartments.jl")
-export compartment_homogeneity, compartments, modularity_zscore, species_roles, web_modularity
+export block_structure, compartment_homogeneity, compartments, modularity_zscore, species_roles, web_modularity
 
 include("data.jl")
 export FoodWeb, foodweb, foodweb_ids, read_foodweb

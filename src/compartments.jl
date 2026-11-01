@@ -547,3 +547,76 @@ function sink_homogeneity(web, groups, sizes)
     end
     return H
 end
+
+"""
+    block_structure(M, groups)
+
+The within- and between-group structure of a community (Jacobian) matrix or flux matrix `M` for
+the partition `groups`, the quantities that set the eigenvalues of block-structured random
+matrices: the mean of the entries between two groups sets the outlier eigenvalues, and their
+variance and pair correlation the bulk (Grilli, Rogers & Allesina 2016). Groups are ordered by
+first appearance in `groups`. Returns a named tuple of `k × k` matrices over pairs of groups
+`(r, s)`, for the off-diagonal entries `M[i, j]` with `i` in `r` and `j` in `s`:
+
+- `connectance`: the fraction of nonzero entries;
+- `mean`, `variance`: their mean and population variance, counting zero entries, as in
+  [`elliptic_law`](@ref), so that a block with nonzero entries of mean `μ` and variance `σ²` at
+  connectance `C` has mean `Cμ` and variance `C(σ² + μ²) − C²μ²`;
+- `correlation`: the correlation of the pairs `(M[i, j], M[j, i])`, with the geometric mean of
+  the two variances in the denominator as in `elliptic_law` (`NaN` when either is 0);
+- `predator_prey`, `competition`, `mutualism`, `one_way`: the numbers of pairs with entries of
+  opposite sign, both negative, both positive, and one zero, symmetric in `r` and `s`;
+
+and, for the groups and the species:
+
+- `labels`, `sizes`: the groups and their numbers of species;
+- `diagonal`: the mean diagonal entry of each group;
+- `coupling`: for each species, the share of its interaction magnitude, `Σ_j |M[i, j]| + |M[j, i]|`
+  over `j ≠ i`, that is with other groups; the coupling species are those with `coupling > 0`.
+
+With one group, `mean` and `correlation` are those of `elliptic_law`.
+
+Grilli, J., Rogers, T. & Allesina, S. Modularity and stability in ecological communities. Nat.
+Commun. 7, 12031 (2016).
+"""
+function block_structure(M::AbstractMatrix{<:Real}, groups::AbstractVector)
+    S = LinearAlgebra.checksquare(M)
+    length(groups) == S || throw(DimensionMismatch("groups must have length $S, got $(length(groups))"))
+    labels = unique(groups)
+    k = length(labels)
+    g = [findfirst(==(groups[i]), labels) for i in 1:S]
+    members = [findall(==(r), g) for r in 1:k]
+    entries(r, s) = [float(M[i, j]) for i in members[r] for j in members[s] if i != j]
+    connectance, μ, variance, correlation = (fill(NaN, k, k) for _ in 1:4)
+    predator_prey, competition, mutualism, one_way = (zeros(Int, k, k) for _ in 1:4)
+    for r in 1:k, s in 1:k
+        x = entries(r, s)
+        isempty(x) && continue
+        connectance[r, s] = count(!iszero, x) / length(x)
+        μ[r, s] = mean(x)
+        variance[r, s] = mean(abs2, x .- μ[r, s])
+        r <= s || continue
+        pairs = [(float(M[i, j]), float(M[j, i])) for i in members[r] for j in members[s] if (r == s ? i < j : true)]
+        a, b = first.(pairs), last.(pairs)
+        va, vb = mean(abs2, a .- mean(a)), mean(abs2, b .- mean(b))
+        ρ = va > 0 && vb > 0 ? mean((a .- mean(a)) .* (b .- mean(b))) / sqrt(va * vb) : NaN
+        correlation[r, s] = correlation[s, r] = ρ
+        counts = (
+            count(p -> p[1] * p[2] < 0, pairs), count(p -> p[1] < 0 && p[2] < 0, pairs),
+            count(p -> p[1] > 0 && p[2] > 0, pairs), count(p -> xor(p[1] == 0, p[2] == 0), pairs),
+        )
+        for (matrix, n) in zip((predator_prey, competition, mutualism, one_way), counts)
+            matrix[r, s] = matrix[s, r] = n
+        end
+    end
+    diagonal = [mean(float(M[i, i]) for i in members[r]) for r in 1:k]
+    coupling = map(1:S) do i
+        total = sum((abs(M[i, j]) + abs(M[j, i]) for j in 1:S if j != i); init = 0.0)
+        outside = sum((abs(M[i, j]) + abs(M[j, i]) for j in 1:S if g[j] != g[i]); init = 0.0)
+        total > 0 ? outside / total : 0.0
+    end
+    return (;
+        labels, sizes = length.(members), connectance, mean = μ, variance, correlation,
+        predator_prey, competition, mutualism, one_way, diagonal, coupling,
+    )
+end

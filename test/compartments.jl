@@ -2,6 +2,7 @@ using FoodWebs
 using Test
 using Random: Random, Xoshiro
 using Statistics: mean, std, var
+using Distributions: Normal, Uniform
 
 @testset "modularity by hand" begin
     # two disconnected links, 1 → 2 and 3 → 4: each group holds one link, and the expected
@@ -239,4 +240,70 @@ end
     @test mean(jittered) ≈ FoodWebs.boundaries(groups, tied, unique(groups)) atol = 0.02
 
     @test_throws DimensionMismatch compartment_homogeneity(web, groups[1:29])
+end
+
+@testset "block structure" begin
+    # constant blocks: group 1 = {1, 2} compete (−1 both ways), group 2 = {3, 4, 5} do not
+    # interact, group 2 eats group 1 (−2 on group 1, +0.5 on group 2), diagonal −1
+    M = [-1.0 -1 -2 -2 -2; -1 -1 -2 -2 -2; 0.5 0.5 -1 0 0; 0.5 0.5 0 -1 0; 0.5 0.5 0 0 -1]
+    b = block_structure(M, [:a, :a, :b, :b, :b])
+    @test b.labels == [:a, :b] && b.sizes == [2, 3]
+    @test b.connectance == [1 1; 1 0]
+    @test b.mean == [-1 -2; 0.5 0] && b.variance == zeros(2, 2)
+    @test b.competition == [1 0; 0 0] && b.predator_prey == [0 6; 6 0]
+    @test b.mutualism == zeros(Int, 2, 2) && b.one_way == zeros(Int, 2, 2)
+    @test all(isnan, b.correlation)
+    @test b.diagonal == [-1, -1]
+    # species 1: 2 within its group and 3 × 2.5 with the other
+    @test b.coupling[1] ≈ 7.5 / 9.5 && b.coupling[3] ≈ 1
+
+    # one group gives the moments of elliptic_law
+    rng = Xoshiro(86)
+    J = random_predprey(rng, niche_network(rng, 40, 0.15), Normal(0, 1), 0.3)
+    one = block_structure(J, ones(Int, 40))
+    law = elliptic_law(J)
+    @test one.mean[1, 1] ≈ law.μ && one.correlation[1, 1] ≈ law.ρ
+    @test all(iszero, one.coupling)
+
+    # block moments of a large matrix with known parameters: within blocks, pairs are present with
+    # probability C and bivariate normal with mean μ, variance σ² and correlation ρ; between blocks,
+    # entries are present with probability C_b and normal with mean μ_b
+    S, C, μ, σ, ρ, C_b, μ_b = 400, 0.3, -0.5, 1.0, -0.6, 0.05, 1.0
+    groups = repeat(1:2, inner = S ÷ 2)
+    M = zeros(S, S)
+    for i in 1:S, j in (i + 1):S
+        if groups[i] == groups[j]
+            rand(rng) < C || continue
+            z1, z2 = randn(rng), randn(rng)
+            M[i, j] = μ + σ * z1
+            M[j, i] = μ + σ * (ρ * z1 + sqrt(1 - ρ^2) * z2)
+        else
+            rand(rng) < C_b && (M[i, j] = μ_b + σ * randn(rng))
+            rand(rng) < C_b && (M[j, i] = μ_b + σ * randn(rng))
+        end
+    end
+    b = block_structure(M, groups)
+    variance(c, m) = c * (σ^2 + m^2) - c^2 * m^2
+    @test b.connectance[1, 1] ≈ C atol = 0.01
+    @test b.connectance[1, 2] ≈ C_b atol = 0.01
+    @test b.mean[1, 1] ≈ C * μ atol = 0.01
+    @test b.mean[2, 1] ≈ C_b * μ_b atol = 0.01
+    @test b.variance[2, 2] ≈ variance(C, μ) atol = 0.02
+    @test b.variance[1, 2] ≈ variance(C_b, μ_b) atol = 0.01
+    @test b.correlation[1, 1] ≈ (C * (ρ * σ^2 + μ^2) - C^2 * μ^2) / variance(C, μ) atol = 0.03
+    # independent entries between blocks: no pair correlation
+    @test abs(b.correlation[1, 2]) < 0.03
+
+    # every link of a cascade web is one predator–prey pair of random_predprey, and one one-way pair
+    # of a flux matrix
+    web = cascade_network(rng, 30, 0.15)
+    groups = compartments(rng, web).groups
+    L = count(!iszero, web)
+    upper(X) = sum(X[r, s] for r in axes(X, 1) for s in axes(X, 2) if r <= s)
+    @test upper(block_structure(random_predprey(rng, web, Uniform(0, 1), 0.3), groups).predator_prey) == L
+    flux = rand(rng, 30, 30) .* web
+    fb = block_structure(flux, groups)
+    @test upper(fb.one_way) == L && upper(fb.predator_prey) == 0
+
+    @test_throws DimensionMismatch block_structure(M, groups[1:29])
 end
