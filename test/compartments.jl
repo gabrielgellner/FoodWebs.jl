@@ -307,3 +307,65 @@ end
 
     @test_throws DimensionMismatch block_structure(M, groups[1:29])
 end
+
+# the bipartite modularity of Guimerà, Sales-Pardo & Amaral (2007), from teams of members
+function team_modularity(teams, S, groups; γ = 1)
+    c = zeros(Int, S, S)
+    for team in teams, i in team, j in team
+        i != j && (c[i, j] += 1)
+    end
+    t = [count(team -> i in team, teams) for i in 1:S]
+    K = sum(length(team) * (length(team) - 1) for team in teams)
+    L = sum(length, teams)
+    same = [(i, j) for i in 1:S for j in 1:S if i != j && groups[i] == groups[j]]
+    return sum(c[i, j] for (i, j) in same; init = 0) / K - γ * sum(t[i] * t[j] for (i, j) in same; init = 0) / L^2
+end
+
+@testset "predator and prey views" begin
+    # prey 1 and 2 both eaten by predators 3 and 4: predators 3 and 4 share two prey, so
+    # M = (2 + 2)/4 − (2·2 + 2·2)/4² = 1/2 in the predator view, and the same in the prey view
+    web = falses(4, 4)
+    web[1:2, 3:4] .= true
+    @test web_modularity(web, [1, 1, 2, 2]; view = :predator) ≈ 1 / 2
+    @test web_modularity(web, [1, 1, 2, 2]; view = :prey) ≈ 1 / 2
+
+    # against the definition from teams, on niche webs and random partitions
+    rng = Xoshiro(84)
+    for _ in 1:5
+        web = niche_network(rng, 25, 0.15)
+        groups = rand(rng, 1:4, 25)
+        eats(i, j) = i != j && web[i, j] != 0
+        prey_of = [[i for i in 1:25 if eats(i, j)] for j in 1:25]
+        predators_of = [[j for j in 1:25 if eats(i, j)] for i in 1:25]
+        # predator view: each prey's predators are a team; prey view: each predator's prey
+        @test web_modularity(web, groups; view = :predator) ≈ team_modularity(filter(!isempty, predators_of), 25, groups)
+        @test web_modularity(web, groups; view = :prey) ≈ team_modularity(filter(!isempty, prey_of), 25, groups)
+        @test web_modularity(web, groups; view = :prey, γ = 0.5) ≈ team_modularity(filter(!isempty, prey_of), 25, groups; γ = 0.5)
+        # the views agree for a symmetric web and differ for this one
+        sym = web .| web'
+        @test web_modularity(sym, groups; view = :predator) ≈ web_modularity(sym, groups; view = :prey)
+        @test !(web_modularity(web, groups; view = :predator) ≈ web_modularity(web, groups; view = :prey))
+    end
+
+    # planted guilds: prey 1–10 eaten by predators 21–25 and prey 11–20 by predators 26–30, each
+    # link present with probability 0.6; the prey view groups each set of prey, and the predator
+    # view each set of predators
+    web = falses(30, 30)
+    for i in 1:20, j in 21:30
+        ((i <= 10) == (j <= 25)) && rand(rng) < 0.6 && (web[i, j] = true)
+    end
+    # (a species without predators, or without prey, shares them with no one and stays alone)
+    eaten = [i for i in 1:30 if any(web[i, :])]
+    eating = [j for j in 1:30 if any(web[:, j])]
+    prey = compartments(Xoshiro(1), web; view = :prey, runs = 5).groups
+    A, B = intersect(eaten, 1:10), intersect(eaten, 11:20)
+    @test allequal(prey[A]) && allequal(prey[B]) && prey[A[1]] != prey[B[1]]
+    predators = compartments(Xoshiro(1), web; view = :predator, method = :annealing, runs = 3).groups
+    A, B = intersect(eating, 21:25), intersect(eating, 26:30)
+    @test allequal(predators[A]) && allequal(predators[B]) && predators[A[1]] != predators[B[1]]
+    r = modularity_zscore(Xoshiro(2), web; view = :prey, samples = 20, runs = 3)
+    @test r.z > 3
+
+    @test_throws ArgumentError web_modularity(rand(Xoshiro(3), 4, 4), [1, 1, 2, 2]; view = :prey)
+    @test_throws ArgumentError web_modularity(web, ones(Int, 30); view = :guild)
+end

@@ -67,6 +67,26 @@ maximum(r.groups), r.modularity, extrema(r.run_modularity)
 count(x -> 0 < x < 1, r.coassignment) / length(r.coassignment)
 ```
 
+## Three views of a compartment
+
+Guimerà et al. (2010) define a compartment in three ways: species densely linked to each other
+(`view = :density`, the default), species that share many prey (`:predator`), and species that
+share many predators (`:prey`), the last two by the bipartite modularity of Guimerà, Sales-Pardo &
+Amaral (2007). The density view finds energy channels, which follow the sink webs; the predator
+and prey views find guilds of species at similar trophic levels, which cut across the sink webs,
+as Guimerà et al. found. Species with no prey (or no predators) share them with no one and stay
+alone in the predator (prey) view:
+
+```@example compartments
+binary = first(remove_cannibalism(fw)) .!= 0
+map((:density, :predator, :prey)) do view
+    r = compartments(Xoshiro(2026), binary; view, runs = 20)
+    h = compartment_homogeneity(binary, r.best)
+    (; view, Q = round(maximum(r.run_modularity); digits = 3), groups = maximum(r.best),
+        trophic = round(h.trophic; digits = 1), sink = round(h.sink; digits = 1))
+end
+```
+
 ## Significance against null webs
 
 Random webs reach high modularity from fluctuations alone (Guimerà, Sales-Pardo & Amaral 2004),
