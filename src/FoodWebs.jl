@@ -1,6 +1,6 @@
 module FoodWebs
 
-using Distributions: Beta, Distribution, Uniform, sample
+using Distributions: Beta, Distribution, Uniform, logpdf, sample
 using Graphs: DiGraph, Graph, add_edge!, gdistances, has_path, is_connected, strongly_connected_components,
     vertices, weakly_connected_components
 using LinearAlgebra: Diagonal, I, LinearAlgebra, Symmetric, diag, diagind, diagm, eigmax, eigvals
@@ -34,6 +34,10 @@ include("properties.jl")
 export cannibals, intermediate_species, omnivores, species_in_loops
 export generality, vulnerability, mean_max_similarity, trophic_similarity
 export characteristic_path_length, structural_properties
+
+include("feasible.jl")
+export FeasibleCommunities, CommunityPrior, community_matrix, coordinates, diagnose, dimension,
+    fluxes, growth_rates, halfspaces, interaction_matrix, isbounded, logdensity, structurally_singular
 
 include("motifs.jl")
 export motif_census, motif_ids, motif_name, motif_roles, motif_zscores, rewire_links
