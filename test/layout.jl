@@ -3,6 +3,7 @@ using FoodWebs: edge_crossings
 using Test
 using Random: Xoshiro
 using CairoMakie: CairoMakie
+using Distributions: Uniform
 
 chain(S) = (
     web = zeros(Bool, S, S); for i in 1:(S - 1)
@@ -55,6 +56,28 @@ chain(S) = (
     end
 end
 
+@testset "layout by group" begin
+    # two food chains 1 → 3 → 5 and 2 → 4 → 6, numbered so that the plain layout interleaves them
+    web = zeros(Bool, 6, 6)
+    web[1, 3] = web[3, 5] = web[2, 4] = web[4, 6] = true
+    groups = [1, 2, 1, 2, 1, 2]
+    p = trophic_layout(web; groups)
+    @test last.(p) == trophic_levels(web)
+    # each chain keeps one side in every band, as a vertical channel
+    side(i) = sign(p[i][1])
+    @test side(1) == side(3) == side(5) && side(2) == side(4) == side(6) && side(1) != side(2)
+    # in each band of a larger web, every group's species are contiguous along x
+    web = niche_network(Xoshiro(5), 30, 0.12; basal_paths = true)
+    groups = compartments(Xoshiro(6), web).groups
+    p = trophic_layout(web; groups)
+    for band in FoodWebs.trophic_bands(trophic_levels(web), 0.3)
+        order = band[sortperm([p[i][1] for i in band])]
+        g = groups[order]
+        @test all(count(k -> g[k] != g[k + 1] && g[k + 1] == c, 1:(length(g) - 1)) + (g[1] == c) <= 1 for c in unique(g))
+    end
+    @test_throws DimensionMismatch trophic_layout(web; groups = groups[1:3])
+end
+
 @testset "Makie extension" begin
     for web in (
             niche_network(Xoshiro(1), 12, 0.15; basal_paths = true),
@@ -95,4 +118,37 @@ end
     # thinner drawing for larger webs
     @test ext.default_markersize(100) < ext.default_markersize(20)
     @test ext.default_edgealpha(1000) < ext.default_edgealpha(50)
+
+    # compartments: groups, links between groups only, roles and a legend
+    web = niche_network(Xoshiro(7), 25, 0.15; basal_paths = true)
+    groups = compartments(Xoshiro(8), web).groups
+    roles = species_roles(web, groups).role
+    for kwargs in ((; groups), (; groups, show_within = false), (; groups, roles), (; roles))
+        fig, ax = foodwebplot(web; kwargs...)
+        path = tempname() * ".png"
+        CairoMakie.save(path, fig)
+        @test filesize(path) > 0
+    end
+    @test any(b -> b isa CairoMakie.Legend, foodwebplot(web; groups)[1].content)
+    @test !any(b -> b isa CairoMakie.Legend, foodwebplot(web; groups, legend = false)[1].content)
+    # single-species groups are grey, the others take the palette in order
+    colors = ext.group_colors([1, 1, 2, 3, 3], [:red, :blue])
+    @test colors[1] == :red && colors[3] == :blue && colors[2] == ext.SINGLE_COLOR
+    @test_throws DimensionMismatch foodwebplot(web; groups = groups[1:3])
+
+    # block-ordered heatmaps of a signed community matrix and of a co-assignment matrix
+    J = random_predprey(Xoshiro(9), PredationMatrix(web), Uniform(0, 1), 0.3)
+    fig, ax = blockplot(J, groups)
+    @test fig isa CairoMakie.Figure
+    r = compartments(Xoshiro(10), web; runs = 4)
+    fig, ax = blockplot(r.coassignment, r.groups)
+    path = tempname() * ".png"
+    CairoMakie.save(path, fig)
+    @test filesize(path) > 0
+    @test_throws DimensionMismatch blockplot(J, groups[1:3])
+
+    # eigenvalues with the predictions of block_spectrum
+    M = modular_random_matrix(Xoshiro(11), 200; α = 0.25, C = 0.2, Q = -0.3, μ = -1.0)
+    fig, ax = eigenplot(M; groups = [fill(1, 50); fill(2, 150)])
+    @test fig isa CairoMakie.Figure
 end
