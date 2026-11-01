@@ -1,0 +1,11 @@
+web,directed,optimum
+cheddar/chesapeakebay,True,0.4456018518518519
+cheddar/chesapeakebay,False,0.43827160493827155
+cheddar/phwebs_dargall_lane,True,0.1403349932095971
+cheddar/phwebs_dargall_lane,False,0.09868718877320058
+cheddar/phwebs_mosedal_beck,True,0.13969271373362244
+cheddar/phwebs_mosedal_beck,False,0.06730134791215014
+williams_martinez_2000/bridge_brook_lake,True,0.18722263313609458
+williams_martinez_2000/bridge_brook_lake,False,0.1610114644970414
+williams_martinez_2000/chesapeake_bay,True,0.44085542437068387
+williams_martinez_2000/chesapeake_bay,False,0.4306081532635332
