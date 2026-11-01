@@ -276,9 +276,13 @@ mutable struct ModularityState{M <: AbstractMatrix{Float64}}
 end
 function ModularityState(w::AbstractMatrix{Float64}, terms, groups::AbstractVector{<:Integer}; total::Real = sum(abs, w))
     S = size(w, 1)
-    κ = Float64[t[1] for t in terms]
-    so = isempty(terms) ? zeros(S, 0) : reduce(hcat, (Vector{Float64}(t[2]) for t in terms))
-    si = isempty(terms) ? zeros(S, 0) : reduce(hcat, (Vector{Float64}(t[3]) for t in terms))
+    n = length(terms)
+    κ, so, si = zeros(n), zeros(S, n), zeros(S, n)
+    for (t, (coefficient, outgoing, incoming)) in enumerate(terms)
+        κ[t] = coefficient
+        so[:, t] .= outgoing
+        si[:, t] .= incoming
+    end
     members = [Set{Int}() for _ in 1:S]
     Gout, Gin = zeros(S, length(κ)), zeros(S, length(κ))
     for v in 1:S
@@ -288,7 +292,6 @@ function ModularityState(w::AbstractMatrix{Float64}, terms, groups::AbstractVect
     end
     return ModularityState(w, float(total), κ, so, si, collect(groups), members, Gout, Gin)
 end
-state_terms(st::ModularityState) = [(st.κ[t], st.so[:, t], st.si[:, t]) for t in eachindex(st.κ)]
 
 toward(st::ModularityState, v, c) = sum((st.w[v, u] + st.w[u, v] for u in st.members[c] if u != v); init = 0.0)
 function move_gain(st::ModularityState, v, b)
