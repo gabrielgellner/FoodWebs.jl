@@ -6,31 +6,42 @@
 # in the package's `data/` directory; downloaded ones live in `foodweb_cache()`.
 
 """
-    FoodWeb(web; species = string.(axes(web, 1)), name = "", metadata = Dict())
+    FoodWeb(web; species = string.(axes(web, 1)), name = "", metadata = Dict(), traits = Dict())
 
 A food web with named species: an `S`×`S` binary matrix where `web[i, j] == 1` means species
-`j` eats species `i`, together with the species names, a name for the web and a metadata
-dictionary (for webs read from a catalog, its title, citation, source and license). A
-`FoodWeb` is an `AbstractMatrix{Bool}`, so every function taking a web accepts it.
+`j` eats species `i`, together with the species names, a name for the web, a metadata
+dictionary (for webs read from a catalog, its title, citation, source and license) and species
+traits, a dictionary from trait name to a vector over species. Webs read from data carry the
+extra columns of their `nodes.csv` as traits, such as cheddar's body mass `"M"`, numerical
+abundance `"N"` and `"category"`. A `FoodWeb` is an `AbstractMatrix{Bool}`, so every function
+taking a web accepts it.
 """
 struct FoodWeb <: AbstractMatrix{Bool}
     web::PredationMatrix
     species::Vector{String}
     name::String
     metadata::Dict{String, Any}
-    function FoodWeb(web::PredationMatrix, species::AbstractVector, name::AbstractString, metadata::AbstractDict)
-        length(species) == size(web, 1) || throw(
-            DimensionMismatch("$(length(species)) species names for a web of $(size(web, 1)) species")
+    traits::Dict{String, Vector}
+    function FoodWeb(
+            web::PredationMatrix, species::AbstractVector, name::AbstractString,
+            metadata::AbstractDict, traits::AbstractDict = Dict{String, Vector}()
         )
+        S = size(web, 1)
+        length(species) == S ||
+            throw(DimensionMismatch("$(length(species)) species names for a web of $S species"))
         allunique(species) || throw(ArgumentError("species names must be unique"))
-        return new(web, string.(species), name, Dict{String, Any}(metadata))
+        for (trait, values) in traits
+            length(values) == S ||
+                throw(DimensionMismatch("trait $trait has $(length(values)) values for a web of $S species"))
+        end
+        return new(web, string.(species), name, Dict{String, Any}(metadata), Dict{String, Vector}(traits))
     end
 end
 function FoodWeb(
         web::AbstractMatrix; species = string.(axes(web, 1)), name::AbstractString = "",
-        metadata::AbstractDict = Dict{String, Any}()
+        metadata::AbstractDict = Dict{String, Any}(), traits::AbstractDict = Dict{String, Vector}()
     )
-    return FoodWeb(PredationMatrix(web), species, name, metadata)
+    return FoodWeb(PredationMatrix(web), species, name, metadata, traits)
 end
 
 Base.size(fw::FoodWeb) = size(fw.web)
@@ -91,8 +102,11 @@ function read_foodweb(
         dir::AbstractString; name::AbstractString = basename(normpath(dir)),
         metadata::AbstractDict = Dict{String, Any}()
     )
-    _, nodes = read_csv(joinpath(dir, "nodes.csv"))
+    node_header, nodes = read_csv(joinpath(dir, "nodes.csv"))
     species = [first(row) for row in nodes]
+    traits = Dict{String, Vector}(
+        node_header[c] => parse_trait([row[c] for row in nodes]) for c in 2:length(node_header)
+    )
     header, links = read_csv(joinpath(dir, "trophic.links.csv"))
     r = findfirst(==("resource"), header)
     c = findfirst(==("consumer"), header)
@@ -106,7 +120,16 @@ function read_foodweb(
         end
         web[index[row[r]], index[row[c]]] = true
     end
-    return FoodWeb(web; species, name, metadata)
+    return FoodWeb(web; species, name, metadata, traits)
+end
+
+# A column of a nodes.csv as numbers, with `missing` for empty or NA cells, when every other
+# cell parses as a number, and as text otherwise
+function parse_trait(values::Vector{String})
+    absent(v) = isempty(v) || v == "NA"
+    numbers = [absent(v) ? missing : tryparse(Float64, v) for v in values]
+    any(isnothing, numbers) && return values
+    return Vector{Union{Missing, Float64}}(numbers)
 end
 
 """
@@ -160,5 +183,5 @@ function foodweb(id::AbstractString)
 end
 
 function rebuild_web(fw::FoodWeb, A)
-    return FoodWeb(PredationMatrix(A), fw.species, fw.name, fw.metadata)
+    return FoodWeb(PredationMatrix(A), fw.species, fw.name, fw.metadata, fw.traits)
 end

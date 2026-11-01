@@ -12,6 +12,8 @@ predictions. The research code in
   `disconnected_from_basal`.
 - `src/properties.jl`: the structural properties of Williams & Martinez (2000) and the
   characteristic path length, tested against their published tables.
+- `src/biomass.jl`: observed biomass from node traits, steady-state biomass from energy flow,
+  and pyramid measures.
 - `src/motifs.jl`: three- and four-species motif census (mfinder IDs), species roles, and the
   rewiring null model for z-scores; `test/fixtures/make_motif_census.py` checks the census
   against igraph and NetworkX.
