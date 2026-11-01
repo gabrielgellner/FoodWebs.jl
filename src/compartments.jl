@@ -826,3 +826,170 @@ function energy_channels(
     groups = relabel(groups)
     return (; groups, modularity = web_modularity(W, groups; γ), reliance = R, dominant)
 end
+
+"""
+    group_model(web, groups)
+
+The group model of Allesina & Pascual (2009) for the partition `groups` of the binary `web`
+(`web[i, j]` the link from prey `i` to predator `j`): a directed stochastic block model in which a
+species of group `r` is eaten by a species of group `s` with probability `p[r, s]`, independently
+for each of the `S²` ordered pairs (cannibalism included, as in the connectance `L / S²`). Returns
+a named tuple with the maximum likelihood probabilities `p[r, s] = L_rs / (S_r S_s)`, groups in
+order of first appearance in `groups` (`labels`), the log-likelihood
+
+    log L = Σ_rs [L_rs log p_rs + (S_r S_s − L_rs) log(1 − p_rs)],
+
+with `0 log 0 = 0`, the Akaike information criterion of the paper, `AIC = 2k² + 2S − 2 log L`
+for `k` groups, and the integrated classification likelihood of Daudin, Picard & Robin (2008),
+
+    ICL = log L + Σ_r S_r log(S_r / S) − (k² / 2) log S² − ((k − 1) / 2) log S,
+
+which also counts the assignment of species to groups. Dense blocks on the diagonal of `p` are compartments; dense blocks off it are
+groups of species that eat the same prey or are eaten by the same predators, such as trophic
+guilds, which modularity does not detect. Degree correction (Karrer & Newman 2011) is not
+included.
+
+Allesina, S. & Pascual, M. Food web models: a plea for groups. Ecol. Lett. 12, 652–662 (2009).
+Daudin, J.-J., Picard, F. & Robin, S. A mixture model for random graphs. Stat. Comput. 18,
+173–183 (2008).
+"""
+function group_model(web::AbstractMatrix, groups::AbstractVector)
+    S = LinearAlgebra.checksquare(web)
+    length(groups) == S || throw(DimensionMismatch("groups must have length $S, got $(length(groups))"))
+    all(x -> x == 0 || x == 1, web) || throw(ArgumentError("the group model needs a binary web"))
+    labels = unique(groups)
+    g = [findfirst(==(groups[i]), labels) for i in 1:S]
+    k = length(labels)
+    n = [count(==(r), g) for r in 1:k]
+    L = zeros(Int, k, k)
+    for i in 1:S, j in 1:S
+        web[i, j] != 0 && (L[g[i], g[j]] += 1)
+    end
+    p = [L[r, s] / (n[r] * n[s]) for r in 1:k, s in 1:k]
+    loglik = sum(block_loglik(L[r, s], n[r] * n[s]) for r in 1:k, s in 1:k)
+    # the complete-data log-likelihood adds the group assignments, with proportions n_r / S
+    icl = loglik + sum(xlogx(n[r]) for r in 1:k) - xlogx(S) - k^2 / 2 * log(S^2) - (k - 1) / 2 * log(S)
+    return (; labels, p, loglik, aic = 2k^2 + 2S - 2loglik, icl)
+end
+
+# The maximized log-likelihood of `l` links among `m` ordered pairs, with 0 log 0 = 0
+xlogx(x) = x > 0 ? x * log(x) : 0.0
+block_loglik(l, m) = m == 0 ? 0.0 : xlogx(l) + xlogx(m - l) - xlogx(m)
+
+"""
+    fit_group_model([rng], web; k = 1:min(S, 10), criterion = :icl, runs = 5, cooling = 0.98, sweeps = 20)
+
+The partition of the binary `web` into `k` groups of highest likelihood under the
+[`group_model`](@ref), or, for a range of `k`, the one chosen by `criterion`: the highest ICL
+(`:icl`, the default) or the lowest AIC (`:aic`, the criterion of Allesina & Pascual 2009). The
+AIC of the paper charges `2k²` for the probabilities but nothing for choosing the partition, whose
+`2S` term is the same for every `k`, so a search over partitions fits noise: on random webs it
+keeps adding groups. The ICL counts the assignment of species to groups and selects one group for
+a random web, as the R package sbm does. For each `k`, `runs`
+searches by simulated annealing, with moves of single species between groups, are followed by
+moves that raise the likelihood until none does; the best is kept. Allesina & Pascual (2009) used
+a genetic algorithm with hill climbing for the same objective. Returns the named tuple of
+`group_model` for the selected partition, with its `groups` (labelled `1, 2, …` in order of first
+appearance), its `k`, and `criterion_by_k`, the value of the criterion for the best partition
+found for each `k` tried.
+"""
+function fit_group_model(
+        rng::AbstractRNG, web::AbstractMatrix; k = 1:min(size(web, 1), 10), criterion::Symbol = :icl,
+        runs::Integer = 5, cooling::Real = 0.98, sweeps::Integer = 20
+    )
+    criterion in (:icl, :aic) || throw(ArgumentError("criterion must be :icl or :aic, given :$criterion"))
+    S = LinearAlgebra.checksquare(web)
+    all(x -> x == 0 || x == 1, web) || throw(ArgumentError("the group model needs a binary web"))
+    ks = collect(k)
+    all(x -> 1 <= x <= S, ks) || throw(ArgumentError("k must be between 1 and $S"))
+    runs >= 1 || throw(ArgumentError("runs must be at least 1"))
+    A = Matrix{Int}(web .!= 0)
+    best_by_k = map(ks) do kk
+        candidates = [anneal_groups_likelihood(rng, A, kk; cooling, sweeps) for _ in 1:runs]
+        candidates[argmax([group_model(A, c).loglik for c in candidates])]
+    end
+    fits = [group_model(A, g) for g in best_by_k]
+    values = criterion === :icl ? [f.icl for f in fits] : [f.aic for f in fits]
+    b = criterion === :icl ? argmax(values) : argmin(values)
+    groups = relabel(best_by_k[b])
+    fit = group_model(A, groups)
+    return (; groups, k = maximum(groups), fit..., criterion_by_k = Dict(zip(ks, values)))
+end
+fit_group_model(web::AbstractMatrix; kwargs...) = fit_group_model(Random.default_rng(), web; kwargs...)
+
+# Simulated annealing of the group model log-likelihood for k groups, then moves that raise it
+# until none does. The block link counts L and group sizes n are updated by each move; the change
+# in log-likelihood comes from the blocks in the rows and columns of the two groups involved.
+function anneal_groups_likelihood(rng::AbstractRNG, A::AbstractMatrix{<:Integer}, k::Integer; cooling, sweeps)
+    S = size(A, 1)
+    k == 1 && return ones(Int, S)
+    g = rand(rng, 1:k, S)
+    n = [count(==(r), g) for r in 1:k]
+    L = zeros(Int, k, k)
+    for i in 1:S, j in 1:S
+        A[i, j] != 0 && (L[g[i], g[j]] += 1)
+    end
+    total(L, n) = sum(block_loglik(L[r, s], n[r] * n[s]) for r in 1:k, s in 1:k)
+    # links of v to (out) and from (in) each group, not counting its self-loop
+    function counts(v)
+        out, inn = zeros(Int, k), zeros(Int, k)
+        for u in 1:S
+            u == v && continue
+            A[v, u] != 0 && (out[g[u]] += 1)
+            A[u, v] != 0 && (inn[g[u]] += 1)
+        end
+        return out, inn
+    end
+    function move_counts(v, b)
+        a = g[v]
+        out, inn = counts(v)
+        self = A[v, v]
+        L2, n2 = copy(L), copy(n)
+        for s in 1:k
+            L2[a, s] -= out[s]; L2[b, s] += out[s]
+            L2[s, a] -= inn[s]; L2[s, b] += inn[s]
+        end
+        L2[a, a] -= self; L2[b, b] += self
+        n2[a] -= 1; n2[b] += 1
+        return L2, n2
+    end
+    current = total(L, n)
+    best, bestll = copy(g), current
+    T = 1.0
+    while T > 1.0e-3
+        for _ in 1:(sweeps * S)
+            v = rand(rng, 1:S)
+            b = rand(rng, 1:k)
+            b == g[v] && continue
+            L2, n2 = move_counts(v, b)
+            new = total(L2, n2)
+            if new >= current || rand(rng) < exp((new - current) / T)
+                g[v], L, n, current = b, L2, n2, new
+                current > bestll && ((best, bestll) = (copy(g), current))
+            end
+        end
+        T *= cooling
+    end
+    # moves that raise the likelihood, from the best partition found
+    g .= best
+    n = [count(==(r), g) for r in 1:k]
+    L = zeros(Int, k, k)
+    for i in 1:S, j in 1:S
+        A[i, j] != 0 && (L[g[i], g[j]] += 1)
+    end
+    current = total(L, n)
+    improved = true
+    while improved
+        improved = false
+        for v in Random.shuffle(rng, 1:S), b in 1:k
+            b == g[v] && continue
+            L2, n2 = move_counts(v, b)
+            new = total(L2, n2)
+            if new > current + 1.0e-10
+                g[v], L, n, current = b, L2, n2, new
+                improved = true
+            end
+        end
+    end
+    return g
+end

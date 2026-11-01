@@ -517,3 +517,42 @@ end
     # Q = 0.39 in their Table 1, the standard directed modularity (their 2W is the total flux)
     @test round(r.modularity; digits = 2) == 0.39
 end
+
+@testset "group model" begin
+    # 1 eats nothing; 3 eats 1 and 2, 4 eats 1: three of the four links from group 1 = {1, 2} to
+    # group 2 = {3, 4}, none elsewhere
+    web = falses(4, 4)
+    web[1, 3] = web[2, 3] = web[1, 4] = true
+    m = group_model(web, [:a, :a, :b, :b])
+    @test m.labels == [:a, :b] && m.p == [0 0.75; 0 0]
+    ll = 3 * log(0.75) + log(0.25)
+    @test m.loglik ≈ ll
+    @test m.aic ≈ 2 * 4 + 2 * 4 - 2ll
+    @test m.icl ≈ ll + 2 * 2 * log(1 / 2) - 2 * log(16) - log(4) / 2
+    # one group: the connectance L / S²
+    one = group_model(web, ones(Int, 4))
+    @test only(one.p) == 3 / 16
+    @test one.loglik ≈ 3 * log(3 / 16) + 13 * log(13 / 16)
+
+    # three trophic layers of 15 species: each layer eaten by the next with probability 0.4,
+    # other pairs with probability 0.02. The ICL selects three groups, the layers, whose
+    # probabilities are dense above the diagonal and sparse on it; the AIC of the paper adds groups
+    rng = Xoshiro(88)
+    truth = repeat(1:3, inner = 15)
+    layered = [i != j && rand(rng) < (truth[j] == truth[i] + 1 ? 0.4 : 0.02) for i in 1:45, j in 1:45]
+    f = fit_group_model(Xoshiro(1), layered; k = 1:5)
+    @test f.k == 3 && f.groups == truth
+    @test f.p[1, 2] > 0.3 && f.p[2, 3] > 0.3 && all(f.p[r, r] < 0.1 for r in 1:3)
+    @test f.loglik >= group_model(layered, truth).loglik - 1.0e-9
+    @test f.criterion_by_k[3] == maximum(values(f.criterion_by_k))
+    # a random web: one group
+    random = [rand(rng) < 0.1 for _ in 1:45, _ in 1:45]
+    @test fit_group_model(Xoshiro(2), random; k = 1:4).k == 1
+    # reproducible from a seeded rng
+    @test fit_group_model(Xoshiro(3), layered; k = 3) == fit_group_model(Xoshiro(3), layered; k = 3)
+
+    @test_throws ArgumentError group_model(rand(Xoshiro(4), 4, 4), [1, 1, 2, 2])
+    @test_throws ArgumentError fit_group_model(layered; k = 0:2)
+    @test_throws ArgumentError fit_group_model(layered; criterion = :bic)
+    @test_throws DimensionMismatch group_model(web, [1, 2])
+end

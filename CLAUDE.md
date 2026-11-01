@@ -18,7 +18,8 @@ predictions. The research code in
   given equilibrium, its structure without a solver, and priors on it.
 - `src/compartments.jl`: modularity of partitions of webs and weight matrices, and partition
   search (Louvain, simulated annealing, consensus), modularity z-scores against rewired and
-  structural null webs, species roles, compartment homogeneity, energy channels, pair weights
+  structural null webs, the group model (a stochastic block model), species roles, compartment
+  homogeneity, energy channels, pair weights
   of community matrices, and their within- and between-group structure; `test/fixtures/make_modularity.py` checks
   modularity against NetworkX and igraph, `make_modularity_optimum.py` gives exact optima, and
   `make_chesapeake_bay.py` takes the Chesapeake Bay flows from enaR for the energy channel test.
