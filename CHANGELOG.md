@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0] - 2026-11-01
+
+### Features
+
+- **feasible**: Add the `per_capita_bounds` keyword to `FeasibleCommunities`, which bounds each loss, gain and self-regulation term by its per capita rate, `lo / x[j] ≤ θ ≤ hi / x[j]`, so that rescaling the biomasses `x` leaves the spectra unchanged; magnitude `bounds` cap the per capita rates at `hi x[j]` and so depend on the scale and shape of `x`. The docs gain a section on how the biomasses enter the model, and the docs examples and `gallery/equilibria.qmd` now use per capita bounds: under an efficiency cap of 0.3 the stable fraction falls from 0.82 to about 0.72 between Eltonian (ρ = 0.2) and inverted (ρ = 5) pyramids, against 0.89 to 0.71 in v0.6.0, which overstated the effect of the pyramid (#67)
+
 ## [0.6.0] - 2026-11-01
 
 ### Bug Fixes
