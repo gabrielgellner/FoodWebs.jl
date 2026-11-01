@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.0] - 2026-11-01
+
+### Features
+
+- **compartments**: Measure compartments with `web_modularity`: the directed modularity of Leicht & Newman (default), the undirected modularity of Newman & Girvan, weights such as fluxes (Arenas et al.), a resolution `γ`, the predator and prey views of Guimerà et al. (2007, 2010), and signed modularity (Gómez, Jensen & Arenas 2009); values match NetworkX and igraph on 416 fixed partitions of the bundled webs (#81, #84, #91)
+- **compartments**: Find compartments with `compartments`, by a directed Louvain method (with a final pass of single-species moves) or simulated annealing, splitting groups that fall apart and combining searches by consensus clustering, returning the consensus and best partitions and the co-assignment of species; the best of 10 searches comes within 0.001 of the exact maximum from igraph on the ten cases small enough to solve (#82)
+- **compartments**: Test compartments with `modularity_zscore`, which re-runs the search on every null web, against rewired webs, structural models at the same richness and connectance, or shuffled weights (`shuffle_weights`); Tuesday Lake reproduces Guimerà et al. (2010): far more modular than rewired webs, less than the niche model, typical of the generalized niche model (#83, #89)
+- **compartments**: Describe species and compartments with `species_roles` (within-module degree, participation coefficient, the classes of Olesen et al. and the roles of Guimerà & Amaral), `compartment_homogeneity` (trophic-level and sink homogeneity of Guimerà et al. 2010, with exact null moments) and `block_structure` (the connectance, mean, variance, pair correlation and kinds of pairs within and between groups of a community matrix, and the share of each species' interactions with other groups) (#85, #86)
+- **compartments**: Weigh the pairs of a community matrix with `pair_weights`: `√|J_ij J_ji|`, independent of abundance units (default), `|J_ij| + |J_ji|`, or signed (#89, #91)
+- **compartments**: Find energy channels with `source_reliance`, the share of each species' energy from each basal source (Rooney et al. 2008), and `energy_channels` (Zhao et al. 2018), which reproduces their Chesapeake Bay example exactly (#90)
+- **compartments**: Fit stochastic block models: `group_model` and `fit_group_model`, the group model of Allesina & Pascual (2009) for binary webs, and `block_model` and `fit_block_model`, with normal weights for signed community matrices; both select the number of groups by the integrated classification likelihood, as the AIC of Allesina & Pascual keeps adding groups to random webs (#88, #91)
+- **blocks**: Draw block-structured random community matrices with `block_random_matrix` (means and spreads may differ by direction between groups) and `modular_random_matrix` (the two-group ensemble of Grilli, Rogers & Allesina 2016, set by connectance and modularity through `modular_connectances`), and predict their bulk and outlier eigenvalues with `block_spectrum`, from parameters or from a sampled matrix; with a positive mean interaction, two equal groups are neutral, contrary to the paper's summary (#87)
+- **plotting**: Show compartments: `foodwebplot` takes `groups` (colours, a layout that keeps groups together, links between groups in their own colour) and `roles`, `trophic_layout` takes `groups`, `blockplot` draws a matrix ordered by group with block boundaries, and `eigenplot` takes `groups` to draw the predictions of `block_spectrum` (#104)
+
+### Miscellaneous
+
+- **deps**: Require Graphs.jl 1.15 (#82)
+- **deps**: Pin PolytopeSamplers.jl to its v0.1.0 release
+
 ## [0.7.0] - 2026-11-01
 
 ### Features
