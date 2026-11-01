@@ -6,7 +6,7 @@ using Graphs: DiGraph, Graph, add_edge!, gdistances, has_path, is_connected, str
 using LinearAlgebra: Diagonal, I, LinearAlgebra, Symmetric, diag, diagind, diagm, eigmax, eigvals
 using Random: AbstractRNG, Random
 using SpecialFunctions: gamma
-using Statistics: cov, mean, std
+using Statistics: cov, mean, quantile, std
 using TOML: TOML
 
 include("topology.jl")
@@ -19,7 +19,7 @@ export generalized_niche_network, minimum_potential_niche_network, nested_hierar
 export probabilistic_niche_network, probabilistic_niche_probabilities
 
 include("randcmat.jl")
-export random_predprey
+export expected_community_matrix, random_predprey
 
 include("stability.jl")
 export numerical_abscissa, spectral_abscissa

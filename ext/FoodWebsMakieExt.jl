@@ -110,7 +110,7 @@ end
 function FoodWebs.eigenplot!(
         ax, M::AbstractMatrix; ellipse = true, outlier = true, stability = true,
         law = nothing, color = (:steelblue, 0.6), markersize = 5, ellipsecolor = :black,
-        outliercolor = :firebrick, equal_aspect = true,
+        outliercolor = :firebrick, equal_aspect = true, expected = nothing, expectedcolor = :darkorange,
     )
     λ = eigvals(M)
     # points the window must contain: the eigenvalues and whatever else is drawn
@@ -135,6 +135,12 @@ function FoodWebs.eigenplot!(
         end
     end
     scatter!(ax, real.(λ), imag.(λ); color, markersize)
+    if expected !== nothing
+        μ = eigvals(expected)
+        scatter!(ax, real.(μ), imag.(μ); marker = :xcross, markersize = 1.6 * markersize, color = expectedcolor)
+        append!(xs, real.(μ))
+        append!(ys, imag.(μ))
+    end
     if equal_aspect
         # a square window with equal scales keeps the ellipse's shape without squeezing a narrow
         # spectrum into a thin axis

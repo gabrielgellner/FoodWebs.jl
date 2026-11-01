@@ -1,7 +1,7 @@
 using FoodWebs
 using Test
 using Random: Xoshiro
-using Distributions: Normal, Dirac
+using Distributions: Normal, Dirac, Exponential
 using LinearAlgebra: I, diag
 
 @testset "random_predprey" begin
@@ -73,4 +73,26 @@ using LinearAlgebra: I, diag
     web = niche_network(Xoshiro(9), 30, 0.15)
     @test random_predprey(Xoshiro(1), web, Normal(), 0.5) ==
         random_predprey(Xoshiro(1), web, Normal(), 0.5)
+end
+
+@testset "expected_community_matrix" begin
+    # 2 eats 1: the predator's effect is -E|a|, the prey's f E|a|; with Dirac magnitudes the
+    # expected matrix is the matrix itself
+    web = PredationMatrix([0 1 1; 0 0 1; 0 0 0])
+    @test expected_community_matrix(web, Dirac(1.0), 0.5) == random_predprey(Xoshiro(1), web, Dirac(1.0), 0.5)
+    m = sqrt(2 / π)
+    E = expected_community_matrix(PredationMatrix([0 1; 0 0]), Normal(), 0.5)
+    @test E ≈ [-1 -m; 0.5m -1] rtol = 1.0e-4
+    # species that eat each other get both links' effects; shuffled pairs average them
+    @test expected_community_matrix(PredationMatrix([0 1; 1 0]), Normal(), 0.5) ≈ [-1 -0.5m; -0.5m -1] rtol = 1.0e-4
+    @test expected_community_matrix(PredationMatrix([0 1; 0 0]), Normal(), 0.5; shuffle_prey = true) ≈
+        [-1 -0.25m; -0.25m -1] rtol = 1.0e-4
+    # the mean of many draws
+    rng = Xoshiro(23)
+    web = niche_network(rng, 20, 0.15)
+    draws = [random_predprey(rng, web, Exponential(2.0), 0.3) for _ in 1:4000]
+    @test maximum(abs.(sum(draws) / length(draws) .- expected_community_matrix(web, Exponential(2.0), 0.3))) < 0.15
+    # with f = 1 the expected matrix plus the identity is skew-symmetric
+    E = expected_community_matrix(niche_network(rng, 40, 0.15), Normal(), 1.0)
+    @test E + I ≈ -(E + I)'
 end
