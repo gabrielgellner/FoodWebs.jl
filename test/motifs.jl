@@ -110,4 +110,32 @@ end
     @test all(isnan(p.z[k]) for (k, id) in enumerate(p.ids) if startswith(motif_name(id), "D"))
     @test all(isfinite, p.z[[findfirst(==(id), p.ids) for id in (12, 38, 36, 6)]])
     @test isequal(motif_zscores(Xoshiro(2), web; samples = 5).z, motif_zscores(Xoshiro(2), web; samples = 5).z)
+    # the profile is the z-scores scaled to length 1, with the undefined ones as 0
+    @test sum(abs2, p.profile) ≈ 1
+    @test all(iszero(p.profile[k]) for k in eachindex(p.z) if isnan(p.z[k]))
+    @test p.profile[1] ≈ p.z[1] / sqrt(sum(abs2, filter(!isnan, p.z)))
+end
+
+@testset "Stouffer et al. (2007) motif profiles" begin
+    # Stouffer et al. (2007, Fig. 3) split empirical webs by the signs of their S2 (omnivory),
+    # S4 and S5 (competition) z-scores against the same null model: (a) S2 over-represented and
+    # S4, S5 under-represented, or (b) the reverse. Every bundled web they studied falls in its
+    # published group. Across 10 seeds with 50 rewired webs the smallest |z| among these is
+    # 0.66 (Benguela S2), so the signs are stable at 100.
+    groups = Dict(
+        "williams_martinez_2000/little_rock_lake" => :a, "williams_martinez_2000/coachella_valley" => :a,
+        "williams_martinez_2000/chesapeake_bay" => :a, "williams_martinez_2000/st_martin_island" => :a,
+        "cheddar/benguela" => :a, "williams_martinez_2000/bridge_brook_lake" => :b,
+        "williams_martinez_2000/skipwith_pond" => :b, "williams_martinez_2000/ythan_estuary" => :b,
+    )
+    rng = Xoshiro(20)
+    for (web, group) in groups
+        p = motif_zscores(rng, foodweb(web); samples = 100)
+        z(id) = p.z[findfirst(==(id), p.ids)]
+        sign_a = z(38) > 0 && z(36) < 0 && z(6) < 0
+        sign_b = z(38) < 0 && z(36) > 0 && z(6) > 0
+        @test group === :a ? sign_a : sign_b
+        # and three-species loops are under-represented in all seven Williams & Martinez webs
+        startswith(web, "williams_martinez_2000/") && @test z(98) < 0
+    end
 end
