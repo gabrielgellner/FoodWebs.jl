@@ -4,7 +4,7 @@
 # non-negative weight such as an energy flux. Cannibalistic links are left out.
 
 """
-    modularity(W, groups; directed = true, γ = 1)
+    web_modularity(W, groups; directed = true, γ = 1)
 
 The modularity of the partition `groups` (one label per species) of the web or non-negative
 weight matrix `W`, where `W[i, j]` is the link from prey `i` to predator `j`, such as an energy
@@ -31,7 +31,7 @@ preserving modularity. New J. Phys. 9, 176 (2007). Newman, M. E. J. & Girvan, M.
 evaluating community structure in networks. Phys. Rev. E 69, 026113 (2004). Reichardt, J. &
 Bornholdt, S. Statistical mechanics of community detection. Phys. Rev. E 74, 016110 (2006).
 """
-function modularity(W::AbstractMatrix, groups::AbstractVector; directed::Bool = true, γ::Real = 1)
+function web_modularity(W::AbstractMatrix, groups::AbstractVector; directed::Bool = true, γ::Real = 1)
     S = LinearAlgebra.checksquare(W)
     length(groups) == S || throw(DimensionMismatch("groups must have length $S, got $(length(groups))"))
     γ >= 0 || throw(ArgumentError("the resolution γ must be non-negative, got $γ"))
