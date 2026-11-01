@@ -145,13 +145,14 @@ end
 end
 
 @testset "modularity z-scores" begin
-    # webs drawn from the null model itself score z near 0 on average, for both kinds of null
+    # webs drawn from the null model itself score z near 0 on average, for both kinds of null (the
+    # mean of 15 z-scores has a standard error of about 0.27; the bound is about 3 of them)
     rng = Xoshiro(83)
     base = niche_network(rng, 30, 0.12)
     rewired_z = [modularity_zscore(rng, rewire_links(rng, base); samples = 30, runs = 3).z for _ in 1:15]
-    @test abs(mean(rewired_z)) < 0.6
+    @test abs(mean(rewired_z)) < 0.8
     niche_z = [modularity_zscore(rng, niche_network(rng, 30, 0.12); null = niche_network, samples = 30, runs = 3).z for _ in 1:15]
-    @test abs(mean(niche_z)) < 0.6
+    @test abs(mean(niche_z)) < 0.8
 
     # planted compartments stand far above their rewired versions
     web, truth = planted_web(Xoshiro(84))
@@ -238,7 +239,7 @@ end
     # with tied levels, the boundaries are the mean over random orderings of the ties
     tied = round.(trophic_levels(web); digits = 1)
     jittered = [FoodWebs.boundaries(groups, tied .+ 1.0e-6 .* rand(rng, 30), unique(groups)) for _ in 1:20_000]
-    @test mean(jittered) ≈ FoodWebs.boundaries(groups, tied, unique(groups)) atol = 0.02
+    @test abs(mean(jittered) - FoodWebs.boundaries(groups, tied, unique(groups))) < 4 * std(jittered) / sqrt(length(jittered))
 
     @test_throws DimensionMismatch compartment_homogeneity(web, groups[1:29])
 end
@@ -555,4 +556,45 @@ end
     @test_throws ArgumentError fit_group_model(layered; k = 0:2)
     @test_throws ArgumentError fit_group_model(layered; criterion = :bic)
     @test_throws DimensionMismatch group_model(web, [1, 2])
+end
+
+@testset "signed modularity" begin
+    rng = Xoshiro(91)
+    # without negative weights, signed modularity is the modularity
+    web = niche_network(rng, 30, 0.15)
+    groups = compartments(rng, web).groups
+    W = rand(rng, 30, 30) .* web
+    @test web_modularity(W, groups; signed = true) ≈ web_modularity(W, groups)
+    # with both signs, Q = (W⁺Q⁺ − W⁻Q⁻)/(W⁺ + W⁻) for the modularities of the two parts, which the
+    # fixtures check against NetworkX and igraph
+    M = randn(rng, 30, 30) .* (web .| web')
+    P, N = max.(M, 0), max.(-M, 0)
+    Wp, Wn = sum(P) - sum(P[i, i] for i in 1:30), sum(N) - sum(N[i, i] for i in 1:30)
+    for directed in (true, false)
+        expected = (Wp * web_modularity(P, groups; directed) - Wn * web_modularity(N, groups; directed)) / (Wp + Wn)
+        @test web_modularity(M, groups; signed = true, directed) ≈ expected
+    end
+
+    # signed pair weights: predator–prey pairs negative, competing pairs positive
+    J = [-1.0 -2 -1; 0.5 -1 0; -4 0 -1]
+    @test pair_weights(J; method = :signed)[1, 2] ≈ -1 && pair_weights(J; method = :signed)[1, 3] ≈ 2
+
+    # planted signed groups: positive weights within three groups of 15, negative between, on a
+    # random topology; the signed search recovers them
+    truth = repeat(1:3, inner = 15)
+    M = zeros(45, 45)
+    for i in 1:45, j in (i + 1):45
+        rand(rng) < 0.3 || continue
+        M[i, j] = M[j, i] = (truth[i] == truth[j] ? 1 : -1) * (0.5 + rand(rng))
+    end
+    # annealing finds them; Louvain, a faster heuristic, comes within 5%
+    r = compartments(Xoshiro(1), M; signed = true, method = :annealing, runs = 3)
+    @test r.groups == truth
+    @test r.modularity ≈ web_modularity(M, truth; signed = true)
+    r = compartments(Xoshiro(1), M; signed = true, runs = 3)
+    @test maximum(r.run_modularity) >= 0.95 * web_modularity(M, truth; signed = true)
+
+    @test_throws ArgumentError web_modularity(M, truth)
+    @test_throws ArgumentError web_modularity(M .> 0, truth; view = :prey, signed = true)
+    @test_throws ArgumentError pair_weights(J; method = :difference)
 end

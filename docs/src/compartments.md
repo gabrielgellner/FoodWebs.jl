@@ -229,6 +229,23 @@ topology = modularity_zscore(Xoshiro(2), web; samples = 30, runs = 3)
 (strengths = round(strengths.z; digits = 2), topology = round(topology.z; digits = 1))
 ```
 
+## Signed modularity
+
+`pair_weights(J; method = :signed)` keeps the sign of each pair, `sign(J_ij J_ji) √|J_ij J_ji|`:
+negative for predator–prey pairs, positive for competition and mutualism. The signed modularity
+of Gómez, Jensen & Arenas (2009) (`signed = true`) rewards positive pairs within groups and
+negative pairs between them. In a purely trophic community matrix every pair is negative, so it
+finds the anti-modular structure of Grilli, Rogers & Allesina (2016): in Tuesday Lake, two groups
+that alternate up the trophic levels, basal species with the third level and herbivores with
+the fourth, with nearly every predator–prey pair between them:
+
+```@example compartments
+signed_weights = pair_weights(J; method = :signed)
+s = compartments(Xoshiro(2), signed_weights; signed = true, method = :annealing, runs = 3)
+rounded = round.(levels)
+[(group = g, levels = [count(i -> s.groups[i] == g && rounded[i] == l, eachindex(levels)) for l in 1:4]) for g in 1:maximum(s.groups)]
+```
+
 ## Block-structured random matrices
 
 [`block_random_matrix`](@ref) draws community matrices whose species fall into groups, with the
