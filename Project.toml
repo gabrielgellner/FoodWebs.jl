@@ -36,7 +36,7 @@ julia = "1.13"
 PolytopeSamplers = "23957194-1ca4-53c5-ae50-e0ed682cc5dc"
 
 [sources]
-PolytopeSamplers = {url = "https://github.com/gabrielgellner/PolytopeSamplers.jl", rev = "bbe2ae2"}
+PolytopeSamplers = {url = "https://github.com/gabrielgellner/PolytopeSamplers.jl", rev = "v0.1.0"}
 
 [workspace]
 projects = ["test"]
