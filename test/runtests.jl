@@ -18,4 +18,5 @@ using ExplicitImports: test_explicit_imports
     include("layout.jl")
     include("data.jl")
     include("properties.jl")
+    include("motifs.jl")
 end
