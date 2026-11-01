@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2026-11-01
+
+### Documentation
+
+- Add a Documenter site deployed to GitHub Pages at https://gabrielgellner.github.io/FoodWebs.jl, with pages on the models, empirical webs, trophic levels and structure, motifs, community matrices and plotting, live examples and figures, and every exported docstring; `just docs` builds it locally (#49)
+
+### Features
+
+- **elliptic law**: Predict the outlier that a nonzero mean adds to the spectrum, `EllipticLaw.outlier` at `θ + ρSσ²/θ` from the center (O'Rourke & Renfrew 2014); `EllipticLaw` gains this field, so its positional constructor takes one more argument; add `eigenplot` and `eigenplot!` to draw eigenvalues with the elliptic-law ellipse, outlier and stability boundary; test the random-matrix reference cases of Allesina's notes and the imaginary outliers of cascade-structured webs; add the `gallery/spectra.qmd` note (#20, #41)
+- **motifs**: Add `motif_census` for the 13 three-species and 199 four-species motifs by mfinder ID, `motif_name`, `motif_roles` for the 30 species positions, `rewire_links` for the null model keeping each species' one-way and two-way links, and `motif_zscores`; the census matches igraph and NetworkX on every bundled web (#42, #43)
+- **motifs**: Return the normalized profile from `motif_zscores`; the eight bundled webs studied by Stouffer et al. (2007) fall in their published groups by the signs of the omnivory and competition motifs (#44, #45)
+
 ## [0.4.0] - 2026-10-31
 
 ### Breaking Changes
