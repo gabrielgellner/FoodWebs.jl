@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 2026-11-01
+
+### Bug Fixes
+
+- **randcmat**: Give species that eat each other both links' effects in `random_predprey`: each entry of a two-way pair is `f |b'| - |a|`, of either sign. Before, the lower index was always treated as the predator, which reversed the links of niche-family webs where a prey has a higher niche value than its predator, so results from those webs change (#56)
+
+### Documentation
+
+- **feasible**: Add a Three ensembles section to the feasible communities page, comparing `random_predprey`, feasible and energetically constrained communities, and the `gallery/equilibria.qmd` note on the stable fraction against the shape of the biomass pyramid, for generated pyramids and the observed Tuesday Lake biomasses (#54)
+
+### Features
+
+- **topology**: Add `remove_cannibalism` and `orient_two_way_links`, which keeps one link of each two-way pair by trophic level (`:up`), index, at random, or drops both; both return the web and the removed links and keep the input type (#57)
+- **randcmat**: Add `expected_community_matrix`, the mean of `random_predprey` given the web, and the `expected` keyword of `eigenplot` to mark its eigenvalues, which predict the largest imaginary part of cascade and niche spectra to within about 1% (#59)
+- **biomass**: Keep node traits from `nodes.csv` in the new `FoodWeb.traits` field; add `biomass` (body mass times abundance), `steady_state_biomass` from energy flow through the web with fixed, per-species or allometric turnover, and the pyramid measures `biomass_ratios`, `pyramid_slope`, `is_pyramid` and `is_inverted_pyramid`, with a new docs page (#51)
+- **feasible**: Add `FeasibleCommunities`, the polytope of Lotka–Volterra interaction strengths, self-regulation and growth rates with a given equilibrium, for every web including cannibalism and mutual feeding; `halfspaces`, `coordinates`, `interaction_matrix`, `growth_rates`, `community_matrix` and `fluxes` convert between the polytope and models; `dimension`, `isbounded`, `structurally_singular` and `diagnose` describe it without a solver; `CommunityPrior` and `logdensity` put densities on it (#52)
+- **feasible**: Add the PolytopeSamplers.jl extension, with `Polytope(fc)`, `isempty(fc)` by linear program, `sample_communities` for uniform and prior targets, and `feasible_growth_rates`, the redraw loop of the published studies; add `draw_growth_rates` (#53)
+
 ## [0.5.0] - 2026-11-01
 
 ### Documentation
