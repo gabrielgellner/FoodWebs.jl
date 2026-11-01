@@ -184,6 +184,26 @@ model.k, [round(sum(levels[model.groups .== r]) / count(==(r), model.groups); di
 round.(model.p; digits = 2)
 ```
 
+## Groups of a community matrix
+
+The group model uses only which species interact. [`block_model`](@ref) adds the strengths: an
+entry between groups `r` and `s` is nonzero with probability `p[r, s]` and then normal with mean
+`μ[r, s]` and standard deviation `σ[r, s]`, separately in each direction, the inferential
+counterpart of [`block_structure`](@ref). [`fit_block_model`](@ref) selects the number of groups by
+the integrated classification likelihood. In the random community matrix of Tuesday Lake it finds
+groups by trophic level, with negative means above the diagonal (predators on their prey) and
+positive means below it (prey on their predators):
+
+```@example compartments
+blocks = fit_block_model(Xoshiro(2), J; k = 1:8)
+rounded = round.(levels)
+[(group = g, levels = [count(i -> blocks.groups[i] == g && rounded[i] == l, eachindex(levels)) for l in 1:4]) for g in 1:blocks.k]
+```
+
+```@example compartments
+round.(blocks.μ; digits = 2)
+```
+
 ## Energy channels
 
 Energy channels are an ecological definition of compartments: the pathways of energy from each
@@ -242,7 +262,6 @@ the fourth, with nearly every predator–prey pair between them:
 ```@example compartments
 signed_weights = pair_weights(J; method = :signed)
 s = compartments(Xoshiro(2), signed_weights; signed = true, method = :annealing, runs = 3)
-rounded = round.(levels)
 [(group = g, levels = [count(i -> s.groups[i] == g && rounded[i] == l, eachindex(levels)) for l in 1:4]) for g in 1:maximum(s.groups)]
 ```
 
@@ -332,6 +351,8 @@ compartment_homogeneity
 block_structure
 group_model
 fit_group_model
+block_model
+fit_block_model
 source_reliance
 energy_channels
 pair_weights
