@@ -67,7 +67,30 @@ maximum(r.groups), r.modularity, extrema(r.run_modularity)
 count(x -> 0 < x < 1, r.coassignment) / length(r.coassignment)
 ```
 
+## Significance against null webs
+
+Random webs reach high modularity from fluctuations alone (Guimerà, Sales-Pardo & Amaral 2004),
+so [`modularity_zscore`](@ref) runs the same search on every null web and compares the best
+modularity found. Against webs rewired to keep each species' links, Tuesday Lake is strongly
+compartmented; against the niche model it is less modular, and against the generalized niche
+model, whose diets need not be contiguous, it is typical, as Guimerà et al. (2010) found for
+other food webs:
+
+```@example compartments
+rewired = modularity_zscore(Xoshiro(1), fw; samples = 50)
+niche = modularity_zscore(Xoshiro(1), fw; samples = 50, null = niche_network)
+generalized = modularity_zscore(Xoshiro(1), fw; samples = 50,
+    null = (rng, S, C) -> generalized_niche_network(rng, S, C, 0.6))
+[(null, round(r.mean; digits = 3), round(r.z; digits = 1)) for (null, r) in
+    (("rewired", rewired), ("niche", niche), ("generalized niche", generalized))]
+```
+
+```@example compartments
+rewired.observed
+```
+
 ```@docs
 web_modularity
 compartments
+modularity_zscore
 ```

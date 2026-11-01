@@ -1,6 +1,7 @@
 using FoodWebs
 using Test
 using Random: Xoshiro
+using Statistics: mean, std
 
 @testset "modularity by hand" begin
     # two disconnected links, 1 → 2 and 3 → 4: each group holds one link, and the expected
@@ -139,4 +140,31 @@ end
         @test all(>=(optimum - 0.01), found)
         @test maximum(found) >= optimum - 0.001
     end
+end
+
+@testset "modularity z-scores" begin
+    # webs drawn from the null model itself score z near 0 on average, for both kinds of null
+    rng = Xoshiro(83)
+    base = niche_network(rng, 30, 0.12)
+    rewired_z = [modularity_zscore(rng, rewire_links(rng, base); samples = 30, runs = 3).z for _ in 1:15]
+    @test abs(mean(rewired_z)) < 0.6
+    niche_z = [modularity_zscore(rng, niche_network(rng, 30, 0.12); null = niche_network, samples = 30, runs = 3).z for _ in 1:15]
+    @test abs(mean(niche_z)) < 0.6
+
+    # planted compartments stand far above their rewired versions
+    web, truth = planted_web(Xoshiro(84))
+    r = modularity_zscore(Xoshiro(1), web; samples = 30, runs = 3)
+    @test r.z > 5 && r.p == 0
+    @test r.groups == truth
+    @test r.observed ≈ web_modularity(web, truth)
+    @test length(r.null_modularity) == 30
+    @test r.mean ≈ mean(r.null_modularity) && r.sd ≈ std(r.null_modularity)
+    # Tuesday Lake is more modular than its rewired versions (Guimerà et al. 2010)
+    @test modularity_zscore(Xoshiro(2), foodweb("cheddar/tl84"); samples = 30, runs = 3).z > 3
+    # reproducible from a seeded rng
+    @test modularity_zscore(Xoshiro(3), base; samples = 10, runs = 2) == modularity_zscore(Xoshiro(3), base; samples = 10, runs = 2)
+
+    @test_throws ArgumentError modularity_zscore(rand(Xoshiro(4), 5, 5))
+    @test_throws ArgumentError modularity_zscore(base; null = :shuffle)
+    @test_throws ArgumentError modularity_zscore(base; samples = 1)
 end
