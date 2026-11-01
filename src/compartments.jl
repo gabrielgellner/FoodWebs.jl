@@ -4,14 +4,15 @@
 # non-negative weight such as an energy flux. Cannibalistic links are left out.
 
 """
-    web_modularity(W, groups; directed = true, γ = 1)
+    web_modularity(W, groups; view = :density, directed = true, γ = 1)
 
 The modularity of the partition `groups` (one label per species) of the web or non-negative
 weight matrix `W`, where `W[i, j]` is the link from prey `i` to predator `j`, such as an energy
-flux. Cannibalistic links (the diagonal) are left out.
+flux. Cannibalistic links (the diagonal) are left out. Guimerà et al. (2010) define compartments
+in three ways, chosen by `view`.
 
-With `directed = true`, the directed modularity of Leicht & Newman (2008), weighted as in
-Arenas et al. (2007),
+`view = :density`, species densely linked to each other. With `directed = true`, the directed
+modularity of Leicht & Newman (2008), weighted as in Arenas et al. (2007),
 
     Q = (1/W) Σ_ij [W_ij − γ s_i^out s_j^in / W] δ(g_i, g_j),
 
@@ -22,20 +23,37 @@ of Newman & Girvan (2004) on the undirected web `W + Wᵀ`,
     Q = (1/2m) Σ_ij [A_ij − γ k_i k_j / 2m] δ(g_i, g_j),
 
 in which each link counts once, so that two species that eat each other are joined by two links.
+
+`view = :predator`, species that share many prey, and `view = :prey`, species that share many
+predators: the bipartite modularity of Guimerà, Sales-Pardo & Amaral (2007), with each prey's set
+of predators (or each predator's set of prey) as a team,
+
+    M = Σ_s [ Σ_{i ≠ j ∈ s} c_ij / Σ_a m_a(m_a − 1) − γ Σ_{i ≠ j ∈ s} t_i t_j / L² ],
+
+where `c_ij` counts the prey (predators) that `i` and `j` share, `t_i` the prey (predators) of
+`i`, `m_a` the predators of prey `a` (the prey of predator `a`) and `L` the links. The two views
+differ for a web and agree for a symmetric one. These views need a binary web and ignore
+`directed`.
+
 `γ` is the resolution of Reichardt & Bornholdt (2006): larger values favour smaller groups. `Q`
-is 0 for a single group and for a web without links.
+is 0 for a single group in the density view and for a web without links.
 
 Leicht, E. A. & Newman, M. E. J. Community structure in directed networks. Phys. Rev. Lett. 100,
 118703 (2008). Arenas, A., Duch, J., Fernández, A. & Gómez, S. Size reduction of complex networks
 preserving modularity. New J. Phys. 9, 176 (2007). Newman, M. E. J. & Girvan, M. Finding and
-evaluating community structure in networks. Phys. Rev. E 69, 026113 (2004). Reichardt, J. &
-Bornholdt, S. Statistical mechanics of community detection. Phys. Rev. E 74, 016110 (2006).
+evaluating community structure in networks. Phys. Rev. E 69, 026113 (2004). Guimerà, R.,
+Sales-Pardo, M. & Amaral, L. A. N. Module identification in bipartite and directed networks.
+Phys. Rev. E 76, 036102 (2007). Guimerà, R. et al. Origin of compartmentalization in food webs.
+Ecology 91, 2941–2951 (2010). Reichardt, J. & Bornholdt, S. Statistical mechanics of community
+detection. Phys. Rev. E 74, 016110 (2006).
 """
-function web_modularity(W::AbstractMatrix, groups::AbstractVector; directed::Bool = true, γ::Real = 1)
+function web_modularity(
+        W::AbstractMatrix, groups::AbstractVector; view::Symbol = :density, directed::Bool = true, γ::Real = 1
+    )
     S = LinearAlgebra.checksquare(W)
     length(groups) == S || throw(DimensionMismatch("groups must have length $S, got $(length(groups))"))
     γ >= 0 || throw(ArgumentError("the resolution γ must be non-negative, got $γ"))
-    return partition_modularity(link_weights(W, directed), groups, γ)
+    return partition_modularity(modularity_objective(W, view, directed, γ), groups)
 end
 
 # The links of W without the diagonal, as `w + wᵀ` when undirected
@@ -46,26 +64,52 @@ function link_weights(W::AbstractMatrix, directed::Bool)
     return directed ? w : w + w'
 end
 
-# Q of a partition of the link weights `w`, in either form
-function partition_modularity(w::AbstractMatrix, groups::AbstractVector, γ::Real)
+# Every modularity here has the form Q = (1/T) Σ_ij [w_ij − γ so_i si_j / T] δ(g_i, g_j) + offset,
+# with T = Σ w. The density view uses the link weights and their row and column sums. The role
+# views use the shared prey or predators c_ij and the prey or predator counts t_i: with
+# K = Σ_a m_a(m_a − 1) = Σ c_ij, the bipartite modularity is this form with γ K² / L² in place of
+# γ, plus the terms i = j of the null that it leaves out, γ Σ t_i² / L², which do not depend on the
+# partition. Searches use (w, so, si, γ); the offset only corrects the value reported.
+function modularity_objective(W::AbstractMatrix, view::Symbol, directed::Bool, γ::Real)
+    if view === :density
+        w = link_weights(W, directed)
+        return (; w, so = vec(sum(w; dims = 2)), si = vec(sum(w; dims = 1)), γ = float(γ), offset = 0.0)
+    end
+    view in (:predator, :prey) || throw(ArgumentError("view must be :density, :predator or :prey, given :$view"))
+    a = link_weights(W, true)
+    all(x -> x == 0 || x == 1, a) || throw(ArgumentError("the $view view needs a binary web"))
+    # teams are the rows of `members`, members the columns: for the predator view each prey's
+    # predators, for the prey view each predator's prey
+    members = view === :predator ? a : Matrix(a')
+    S = size(a, 1)
+    c = [i == j ? 0.0 : sum(members[:, i] .* members[:, j]) for i in 1:S, j in 1:S]
+    t = vec(sum(members; dims = 1))
+    L, K = sum(t), sum(c)
+    (L == 0 || K == 0) && return (; w = c, so = t, si = t, γ = 0.0, offset = 0.0)
+    return (; w = c, so = t, si = t, γ = γ * K^2 / L^2, offset = γ * sum(abs2, t) / L^2)
+end
+
+# Q of a partition for an objective
+function partition_modularity(obj, groups::AbstractVector)
+    (; w, so, si, γ, offset) = obj
     S = size(w, 1)
     total = sum(w)
     total == 0 && return 0.0
-    s_out = vec(sum(w; dims = 2))
-    s_in = vec(sum(w; dims = 1))
     Q = 0.0
     for j in 1:S, i in 1:S
-        groups[i] == groups[j] && (Q += w[i, j] - γ * s_out[i] * s_in[j] / total)
+        groups[i] == groups[j] && (Q += w[i, j] - γ * so[i] * si[j] / total)
     end
-    return Q / total
+    return Q / total + offset
 end
+density_objective(w::AbstractMatrix, γ::Real) = (; w, so = vec(sum(w; dims = 2)), si = vec(sum(w; dims = 1)), γ = float(γ), offset = 0.0)
 
 """
-    compartments([rng], W; directed = true, γ = 1, method = :louvain, runs = 10, threshold = 0.5)
+    compartments([rng], W; view = :density, directed = true, γ = 1, method = :louvain, runs = 10,
+                 threshold = 0.5)
 
 A partition of the species of the web or non-negative weight matrix `W` (`W[i, j]` the link from
 prey `i` to predator `j`) of high modularity, as scored by [`web_modularity`](@ref) with the same
-`directed` and `γ`. Returns a named tuple:
+`view`, `directed` and `γ`. Returns a named tuple:
 
 - `groups`: the consensus partition, labelled `1, 2, …` in order of first appearance;
 - `modularity`: its modularity;
@@ -81,7 +125,8 @@ Each search uses `method`:
   merges of groups, followed by a greedy pass; slower, and a check on the Louvain result.
 
 After each search, groups that fall apart into unlinked pieces are split, which never lowers the
-modularity, so that every group is connected. Many partitions have nearly the highest modularity
+modularity, so that every group is connected (in the predator and prey views, through shared prey
+or predators). Many partitions have nearly the highest modularity
 (Good, de Montjoye & Clauset 2010), so `compartments` combines the searches by consensus
 clustering (Lancichinetti & Fortunato 2012): it keeps the pairs that at least `threshold` of the
 searches put together, searches that co-assignment matrix again, and repeats until every search
@@ -101,17 +146,18 @@ Rev. E 81, 046106 (2010). Lancichinetti, A. & Fortunato, S. Consensus clustering
 networks. Sci. Rep. 2, 336 (2012).
 """
 function compartments(
-        rng::AbstractRNG, W::AbstractMatrix; directed::Bool = true, γ::Real = 1, method::Symbol = :louvain,
-        runs::Integer = 10, threshold::Real = 0.5
+        rng::AbstractRNG, W::AbstractMatrix; view::Symbol = :density, directed::Bool = true, γ::Real = 1,
+        method::Symbol = :louvain, runs::Integer = 10, threshold::Real = 0.5
     )
     γ >= 0 || throw(ArgumentError("the resolution γ must be non-negative, got $γ"))
     method in (:louvain, :annealing) || throw(ArgumentError("method must be :louvain or :annealing, given :$method"))
     runs >= 1 || throw(ArgumentError("runs must be at least 1"))
     0 < threshold <= 1 || throw(ArgumentError("threshold must be in (0, 1], got $threshold"))
-    w = link_weights(W, directed)
-    search(x, γx) = connected_groups(x, method === :louvain ? louvain_groups(rng, x, γx) : annealed_groups(rng, x, γx))
-    first_round = [search(w, γ) for _ in 1:runs]
-    run_modularity = [partition_modularity(w, g, γ) for g in first_round]
+    obj = modularity_objective(W, view, directed, γ)
+    w = obj.w
+    search(o) = connected_groups(o.w, method === :louvain ? louvain_groups(rng, o) : annealed_groups(rng, o))
+    first_round = [search(obj) for _ in 1:runs]
+    run_modularity = [partition_modularity(obj, g) for g in first_round]
     coassignment = coassignment_matrix(first_round)
     partitions = first_round
     groups = nothing
@@ -123,13 +169,13 @@ function compartments(
             groups = connected_groups(kept, collect(1:S); merge = true)
             break
         end
-        partitions = [search(kept, 1) for _ in 1:runs]
+        partitions = [search(density_objective(kept, 1)) for _ in 1:runs]
     end
-    groups === nothing && (groups = partitions[argmax([partition_modularity(w, g, γ) for g in partitions])])
+    groups === nothing && (groups = partitions[argmax([partition_modularity(obj, g) for g in partitions])])
     # the searches of the co-assignment matrix can join species that no link of `w` connects
     groups = relabel(connected_groups(w, groups))
     best = relabel(first_round[argmax(run_modularity)])
-    return (; groups, modularity = partition_modularity(w, groups, γ), best, run_modularity, coassignment)
+    return (; groups, modularity = partition_modularity(obj, groups), best, run_modularity, coassignment)
 end
 compartments(W::AbstractMatrix; kwargs...) = compartments(Random.default_rng(), W; kwargs...)
 
@@ -185,9 +231,11 @@ mutable struct ModularityState{M <: AbstractMatrix{Float64}}
     const Gout::Vector{Float64}
     const Gin::Vector{Float64}
 end
-function ModularityState(w::AbstractMatrix{Float64}, γ::Real, groups::AbstractVector{<:Integer})
+function ModularityState(
+        w::AbstractMatrix{Float64}, so::AbstractVector, si::AbstractVector, γ::Real, groups::AbstractVector{<:Integer}
+    )
     S = size(w, 1)
-    so, si = vec(sum(w; dims = 2)), vec(sum(w; dims = 1))
+    so, si = Vector{Float64}(so), Vector{Float64}(si)
     members = [Set{Int}() for _ in 1:S]
     Gout, Gin = zeros(S), zeros(S)
     for v in 1:S
@@ -249,14 +297,14 @@ end
 # The Louvain method (Blondel et al. 2008), in the directed form of Dugué & Perez (2015) when `w`
 # is asymmetric: greedy moves of single species, then the groups become the species of a smaller
 # weight matrix that keeps the weight inside each group on its diagonal, until no move is made
-function louvain_groups(rng::AbstractRNG, w::AbstractMatrix, γ::Real)
-    S = size(w, 1)
-    all(iszero, w) && return collect(1:S)
+function louvain_groups(rng::AbstractRNG, obj)
+    S = size(obj.w, 1)
+    all(iszero, obj.w) && return collect(1:S)
     assignment = collect(1:S)
-    current = Matrix{Float64}(w)
+    current, so, si = Matrix{Float64}(obj.w), Vector{Float64}(obj.so), Vector{Float64}(obj.si)
     while true
         n = size(current, 1)
-        st = greedy_moves!(rng, ModularityState(current, γ, collect(1:n)))
+        st = greedy_moves!(rng, ModularityState(current, so, si, obj.γ, collect(1:n)))
         groups = relabel(st.groups)
         k = maximum(groups)
         k == n && break
@@ -265,6 +313,8 @@ function louvain_groups(rng::AbstractRNG, w::AbstractMatrix, γ::Real)
         for i in 1:n, j in 1:n
             aggregated[groups[i], groups[j]] += current[i, j]
         end
+        so = [sum(so[groups .== r]) for r in 1:k]
+        si = [sum(si[groups .== r]) for r in 1:k]
         current = aggregated
     end
     return assignment
@@ -274,13 +324,14 @@ end
 # to the group of a linked species or to a new group, and merges of two groups, under geometric
 # cooling from a temperature of about the change in Q of one link, then greedy moves from the
 # best partition found
-function annealed_groups(rng::AbstractRNG, w::AbstractMatrix, γ::Real; cooling::Real = 0.98, sweeps::Integer = 20)
+function annealed_groups(rng::AbstractRNG, obj; cooling::Real = 0.98, sweeps::Integer = 20)
+    w, γ = obj.w, obj.γ
     S = size(w, 1)
     total = sum(w)
     total == 0 && return collect(1:S)
-    st = ModularityState(Matrix{Float64}(w), γ, collect(1:S))
+    st = ModularityState(Matrix{Float64}(w), obj.so, obj.si, γ, collect(1:S))
     linked = [[u for u in 1:S if u != v && (w[v, u] > 0 || w[u, v] > 0)] for v in 1:S]
-    Q = partition_modularity(st.w, st.groups, γ)
+    Q = partition_modularity((; w = st.w, so = st.so, si = st.si, γ, offset = 0.0), st.groups)
     best, bestQ = copy(st.groups), Q
     T = 1 / total
     while T > 1.0e-4 / total
@@ -312,15 +363,16 @@ function annealed_groups(rng::AbstractRNG, w::AbstractMatrix, γ::Real; cooling:
         Q > bestQ && ((best, bestQ) = (copy(st.groups), Q))
         T *= cooling
     end
-    return greedy_moves!(rng, ModularityState(st.w, γ, best); new_groups = true).groups
+    return greedy_moves!(rng, ModularityState(st.w, st.so, st.si, γ, best); new_groups = true).groups
 end
 
 """
-    modularity_zscore([rng], web; null = :rewire, samples = 100, swaps = 10 * L, directed = true,
-                      γ = 1, method = :louvain, runs = 5)
+    modularity_zscore([rng], web; null = :rewire, samples = 100, swaps = 10 * L, view = :density,
+                      directed = true, γ = 1, method = :louvain, runs = 5)
 
 How much more modular the binary `web` is than webs from a null model, with the modularity of
-each web the highest found by [`compartments`](@ref) in `runs` searches by `method`. Random webs
+each web, in the `view` of [`web_modularity`](@ref), the highest found by [`compartments`](@ref)
+in `runs` searches by `method`. Random webs
 have high modularity from fluctuations alone (Guimerà, Sales-Pardo & Amaral 2004), so the same
 search runs on every null web: comparing null webs on the partition found for `web` would bias
 the test towards significance.
@@ -342,8 +394,8 @@ compartmentalization in food webs. Ecology 91, 2941–2951 (2010).
 """
 function modularity_zscore(
         rng::AbstractRNG, web::AbstractMatrix; null = :rewire, samples::Integer = 100,
-        swaps::Integer = 10 * count(!iszero, web), directed::Bool = true, γ::Real = 1, method::Symbol = :louvain,
-        runs::Integer = 5
+        swaps::Integer = 10 * count(!iszero, web), view::Symbol = :density, directed::Bool = true, γ::Real = 1,
+        method::Symbol = :louvain, runs::Integer = 5
     )
     all(x -> x == 0 || x == 1, web) ||
         throw(ArgumentError("modularity_zscore needs a binary web; its null models generate binary webs"))
@@ -357,7 +409,7 @@ function modularity_zscore(
     else
         throw(ArgumentError("null must be :rewire or a function (rng, S, C) -> web, given $null"))
     end
-    best(W) = compartments(rng, W; directed, γ, method, runs)
+    best(W) = compartments(rng, W; view, directed, γ, method, runs)
     found = best(web)
     observed = maximum(found.run_modularity)
     null_modularity = [maximum(best(draw()).run_modularity) for _ in 1:samples]
