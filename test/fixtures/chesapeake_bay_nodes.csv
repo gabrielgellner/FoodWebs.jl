@@ -1,0 +1,37 @@
+index,name,living,input
+1,Phytoplankton,True,522650.0
+2,Bacteria in Suspended POC,True,0.0
+3,Bacteria in Sediment POC,True,0.0
+4,Benthic Diatoms,True,77803.0
+5,Free Bacteria,True,0.0
+6,Heterotrophic Microflagelates,True,0.0
+7,Ciliates,True,0.0
+8,Zooplankton,True,0.0
+9,Ctenophores,True,0.0
+10,Sea Nettle,True,0.0
+11,Other Suspension Feeders,True,0.0
+12,Mya arenaria,True,0.0
+13,Oysters,True,0.0
+14,Other Polychaetes,True,0.0
+15,Nereis,True,0.0
+16,Macoma spp.,True,0.0
+17,Meiofauna,True,0.0
+18,Crustacean Deposit Feeder,True,0.0
+19,Blue Crab,True,0.0
+20,Fish Larvae,True,0.0
+21,Alewife & Blue Herring,True,0.0
+22,Bay Anchovy,True,0.0
+23,Menhaden,True,0.0
+24,Shad,True,0.0
+25,Croaker,True,0.0
+26,Hogchoker,True,0.0
+27,Spot,True,0.0
+28,White Perch,True,0.0
+29,Catfish,True,0.0
+30,Bluefish,True,0.0
+31,Weakfish,True,0.0
+32,Summer Flounder,True,0.0
+33,Striped Bass,True,0.0
+34,Dissolved Organic Carbon,False,103188.0
+35,Suspended Particulate Carbon,False,185150.4
+36,Sediment Partculate Carbon,False,0.0
