@@ -89,8 +89,34 @@ generalized = modularity_zscore(Xoshiro(1), fw; samples = 50,
 rewired.observed
 ```
 
+## Species roles and homogeneity
+
+[`species_roles`](@ref) places each species by its within-module degree `z` and its
+participation coefficient `P`, the spread of its links over the groups (Guimerà & Amaral 2005).
+Connectors, with `P > 0.62`, link compartments, and in Tuesday Lake they sit higher in the web
+than the peripheral species:
+
+```@example compartments
+groups = compartments(Xoshiro(2026), fw; runs = 20).best
+roles = species_roles(fw, groups)
+levels = trophic_levels(fw)
+[(role, count(==(role), roles.role), round(sum(levels[roles.role .== role]) / count(==(role), roles.role); digits = 2))
+    for role in unique(roles.role)]
+```
+
+[`compartment_homogeneity`](@ref) measures whether compartments follow trophic levels and sink
+webs (Guimerà et al. 2010). Tuesday Lake's compartments follow its sink webs, the energy
+channels from the basal species up; its species categories follow trophic levels instead and cut
+across the sink webs:
+
+```@example compartments
+compartment_homogeneity(fw, groups), compartment_homogeneity(fw, fw.traits["category"])
+```
+
 ```@docs
 web_modularity
 compartments
 modularity_zscore
+species_roles
+compartment_homogeneity
 ```

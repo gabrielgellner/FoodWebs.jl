@@ -1,7 +1,7 @@
 using FoodWebs
 using Test
-using Random: Xoshiro
-using Statistics: mean, std
+using Random: Random, Xoshiro
+using Statistics: mean, std, var
 
 @testset "modularity by hand" begin
     # two disconnected links, 1 → 2 and 3 → 4: each group holds one link, and the expected
@@ -167,4 +167,76 @@ end
     @test_throws ArgumentError modularity_zscore(rand(Xoshiro(4), 5, 5))
     @test_throws ArgumentError modularity_zscore(base; null = :shuffle)
     @test_throws ArgumentError modularity_zscore(base; samples = 1)
+end
+
+@testset "species roles" begin
+    # two three-species modules (1 → 2 → 3, 1 → 3, and the same for 4, 5, 6), and a top predator
+    # 7, alone in its group, that eats 3 and 6
+    web = falses(7, 7)
+    for (prey, predator) in [(1, 2), (2, 3), (1, 3), (4, 5), (5, 6), (4, 6), (3, 7), (6, 7)]
+        web[prey, predator] = true
+    end
+    groups = [1, 1, 1, 2, 2, 2, 3]
+    r = species_roles(web, groups)
+    # 7 splits its two links evenly over the two other groups; 3 has 2 of its 3 links at home
+    @test r.P[7] ≈ 1 - 2 * (1 / 2)^2 && r.P[3] ≈ 1 - (2 / 3)^2 - (1 / 3)^2 && r.P[1] == 0
+    # every member of a module has the same within-module degree, so z = 0
+    @test all(iszero, r.z)
+    @test r.role == [:peripheral for _ in 1:7]
+    @test r.cartography[1] == :ultra_peripheral && r.cartography[7] == :peripheral
+    # links to prey only: 7's prey are split over two groups, 1 has no prey
+    prey = species_roles(web, groups; links = :prey)
+    @test prey.P[7] ≈ 1 / 2 && prey.P[1] == 0 && prey.P[3] == 0
+    # every species' predators are in a single group
+    @test species_roles(web, groups; links = :predators).P == zeros(7)
+
+    # a star module: species 1 linked to 2, 3, 4 and 5, so κ = (4, 1, 1, 1, 1) with mean 1.6 and
+    # sample standard deviation √1.8
+    star = falses(5, 5)
+    star[1, 2:5] .= true
+    @test species_roles(star, ones(Int, 5)).z ≈ [2.4, -0.6, -0.6, -0.6, -0.6] ./ sqrt(1.8)
+
+    # weights: unit weights give the binary roles, and scale does not matter
+    rng = Xoshiro(85)
+    niche = niche_network(rng, 40, 0.12)
+    g = compartments(rng, niche).groups
+    W = rand(rng, 40, 40) .* niche
+    @test species_roles(Float64.(niche), g) == species_roles(niche, g)
+    R = species_roles(W, g)
+    @test species_roles(5 .* W, g).P ≈ R.P && species_roles(5 .* W, g).z ≈ R.z
+    @test all(p -> 0 <= p < 1, R.P)
+    # the classes follow from z and P
+    @test all(R.role[i] == (R.z[i] > 2.5 ? (R.P[i] > 0.62 ? :network_hub : :module_hub) : (R.P[i] > 0.62 ? :connector : :peripheral)) for i in 1:40)
+
+    @test_throws ArgumentError species_roles(web, groups; links = :both)
+    @test_throws DimensionMismatch species_roles(web, groups[1:6])
+end
+
+@testset "compartment homogeneity" begin
+    # a chain 1 → 2 → 3 → 4 split into its lower and upper halves has one boundary, the fewest
+    # possible, and more homogeneous than chance; alternating groups have three, the most
+    chain = food_chain_network(4)
+    @test FoodWebs.boundaries([1, 1, 2, 2], 1:4, [1, 2]) == 1
+    @test compartment_homogeneity(chain, [1, 1, 2, 2]).trophic > 0
+    @test compartment_homogeneity(chain, [1, 2, 1, 2]).trophic < 0
+
+    # the exact null moments against random partitions with the same group sizes: shuffling the
+    # labels samples that ensemble, and H_t is a z-score, so it has mean 0 and variance 1
+    rng = Xoshiro(86)
+    web = niche_network(rng, 30, 0.12; basal_paths = true)
+    groups = compartments(rng, web).groups
+    levels = trophic_levels(web) .+ 1.0e-6 .* (1:30)
+    H = [compartment_homogeneity(web, Random.shuffle(rng, groups); levels) for _ in 1:20_000]
+    trophic = [h.trophic for h in H]
+    @test abs(mean(trophic)) < 0.03 && abs(var(trophic) - 1) < 0.05
+    # H_s sums one z-score per species, so its mean is 0
+    sink = [h.sink for h in H]
+    @test abs(mean(sink)) < 4 * std(sink) / sqrt(length(sink))
+
+    # with tied levels, the boundaries are the mean over random orderings of the ties
+    tied = round.(trophic_levels(web); digits = 1)
+    jittered = [FoodWebs.boundaries(groups, tied .+ 1.0e-6 .* rand(rng, 30), unique(groups)) for _ in 1:20_000]
+    @test mean(jittered) ≈ FoodWebs.boundaries(groups, tied, unique(groups)) atol = 0.02
+
+    @test_throws DimensionMismatch compartment_homogeneity(web, groups[1:29])
 end

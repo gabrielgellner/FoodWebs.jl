@@ -367,3 +367,183 @@ function modularity_zscore(
     return (; observed, groups = found.best, null_modularity, mean = μ, sd = σ, z, p)
 end
 modularity_zscore(web::AbstractMatrix; kwargs...) = modularity_zscore(Random.default_rng(), web; kwargs...)
+
+"""
+    species_roles(W, groups; links = :all)
+
+The role of each species in the partition `groups` of the web or non-negative weight matrix `W`
+(`W[i, j]` the link from prey `i` to predator `j`), from its links: all of them (`links = :all`,
+counting each link once), those to its prey (`:prey`) or those to its predators (`:predators`).
+With weights, the counts below are sums of weights (strengths). Cannibalistic links are left out.
+Returns a named tuple:
+
+- `z`: the within-module degree, `z_i = (κ_i − κ̄) / σ_κ`, where `κ_i` counts the links of `i` to
+  other members of its group and `κ̄` and `σ_κ` are the mean and standard deviation of `κ` in the
+  group, with the sample standard deviation as in `czvalues` of the R package bipartite; 0 when
+  `σ_κ` is 0 or undefined, as in groups of one species;
+- `P`: the participation coefficient, `P_i = 1 − Σ_s (κ_is / k_i)²`, where `κ_is` counts the links
+  of `i` to group `s` and `k_i` all its links; 0 near the group's own links only and close to 1 when
+  spread evenly over all groups; 0 for a species without links;
+- `role`: the classes of Olesen et al. (2007): `:peripheral` (`z ≤ 2.5`, `P ≤ 0.62`),
+  `:connector` (`z ≤ 2.5`, `P > 0.62`), `:module_hub` (`z > 2.5`, `P ≤ 0.62`) and `:network_hub`
+  (`z > 2.5`, `P > 0.62`);
+- `cartography`: the seven roles of Guimerà & Amaral (2005), for non-hubs (`z < 2.5`)
+  `:ultra_peripheral` (`P ≤ 0.05`), `:peripheral` (`P ≤ 0.62`), `:connector` (`P ≤ 0.80`) and
+  `:kinless` (`P > 0.80`), and for hubs (`z ≥ 2.5`) `:provincial_hub` (`P ≤ 0.30`),
+  `:connector_hub` (`P ≤ 0.75`) and `:kinless_hub` (`P > 0.75`).
+
+Connectors, the species with high `P`, are the species that link compartments.
+
+Guimerà, R. & Amaral, L. A. N. Functional cartography of complex metabolic networks. Nature 433,
+895–900 (2005). Olesen, J. M., Bascompte, J., Dupont, Y. L. & Jordano, P. The modularity of
+pollination networks. Proc. Natl Acad. Sci. USA 104, 19891–19896 (2007).
+"""
+function species_roles(W::AbstractMatrix, groups::AbstractVector; links::Symbol = :all)
+    S = LinearAlgebra.checksquare(W)
+    length(groups) == S || throw(DimensionMismatch("groups must have length $S, got $(length(groups))"))
+    w = link_weights(W, true)
+    # a[i, j]: the link of species i to species j counted for i's role
+    a = if links === :all
+        w + w'
+    elseif links === :prey
+        Matrix(w')
+    elseif links === :predators
+        w
+    else
+        throw(ArgumentError("links must be :all, :prey or :predators, given :$links"))
+    end
+    labels = unique(groups)
+    toward = [sum((a[i, j] for j in 1:S if groups[j] == s); init = 0.0) for i in 1:S, s in labels]
+    own = [findfirst(==(groups[i]), labels) for i in 1:S]
+    κ = [toward[i, own[i]] for i in 1:S]
+    k = vec(sum(toward; dims = 2))
+    z = zeros(S)
+    for s in eachindex(labels)
+        members = findall(==(s), own)
+        μ, σ = mean(κ[members]), length(members) > 1 ? std(κ[members]) : 0.0
+        σ > 0 && (z[members] .= (κ[members] .- μ) ./ σ)
+    end
+    P = [k[i] > 0 ? 1 - sum(abs2, toward[i, :] ./ k[i]) : 0.0 for i in 1:S]
+    role = [
+        z[i] > 2.5 ? (P[i] > 0.62 ? :network_hub : :module_hub) : (P[i] > 0.62 ? :connector : :peripheral)
+            for i in 1:S
+    ]
+    cartography = map(1:S) do i
+        if z[i] >= 2.5
+            P[i] <= 0.3 ? :provincial_hub : P[i] <= 0.75 ? :connector_hub : :kinless_hub
+        else
+            P[i] <= 0.05 ? :ultra_peripheral : P[i] <= 0.62 ? :peripheral : P[i] <= 0.8 ? :connector : :kinless
+        end
+    end
+    return (; z, P, role, cartography)
+end
+
+"""
+    compartment_homogeneity(web, groups; levels = trophic_levels(web))
+
+How far the compartments `groups` of `web` follow trophic structure, as the trophic-level and sink
+homogeneity of Guimerà et al. (2010), each a z-score against random partitions with the same
+group sizes. Positive values mean more homogeneous than chance. Returns a named tuple:
+
+- `trophic`: `H_t = (⟨B⟩ − B) / σ_B`, where `B` counts the boundaries between groups along the
+  species sorted by `levels`; compartments of contiguous trophic levels have few boundaries.
+  Species with equal levels are ordered at random, and `B` is its mean over those orderings.
+- `sink`: `H_s = Σ_i (o_i − ⟨o_i⟩) / σ_{o_i}`, where `o_i` counts the other members of species
+  `i`'s group that are in its sink web (its prey, their prey and so on); species whose `o_i`
+  cannot vary are left out.
+
+The means and standard deviations over random partitions are exact.
+
+Guimerà, R. et al. Origin of compartmentalization in food webs. Ecology 91, 2941–2951 (2010).
+"""
+function compartment_homogeneity(web::AbstractMatrix, groups::AbstractVector; levels::AbstractVector = trophic_levels(web))
+    S = LinearAlgebra.checksquare(web)
+    length(groups) == S || throw(DimensionMismatch("groups must have length $S, got $(length(groups))"))
+    length(levels) == S || throw(DimensionMismatch("levels must have length $S, got $(length(levels))"))
+    labels = unique(groups)
+    sizes = [count(==(s), groups) for s in labels]
+    return (; trophic = trophic_homogeneity(groups, levels, labels, sizes), sink = sink_homogeneity(web, groups, sizes))
+end
+
+# The expected number of boundaries along the species sorted by level, over random orderings
+# of species with equal levels: within a block of `m` tied species with group counts `m_c`,
+# neighbours differ with probability 1 − Σ m_c (m_c − 1) / (m (m − 1)); across consecutive blocks
+# with counts `a_c` and `b_c`, with probability 1 − Σ a_c b_c / (m_a m_b).
+function boundaries(groups, levels, labels)
+    order = sortperm(levels)
+    blocks = Vector{Vector{Int}}()
+    for i in order
+        if isempty(blocks) || !isapprox(levels[i], levels[last(blocks)[1]]; atol = 1.0e-9)
+            push!(blocks, [i])
+        else
+            push!(last(blocks), i)
+        end
+    end
+    counts = [[count(i -> groups[i] == s, block) for s in labels] for block in blocks]
+    B = 0.0
+    for (block, c) in zip(blocks, counts)
+        m = length(block)
+        m > 1 && (B += (m - 1) * (1 - sum(c .* (c .- 1)) / (m * (m - 1))))
+    end
+    for k in 2:length(blocks)
+        B += 1 - sum(counts[k - 1] .* counts[k]) / (length(blocks[k - 1]) * length(blocks[k]))
+    end
+    return B
+end
+
+# H_t. Under a random arrangement of the labels, with `n_c` species in group `c`, the indicator
+# `X_t` that neighbours `t` and `t + 1` share a group has mean `p2 = Σ n_c (n_c − 1) / (S)_2`, two
+# overlapping indicators are both 1 with probability `p3 = Σ (n_c)_3 / (S)_3`, and two disjoint
+# ones with probability `p4 = [Σ (n_c)_4 + Σ_{c ≠ d} (n_c)_2 (n_d)_2] / (S)_4`, where `(n)_k` is the
+# falling factorial. `B = (S − 1) − Σ X_t`.
+function trophic_homogeneity(groups, levels, labels, sizes)
+    S = length(groups)
+    S < 4 && return NaN
+    falling(n, k) = prod(n - j for j in 0:(k - 1); init = 1.0)
+    p2 = sum(falling(n, 2) for n in sizes) / falling(S, 2)
+    p3 = sum(falling(n, 3) for n in sizes) / falling(S, 3)
+    pairs2 = [falling(n, 2) for n in sizes]
+    p4 = (sum(falling(n, 4) for n in sizes) + sum(pairs2)^2 - sum(abs2, pairs2)) / falling(S, 4)
+    adjacent = S - 2
+    disjoint = (S - 1) * (S - 2) ÷ 2 - adjacent
+    mean_B = (S - 1) * (1 - p2)
+    var_B = (S - 1) * p2 * (1 - p2) + 2 * adjacent * (p3 - p2^2) + 2 * disjoint * (p4 - p2^2)
+    var_B > 0 || return NaN
+    return (mean_B - boundaries(groups, levels, labels)) / sqrt(var_B)
+end
+
+# H_s. In a random partition with the observed group sizes, species `i` falls in a group of size
+# `n` with probability `n · (number of groups of size n) / S`, and the other `n − 1` members are a
+# random draw from the other `S − 1` species, so `o_i` is hypergeometric given `n`: with `t_i`
+# species in the sink web of `i`, mean `(n − 1) t_i / (S − 1)` and variance
+# `(n − 1) t_i (S − 1 − t_i) (S − n) / ((S − 1)² (S − 2))`.
+function sink_homogeneity(web, groups, sizes)
+    S = length(groups)
+    S < 3 && return NaN
+    eats = [i != j && web[i, j] != 0 for i in 1:S, j in 1:S]
+    weights = Dict(n => n * count(==(n), sizes) / S for n in unique(sizes))
+    H = 0.0
+    for i in 1:S
+        # the sink web of i, by search down its prey
+        sink = falses(S)
+        stack = [i]
+        while !isempty(stack)
+            v = pop!(stack)
+            for u in 1:S
+                (eats[u, v] && !sink[u] && u != i) || continue
+                sink[u] = true
+                push!(stack, u)
+            end
+        end
+        t = count(sink)
+        o = count(u -> u != i && sink[u] && groups[u] == groups[i], 1:S)
+        μ = sum(p * (n - 1) * t / (S - 1) for (n, p) in weights)
+        second = sum(
+            p * ((n - 1) * t * (S - 1 - t) * (S - n) / ((S - 1)^2 * (S - 2)) + ((n - 1) * t / (S - 1))^2)
+                for (n, p) in weights
+        )
+        σ = sqrt(max(second - μ^2, 0.0))
+        σ > 1.0e-12 && (H += (o - μ) / σ)
+    end
+    return H
+end
