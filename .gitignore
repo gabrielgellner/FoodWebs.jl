@@ -7,3 +7,6 @@ Manifest.toml
 .quarto/
 gallery/*.html
 gallery/*_files/
+
+# Documenter output
+docs/build/

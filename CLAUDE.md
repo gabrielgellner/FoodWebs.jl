@@ -21,6 +21,8 @@ predictions. The research code in
 - `src/stability.jl`: spectral and numerical abscissa.
 - `src/elliptic_law.jl`: elliptic-law predictions and off-diagonal pair utilities.
 - `test/`: one test file per source file, each testset with its own seeded `Xoshiro`.
+- `docs/`: the Documenter site (own environment), deployed to GitHub Pages by
+  `.github/workflows/Documentation.yml` on pushes to main and release tags.
 
 ## Conventions
 
@@ -49,6 +51,7 @@ just setup      # install Runic and JETLS as Julia apps, instantiate environment
 just fmt        # format with Runic
 just ci         # formatting check, JETLS lint, tests (run by the pre-push hook)
 just gallery    # render the Quarto gallery of the bundled webs to gallery/webs.html
+just docs       # build the Documenter site to docs/build
 ```
 
 `main` is protected: changes go through a PR. GitHub Actions runs nothing automatically; run

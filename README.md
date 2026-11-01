@@ -1,5 +1,7 @@
 # FoodWebs.jl
 
+[![Documentation](https://img.shields.io/badge/docs-dev-blue.svg)](https://gabrielgellner.github.io/FoodWebs.jl/dev/)
+
 Models and utilities for ecological food webs: network topologies, random community
 matrices, stability metrics and elliptic-law predictions.
 
@@ -47,6 +49,7 @@ just setup      # install Runic and JETLS as Julia apps, instantiate environment
 just fmt        # format with Runic
 just ci         # formatting check, JETLS lint, and tests (run by the pre-push hook)
 just gallery    # render the Quarto gallery of the bundled webs to gallery/webs.html
+just docs       # build the Documenter site to docs/build
 ```
 
 Formatting uses [Runic](https://github.com/fredrikekre/Runic.jl). To have `git blame` skip the

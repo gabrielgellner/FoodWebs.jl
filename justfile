@@ -36,6 +36,11 @@ ci: fmt-check lint test
 
 alias check := ci
 
+# Build the documentation to docs/build (open docs/build/index.html)
+docs:
+    {{ julia }} --project=docs -e 'using Pkg; Pkg.instantiate()'
+    {{ julia }} --project=docs docs/make.jl
+
 # Render the Quarto notes in gallery/ (the bundled food webs and random community matrices)
 gallery:
     {{ julia }} --project=gallery -e 'using Pkg; Pkg.instantiate()'
