@@ -23,4 +23,5 @@ using ExplicitImports: test_explicit_imports
     include("properties.jl")
     include("motifs.jl")
     include("compartments.jl")
+    include("blocks.jl")
 end

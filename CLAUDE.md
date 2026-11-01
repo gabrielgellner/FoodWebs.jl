@@ -26,6 +26,8 @@ predictions. The research code in
   against igraph and NetworkX.
 - `src/data.jl`: the `FoodWeb` type and readers for the empirical webs in `data/` (see
   `data/README.md`).
+- `src/blocks.jl`: block-structured random community matrices (Grilli, Rogers & Allesina 2016)
+  and predictions of their bulk and outlier eigenvalues.
 - `src/randcmat.jl`: random community matrices with a web's structure (`random_predprey`).
 - `src/stability.jl`: spectral and numerical abscissa.
 - `src/elliptic_law.jl`: elliptic-law predictions and off-diagonal pair utilities.

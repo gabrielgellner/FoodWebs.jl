@@ -144,6 +144,46 @@ couplers = blocks.coupling .> 0
 count(couplers), extrema(levels[couplers]), extrema(levels[.!couplers])
 ```
 
+## Block-structured random matrices
+
+[`block_random_matrix`](@ref) draws community matrices whose species fall into groups, with the
+connectance, means, spreads and pair correlation of each pair of groups set separately; the
+means may differ by direction, as when one group eats another. [`modular_random_matrix`](@ref)
+is the two-group case of Grilli, Rogers & Allesina (2016), set by the overall connectance and the
+modularity `Q` through [`modular_connectances`](@ref). [`block_spectrum`](@ref) predicts the
+eigenvalues from the block moments: a bulk from the variances and pair correlations, and outliers
+from the means.
+
+The ratio of the predicted spectral abscissa with block structure to that without shows the
+regimes of Grilli et al.: with a negative mean interaction, modularity stabilizes slightly and
+anti-modularity (`Q < 0`) destabilizes strongly; with a positive mean, block structure is neutral
+for two groups of equal size, since the leading outlier `(S/2)(μ_w + |μ_b|)` is then `SCμ` for
+every `Q`, and destabilizing for unequal groups:
+
+```@example compartments
+function ratio(Q, μ, α; S = 1000, C = 0.2)
+    n = round(Int, α * S)
+    predicted(q) = let (Cw, Cb) = modular_connectances(C, q, α)
+        block_spectrum([n, S - n]; connectance = [Cw Cb; Cb Cw], μ).abscissa
+    end
+    return predicted(Q) / predicted(0.0)
+end
+[(μ, α, [round(ratio(Q, μ, α); digits = 2) for Q in (-0.3, -0.1, 0.1, 0.3)])
+    for (μ, α) in ((-1.0, 0.5), (-1.0, 0.25), (1.0, 0.5), (1.0, 0.25))]
+```
+
+The predictions also apply to a sampled matrix and its groups, from the moments of
+[`block_structure`](@ref):
+
+```@example compartments
+using LinearAlgebra: eigvals
+
+M = block_random_matrix(Xoshiro(3), [300, 500]; connectance = [0.15 0.1; 0.1 0.2],
+    μ = [-0.3 -1.5; 1.0 -0.3], ρ = -0.4, diagonal = -1)
+p = block_spectrum(M, [fill(1, 300); fill(2, 500)])
+p.outliers, p.abscissa, maximum(real, eigvals(M))
+```
+
 ```@docs
 web_modularity
 compartments
@@ -151,4 +191,8 @@ modularity_zscore
 species_roles
 compartment_homogeneity
 block_structure
+block_random_matrix
+modular_random_matrix
+modular_connectances
+block_spectrum
 ```

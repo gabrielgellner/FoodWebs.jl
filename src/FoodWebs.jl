@@ -46,6 +46,9 @@ export motif_census, motif_ids, motif_name, motif_roles, motif_zscores, rewire_l
 include("compartments.jl")
 export block_structure, compartment_homogeneity, compartments, modularity_zscore, species_roles, web_modularity
 
+include("blocks.jl")
+export block_random_matrix, block_spectrum, modular_connectances, modular_random_matrix
+
 include("data.jl")
 export FoodWeb, foodweb, foodweb_ids, read_foodweb
 public foodweb_cache
