@@ -314,3 +314,56 @@ function annealed_groups(rng::AbstractRNG, w::AbstractMatrix, γ::Real; cooling:
     end
     return greedy_moves!(rng, ModularityState(st.w, γ, best); new_groups = true).groups
 end
+
+"""
+    modularity_zscore([rng], web; null = :rewire, samples = 100, swaps = 10 * L, directed = true,
+                      γ = 1, method = :louvain, runs = 5)
+
+How much more modular the binary `web` is than webs from a null model, with the modularity of
+each web the highest found by [`compartments`](@ref) in `runs` searches by `method`. Random webs
+have high modularity from fluctuations alone (Guimerà, Sales-Pardo & Amaral 2004), so the same
+search runs on every null web: comparing null webs on the partition found for `web` would bias
+the test towards significance.
+
+- `null = :rewire`: [`rewire_links`](@ref) with `swaps` swaps, keeping each species' numbers of
+  prey and predators and of one-way and two-way links;
+- `null = f`, a function `f(rng, S, C)` returning a web with `S` species and connectance about `C`,
+  such as `niche_network`, `cascade_network` or `(rng, S, C) -> generalized_niche_network(rng, S,
+  C, 0.6)`: a structural model at the species richness and connectance of `web`. Guimerà et al.
+  (2010) found that empirical food webs are no more modular than the generalized niche model.
+
+Returns a named tuple: the `observed` modularity and its partition `groups`, the modularity of
+each null web `null_modularity`, their `mean` and `sd`, `z = (observed − mean) / sd` (`NaN` when
+`sd` is 0), and `p`, the fraction of null webs at least as modular as `web`.
+
+Guimerà, R., Sales-Pardo, M. & Amaral, L. A. N. Modularity from fluctuations in random graphs and
+complex networks. Phys. Rev. E 70, 025101 (2004). Guimerà, R. et al. Origin of
+compartmentalization in food webs. Ecology 91, 2941–2951 (2010).
+"""
+function modularity_zscore(
+        rng::AbstractRNG, web::AbstractMatrix; null = :rewire, samples::Integer = 100,
+        swaps::Integer = 10 * count(!iszero, web), directed::Bool = true, γ::Real = 1, method::Symbol = :louvain,
+        runs::Integer = 5
+    )
+    all(x -> x == 0 || x == 1, web) ||
+        throw(ArgumentError("modularity_zscore needs a binary web; its null models generate binary webs"))
+    samples >= 2 || throw(ArgumentError("samples must be at least 2"))
+    S = LinearAlgebra.checksquare(web)
+    draw = if null === :rewire
+        () -> rewire_links(rng, web; swaps)
+    elseif null isa Function
+        C = connectance(web)
+        () -> null(rng, S, C)
+    else
+        throw(ArgumentError("null must be :rewire or a function (rng, S, C) -> web, given $null"))
+    end
+    best(W) = compartments(rng, W; directed, γ, method, runs)
+    found = best(web)
+    observed = maximum(found.run_modularity)
+    null_modularity = [maximum(best(draw()).run_modularity) for _ in 1:samples]
+    μ, σ = mean(null_modularity), std(null_modularity)
+    z = σ > 0 ? (observed - μ) / σ : NaN
+    p = count(>=(observed), null_modularity) / samples
+    return (; observed, groups = found.best, null_modularity, mean = μ, sd = σ, z, p)
+end
+modularity_zscore(web::AbstractMatrix; kwargs...) = modularity_zscore(Random.default_rng(), web; kwargs...)
