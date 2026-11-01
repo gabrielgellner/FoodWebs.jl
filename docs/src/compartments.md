@@ -7,7 +7,7 @@ and perturbations spread (Stouffer & Bascompte 2011), while the effect of block 
 eigenvalues of a community matrix depends on the sign and strength of the links between the
 compartments (Grilli, Rogers & Allesina 2016).
 
-[`modularity`](@ref) scores a partition of a web, or of a weight matrix such as energy fluxes,
+[`web_modularity`](@ref) scores a partition of a web, or of a weight matrix such as energy fluxes,
 by how many more links fall inside the groups than expected from the species' degrees. Its
 directed form (Leicht & Newman 2008) is the default; the undirected form of Newman & Girvan
 (2004) is the one most published food web values use.
@@ -22,7 +22,7 @@ for (prey, predator) in [(1, 2), (2, 3), (4, 5), (5, 6), (3, 7), (6, 7)]
 end
 channels = [1, 1, 1, 2, 2, 2, 3]
 layers = [1, 2, 3, 1, 2, 3, 3]
-modularity(web, channels), modularity(web, layers)
+web_modularity(web, channels), web_modularity(web, layers)
 ```
 
 The two channels score 1/3. Grouping by trophic layer scores no better than chance here, as
@@ -32,7 +32,7 @@ below zero:
 
 ```@example compartments
 fw = foodweb("cheddar/tl84")
-modularity(fw, fw.traits["category"]), modularity(fw, fw.traits["category"]; directed = false)
+web_modularity(fw, fw.traits["category"]), web_modularity(fw, fw.traits["category"]; directed = false)
 ```
 
 The resolution `γ` (Reichardt & Bornholdt 2006) sets the size of the groups that modularity
@@ -41,5 +41,5 @@ negative and is high even for random webs (Guimerà, Sales-Pardo & Amaral 2004),
 significance has to be judged against null webs.
 
 ```@docs
-modularity
+web_modularity
 ```
