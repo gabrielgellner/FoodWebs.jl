@@ -238,8 +238,16 @@ rewire_links(web::AbstractMatrix; kwargs...) = rewire_links(Random.default_rng()
 
 How over- or under-represented each motif of `size` species is in `web` compared with
 `samples` randomized webs from [`rewire_links`](@ref). Returns a named tuple with the motif
-`ids`, the `observed` counts, the `mean` and `sd` of the randomized counts and the z-scores
-`z = (observed - mean) / sd`, which are `NaN` for motifs whose randomized count never varies.
+`ids`, the `observed` counts, the `mean` and `sd` of the randomized counts, the z-scores
+`z = (observed - mean) / sd`, which are `NaN` for motifs whose randomized count never varies,
+and the normalized `profile`: the z-scores scaled to length 1, with `NaN` taken as 0 (Milo et al.
+2004). Profiles compare webs of different sizes, as in Stouffer et al. (2007), and the dot
+product of two profiles is their uncentred correlation.
+
+Milo, R. et al. Superfamilies of evolved and designed networks. Science 303, 1538–1542 (2004).
+
+Stouffer, D. B., Camacho, J., Jiang, W. & Amaral, L. A. N. Evidence for the existence of a
+robust pattern of prey selection in food webs. Proc. R. Soc. B 274, 1931–1940 (2007).
 """
 function motif_zscores(
         rng::AbstractRNG, web::AbstractMatrix; size::Int = 3, samples::Integer = 100,
@@ -250,6 +258,9 @@ function motif_zscores(
     μ = vec(mean(random; dims = 2))
     σ = vec(std(random; dims = 2))
     z = [s > 0 ? (o - m) / s : NaN for (o, m, s) in zip(observed, μ, σ)]
-    return (ids = motif_ids(size), observed, mean = μ, sd = σ, z)
+    finite = replace(z, NaN => 0.0)
+    length_z = sqrt(sum(abs2, finite))
+    profile = length_z > 0 ? finite ./ length_z : finite
+    return (ids = motif_ids(size), observed, mean = μ, sd = σ, z, profile)
 end
 motif_zscores(web::AbstractMatrix; kwargs...) = motif_zscores(Random.default_rng(), web; kwargs...)
