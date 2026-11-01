@@ -43,6 +43,9 @@ export draw_growth_rates, feasible_growth_rates, sample_communities
 include("motifs.jl")
 export motif_census, motif_ids, motif_name, motif_roles, motif_zscores, rewire_links
 
+include("compartments.jl")
+export modularity
+
 include("data.jl")
 export FoodWeb, foodweb, foodweb_ids, read_foodweb
 public foodweb_cache

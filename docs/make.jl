@@ -25,6 +25,7 @@ makedocs(;
         "Equilibrium biomass" => "biomass.md",
         "Feasible communities" => "feasible.md",
         "Motifs" => "motifs.md",
+        "Compartments" => "compartments.md",
         "Community matrices and stability" => "matrices.md",
         "Plotting" => "plotting.md",
         "API index" => "api.md",
