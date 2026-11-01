@@ -22,7 +22,7 @@ FoodWebsPolytopeSamplersExt = "PolytopeSamplers"
 
 [compat]
 Distributions = "0.25"
-Graphs = "1.9"
+Graphs = "1.15"
 LinearAlgebra = "1"
 Makie = "0.24"
 PolytopeSamplers = "0.1"
