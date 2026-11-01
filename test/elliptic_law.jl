@@ -2,7 +2,7 @@ using FoodWebs
 using Test
 using Random: Xoshiro
 using LinearAlgebra: eigvals, diag, I
-using Statistics: mean
+using Statistics: mean, quantile
 using Distributions: Normal
 using CairoMakie: CairoMakie
 
@@ -144,24 +144,30 @@ end
 end
 
 @testset "structured predator-prey matrices" begin
-    # In a cascade web predators' negative effects lie above the diagonal and prey's positive
-    # effects below, so the mean matrix has a different constant in each triangle and large
-    # imaginary eigenvalues that the exchangeable elliptic law misses. Its eigenvalues predict
-    # the imaginary extent of the spectrum.
+    # Structured webs break the exchangeable pairs the elliptic law assumes. The eigenvalues of
+    # the expected community matrix given the web give the spread of imaginary parts, including
+    # the largest, which the elliptic law misses; the real parts, and so stability, come from
+    # the fluctuations around it.
     rng = Xoshiro(16)
-    S = 400
-    for f in (1.0, 0.3)
-        J = random_predprey(rng, cascade_network(rng, S, 0.1), Normal(), f)
-        upper = mean(J[i, j] for i in 1:S for j in (i + 1):S)
-        lower = mean(J[i, j] for j in 1:S for i in (j + 1):S)
-        means = [i < j ? upper : i > j ? lower : 0.0 for i in 1:S, j in 1:S]
-        _, im = extents(J, -1.0)
-        @test im ≈ maximum(imag, eigvals(means)) rtol = 0.1
-        @test im > 2 * elliptic_law(J).y_semi_axis
-        # shuffling who is the predator makes the pairs exchangeable again
-        Js = random_predprey(rng, cascade_network(rng, S, 0.1), Normal(), f; shuffle_prey = true)
-        sol = elliptic_law(Js)
-        @test near_edge(extents(Js, -1.0)[2], sol.y_semi_axis, sol)
+    S = 300
+    for (gen, f) in ((cascade_network, 1.0), (cascade_network, 0.3), (niche_network, 1.0), (niche_network, 0.3))
+        web = gen(rng, S, 0.1)
+        J = random_predprey(rng, web, Normal(), f)
+        λ, μ = eigvals(J), eigvals(expected_community_matrix(web, Normal(), f))
+        # the largest imaginary part to within about 1% (8 seeds), and the fluctuations widen
+        # the 90% quantile of |Im λ| by 2-16%
+        @test maximum(imag, λ) ≈ maximum(imag, μ) rtol = 0.03
+        @test 0.98 < quantile(abs.(imag.(λ)), 0.9) / quantile(abs.(imag.(μ)), 0.9) < 1.25
+        @test maximum(imag, λ) > 2 * elliptic_law(J).y_semi_axis
+        # the expected matrix is stable; the fluctuations push the spectral abscissa above zero
+        @test maximum(real, μ) < 0 < maximum(real, λ)
+        # shuffling who is the predator makes the pairs exchangeable again; in niche webs the
+        # uneven numbers of links per species still widen the edge beyond the ellipse
+        if gen === cascade_network
+            Js = random_predprey(rng, web, Normal(), f; shuffle_prey = true)
+            sol = elliptic_law(Js)
+            @test near_edge(extents(Js, -1.0)[2], sol.y_semi_axis, sol)
+        end
     end
 end
 
@@ -183,4 +189,9 @@ end
     @test count(p -> p isa CairoMakie.Scatter, ax.scene.plots) == 1
     @test isempty(filter(p -> p isa CairoMakie.Lines, ax.scene.plots))
     @test eigenplot!(CairoMakie.Axis(fig[1, 2]), M; law = elliptic_law(M)) isa CairoMakie.Axis
+    # the eigenvalues of an expected matrix as a further layer
+    web = cascade_network(rng, 60, 0.1)
+    J = random_predprey(rng, web, Normal(), 1.0)
+    fig, ax = eigenplot(J; expected = expected_community_matrix(web, Normal(), 1.0))
+    @test count(p -> p isa CairoMakie.Scatter, ax.scene.plots) == 2
 end

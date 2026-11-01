@@ -42,14 +42,6 @@ function sparse_pairs(rng, S, C, d; σ = 1.0, ρ = 0.0, μ = 0.0, uniform = fals
     return M
 end
 
-# the mean matrix of a matrix whose upper and lower triangles have different means
-function triangle_means(J)
-    S = size(J, 1)
-    upper = mean(J[i, j] for i in 1:S for j in (i + 1):S)
-    lower = mean(J[i, j] for j in 1:S for i in (j + 1):S)
-    return [i < j ? upper : i > j ? lower : 0.0 for i in 1:S, j in 1:S]
-end
-
 fmt(x) = @sprintf("%.2f", x)
 nothing
 ```
@@ -130,21 +122,23 @@ fig
 The elliptic law assumes the pairs are exchangeable: any pair of entries is as likely to hold the
 predator's effect above the diagonal as below. Food web models break this. In a cascade web,
 species eat only lower-ranked species, so every predator's negative effect lies above the
-diagonal and every prey's positive effect below. The mean matrix then has one constant in each
-triangle, and its eigenvalues (crosses) are large and nearly imaginary. They predict the
-imaginary extent of the cascade spectrum, which reaches several times the ellipse.
+diagonal and every prey's positive effect below; niche webs are close to this, with links
+concentrated near the diagonal.
+
+`expected_community_matrix(web, dist, f)` is the mean of `random_predprey` given the web: the
+web's signed adjacency scaled by the mean interaction strengths. Its eigenvalues (crosses, drawn
+with `eigenplot!(ax, J; expected)`) give the largest imaginary part of the spectrum to about 1%
+for cascade and niche webs alike, several times the ellipse's, and the spread of imaginary parts
+to within about 15%. They do not give the real parts: the expected matrix is stable (with
+`f = 1` every eigenvalue has real part `-1`, as the mean structure is skew-symmetric about the
+diagonal), while the spectrum reaches into the right half-plane. The mean structure sets the
+frequencies; the fluctuations around it set the stability.
 
 The shuffled panels are a null model, not a food web. `shuffle_prey = true` keeps which pairs of
 species interact and the sizes of their effects, but flips a coin for which one of each pair is
 the predator, so about half the links point down the hierarchy and the web has no consistent
-direction of energy flow. That makes the two triangles statistically alike, which is what the
-elliptic law assumes, and the spectrum fills the ellipse. Comparing the two columns isolates
-what the trophic hierarchy itself does to the spectrum.
-
-The niche model only partly follows this: its imaginary extent goes beyond even the
-triangle-mean prediction, and its spectral abscissa beyond the bulk. In the niche model the
-probability of a link depends on the species' niche values, so the mean structure varies within
-each triangle. Allesina et al. (2015) study the stability of these structured webs.
+direction of energy flow. The two triangles then look alike, and the spectrum fills the ellipse,
+apart from a wider edge in niche webs, whose species have very uneven numbers of links.
 
 ```{julia}
 S = 400
@@ -154,12 +148,11 @@ for (r, (name, gen)) in enumerate((("cascade", cascade_network), ("niche", niche
     w = gen(rng, S, 0.1)
     for (c, shuffle) in enumerate((false, true))
         J = random_predprey(rng, w, Normal(), 1.0; shuffle_prey = shuffle)
-        means = eigvals(triangle_means(J))
+        E = expected_community_matrix(w, Normal(), 1.0; shuffle_prey = shuffle)
         ax = Axis(fig[r, c]; title = "$name, $(shuffle ? "shuffled" : "structured")", xlabel = "Re λ", ylabel = "Im λ")
-        eigenplot!(ax, J)
-        shuffle || scatter!(ax, real.(means), imag.(means); marker = :xcross, markersize = 9, color = :darkorange)
-        sol, λ = elliptic_law(J), eigvals(J)
-        push!(rows, (name, shuffle, maximum(imag, λ), sol.y_semi_axis, maximum(imag, means), maximum(real, λ) + 1, sol.x_semi_axis))
+        eigenplot!(ax, J; expected = shuffle ? nothing : E)
+        λ, μ = eigvals(J), eigvals(E)
+        push!(rows, (name, shuffle, maximum(imag, λ), maximum(imag, μ), elliptic_law(J).y_semi_axis, maximum(real, λ), maximum(real, μ)))
     end
 end
 fig
@@ -167,10 +160,10 @@ fig
 
 ```{julia}
 #| output: asis
-println("| Web | Pairs | Max Im λ | Ellipse Im semi-axis | Triangle-mean max Im | Max Re λ − d | Ellipse Re semi-axis |")
+println("| Web | Pairs | Max Im λ | Expected matrix max Im | Ellipse Im semi-axis | Spectral abscissa | Expected matrix abscissa |")
 println("|---|---|--:|--:|--:|--:|--:|")
-for (name, shuffle, im, y, m, re, x) in rows
-    println("| $name | $(shuffle ? "shuffled" : "structured") | ", join(fmt.((im, y, m, re, x)), " | "), " |")
+for (name, shuffle, im, m, y, re, mre) in rows
+    println("| $name | $(shuffle ? "shuffled" : "structured") | ", join(fmt.((im, m, y, re, mre)), " | "), " |")
 end
 ```
 

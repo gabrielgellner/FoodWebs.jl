@@ -30,18 +30,22 @@ with `f < 1` the negative mean adds an outlier on the stable side.
 
 The elliptic law assumes the pairs are exchangeable. Structured food webs break this: in a
 cascade web every predator's effect lies above the diagonal and every prey's effect below, and
-the spectrum gains large imaginary outliers.
+the spectrum reaches far beyond the ellipse along the imaginary axis. The eigenvalues of the
+[`expected_community_matrix`](@ref) given the web (crosses) give that reach to about 1%; the
+real parts, and so stability, come from the fluctuations around the mean.
 
 ```@example matrices
 web = cascade_network(rng, 300, 0.1)
 fig = Figure(size = (900, 450))
-eigenplot!(Axis(fig[1, 1]; title = "cascade web"), random_predprey(rng, web, Normal(), 1.0))
+eigenplot!(Axis(fig[1, 1]; title = "cascade web"), random_predprey(rng, web, Normal(), 1.0);
+    expected = expected_community_matrix(web, Normal(), 1.0))
 eigenplot!(Axis(fig[1, 2]; title = "predators shuffled"), random_predprey(rng, web, Normal(), 1.0; shuffle_prey = true))
 fig
 ```
 
 ```@docs
 random_predprey
+expected_community_matrix
 spectral_abscissa
 numerical_abscissa
 λ_stability
