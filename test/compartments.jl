@@ -482,3 +482,38 @@ end
     loop[2, 3] = loop[3, 2] = 1
     @test_throws ArgumentError source_reliance(loop; sources = [1])
 end
+
+@testset "energy channels of Chesapeake Bay (Zhao et al. 2018)" begin
+    # the carbon flows of Baird & Ulanowicz (1989), from enaR, by test/fixtures/make_chesapeake_bay.py
+    _, nodes = FoodWebs.read_csv(joinpath(@__DIR__, "fixtures", "chesapeake_bay_nodes.csv"))
+    _, flows = FoodWebs.read_csv(joinpath(@__DIR__, "fixtures", "chesapeake_bay_flows.csv"))
+    names = [row[2] for row in nodes]
+    living = [row[3] == "True" for row in nodes]
+    F = zeros(36, 36)
+    for (from, to, flow) in flows
+        F[parse(Int, from), parse(Int, to)] += parse(Float64, flow)
+    end
+    # the basal nodes: the non-living carbon pools and the species that eat nothing
+    sources = [i for i in 1:36 if !living[i] || !any(F[k, i] > 0 for k in 1:36 if k != i)]
+    @test names[sources] ==
+        ["Phytoplankton", "Benthic Diatoms", "Dissolved Organic Carbon", "Suspended Particulate Carbon", "Sediment Partculate Carbon"]
+    r = energy_channels(F; sources)
+    # "the energy of 13 taxa was mainly supplied by sediment particulate nutrient, while suspended
+    # particulate nutrient was the major supplier for another 12 taxa, phytoplankton was the major
+    # supplier for four taxa, dissolved organic nutrient was the major supplier for two taxa, and
+    # benthic diatoms were not a major supplier for any taxa"
+    consumers = setdiff(1:36, sources)
+    @test [count(==(k), r.dominant[consumers]) for k in 1:5] == [4, 0, 2, 12, 13]
+    # "Three compartments were detected, one of which was mainly sustained by suspended particulate
+    # nutrient and phytoplankton; another compartment was mainly sustained by sediment particulate
+    # nutrient but also contained benthic diatoms, while the final compartment contained just three
+    # taxa: free bacteria, heterotrophic microflagellates, and dissolved organic nutrient"
+    @test maximum(r.groups) == 3
+    member(name) = r.groups[findfirst(==(name), names)]
+    @test member("Phytoplankton") == member("Suspended Particulate Carbon")
+    @test member("Benthic Diatoms") == member("Sediment Partculate Carbon")
+    @test sort(names[r.groups .== member("Dissolved Organic Carbon")]) ==
+        ["Dissolved Organic Carbon", "Free Bacteria", "Heterotrophic Microflagelates"]
+    # Q = 0.39 in their Table 1, the standard directed modularity (their 2W is the total flux)
+    @test round(r.modularity; digits = 2) == 0.39
+end

@@ -20,7 +20,8 @@ predictions. The research code in
   search (Louvain, simulated annealing, consensus), modularity z-scores against rewired and
   structural null webs, species roles, compartment homogeneity, energy channels, pair weights
   of community matrices, and their within- and between-group structure; `test/fixtures/make_modularity.py` checks
-  modularity against NetworkX and igraph, and `make_modularity_optimum.py` gives exact optima.
+  modularity against NetworkX and igraph, `make_modularity_optimum.py` gives exact optima, and
+  `make_chesapeake_bay.py` takes the Chesapeake Bay flows from enaR for the energy channel test.
 - `src/motifs.jl`: three- and four-species motif census (mfinder IDs), species roles, and the
   rewiring null model for z-scores; `test/fixtures/make_motif_census.py` checks the census
   against igraph and NetworkX.

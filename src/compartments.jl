@@ -797,7 +797,10 @@ their `modularity`, the `reliance` matrix and the `dominant` source of each spec
 into `sources`).
 
 The channels follow the flow of energy from the sources, an ecological definition to compare
-with the partitions of highest modularity from [`compartments`](@ref).
+with the partitions of highest modularity from [`compartments`](@ref). With its non-living
+carbon pools and the species that eat nothing as sources, the Chesapeake Bay network reproduces
+the worked example of Zhao et al. (2018): the same main source for every consumer, the same three
+channels and `Q = 0.39`.
 """
 function energy_channels(
         W::AbstractMatrix; sources::AbstractVector{<:Integer} = default_sources(W), merge::Bool = true, γ::Real = 1
