@@ -95,6 +95,32 @@ found = feasible_growth_rates(rng, web, 20 .* x; efficiency = (0.0, 0.3), bounds
 found.draws, dimension(found.communities)
 ```
 
+## Three ensembles
+
+The same web gives three ensembles of community matrices, each assuming more than the last:
+
+1. [`random_predprey`](@ref) draws the link magnitudes independently, with a fixed diagonal and
+   no equilibrium. Its stability depends on the web's sign structure and the magnitudes' moments
+   (see [`elliptic_law`](@ref)).
+2. Feasible communities, `J = diag(x) A` for points of `FeasibleCommunities(web, x)`, require
+   the equilibrium `x`, which ties each row of `A` to the growth rate and biomass of its species.
+3. Feasible and energetic communities add an efficiency band, so that no consumer gains more
+   than a share of what its prey lose.
+
+```@example feasible
+using Distributions: Uniform
+
+stability(Js) = count(J -> maximum(real, eigvals(J)) < 0, Js) / length(Js)
+unconstrained = stability([random_predprey(rng, web, Uniform(0, 1), 0.3) for _ in 1:1000])
+feasible = sample_communities(rng, FeasibleCommunities(web, x; bounds = (0.0, 5.0)); target_ess = 200)
+energetic = sample_communities(rng, FeasibleCommunities(web, x; efficiency = (0.0, 0.3), bounds = (0.0, 5.0)); target_ess = 200)
+(; unconstrained, feasible = stability([c.J for c in feasible.communities]),
+    energetic = stability([c.J for c in energetic.communities]))
+```
+
+The gallery note `gallery/equilibria.qmd` compares the feasible ensembles across biomass
+pyramids, from Eltonian to inverted, and on the observed biomasses of the Tuesday Lake webs.
+
 ```@docs
 sample_communities
 feasible_growth_rates
