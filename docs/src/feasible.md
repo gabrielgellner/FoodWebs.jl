@@ -51,7 +51,7 @@ diagnose(FeasibleCommunities(chain, [1.0, 1.0]; rates = [0.1, -1.0], efficiency 
 ```
 
 Testing whether the polytope has any point, and sampling it, need a linear program and a sampler,
-which the PolytopeSamplers.jl extension provides.
+which the PolytopeSamplers.jl extension provides (see [Sampling](@ref)).
 
 ## Priors
 
@@ -63,6 +63,45 @@ weighting each rate vector by the volume of interaction strengths it allows; dra
 first and sampling the interactions on their slice does not, so the two priors differ. A uniform
 distribution stays uniform under linear changes of coordinates, so uniform in the magnitudes is
 uniform in the fluxes or in the entries of the community matrix.
+
+## Sampling
+
+Loading PolytopeSamplers.jl enables `PolytopeSamplers.Polytope(fc)`, `isempty(fc)` (a linear
+program), [`sample_communities`](@ref) and [`feasible_growth_rates`](@ref).
+[`sample_communities`](@ref) runs chains until the effective sample size reaches `target_ess`,
+with the billiard walk for the uniform distribution and coordinate hit-and-run for a prior,
+which was 2 to 3.5 times faster than CRHMC on webs of 63 and 210 dimensions.
+
+```@example feasible
+using PolytopeSamplers
+using LinearAlgebra: eigvals
+
+isempty(fc)
+```
+
+```@example feasible
+res = sample_communities(rng, fc; target_ess = 200)
+stable = count(c -> maximum(real, eigvals(c.J)) < 0, res.communities) / length(res.communities)
+res.converged, stable
+```
+
+The published constrained food web studies fix the growth rates instead, drawing them by role
+with [`draw_growth_rates`](@ref) and redrawing until the polytope has a point;
+[`feasible_growth_rates`](@ref) runs this loop. The biomasses must be on a scale where the rates
+divided by them fit within `bounds`:
+
+```@example feasible
+found = feasible_growth_rates(rng, web, 20 .* x; efficiency = (0.0, 0.3), bounds = (0.0, 5.0))
+found.draws, dimension(found.communities)
+```
+
+```@docs
+sample_communities
+feasible_growth_rates
+draw_growth_rates
+```
+
+## Reference
 
 ```@docs
 FeasibleCommunities

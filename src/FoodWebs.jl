@@ -38,6 +38,7 @@ export characteristic_path_length, structural_properties
 include("feasible.jl")
 export FeasibleCommunities, CommunityPrior, community_matrix, coordinates, diagnose, dimension,
     fluxes, growth_rates, halfspaces, interaction_matrix, isbounded, logdensity, structurally_singular
+export draw_growth_rates, feasible_growth_rates, sample_communities
 
 include("motifs.jl")
 export motif_census, motif_ids, motif_name, motif_roles, motif_zscores, rewire_links
