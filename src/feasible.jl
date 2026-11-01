@@ -518,3 +518,52 @@ function logdensity(prior::CommunityPrior, fc::FeasibleCommunities, θ::Abstract
     end
     return ℓ
 end
+
+"""
+    draw_growth_rates([rng], web; basal = Uniform(0, 5), consumer = Uniform(0, 1))
+
+Growth rates drawn by role: `r_i ~ basal` for species that eat nothing and `r_i = -c`,
+`c ~ consumer`, for the rest, as in the published constrained food web studies. Fixed rates
+drawn this way and then a uniform distribution on the interaction strengths give a different
+prior from rates as coordinates of [`FeasibleCommunities`](@ref) (see [`CommunityPrior`](@ref)).
+"""
+function draw_growth_rates(
+        rng::AbstractRNG, web::AbstractMatrix; basal::Distribution = Uniform(0, 5),
+        consumer::Distribution = Uniform(0, 1)
+    )
+    S = LinearAlgebra.checksquare(web)
+    return [any(i != j && web[i, j] != 0 for i in 1:S) ? -rand(rng, consumer) : rand(rng, basal) for j in 1:S]
+end
+draw_growth_rates(web::AbstractMatrix; kwargs...) = draw_growth_rates(Random.default_rng(), web; kwargs...)
+
+"""
+    sample_communities([rng], fc::FeasibleCommunities[, prior::CommunityPrior]; target_ess = 1000,
+                       sampler, kwargs...)
+
+Sample the polytope of `fc`, uniformly or from the density of `prior`, with PolytopeSamplers.jl
+(load it to enable this method), running chains until their smallest effective sample size
+reaches `target_ess` with R̂ below 1.01. The default sampler is the billiard walk for the uniform
+distribution and coordinate hit-and-run for a prior (`BilliardWalk` samples only uniform
+targets); CRHMC uses the gradient of the prior's log density. Other keywords go to
+`PolytopeSamplers.sample_until_converged`.
+
+Returns a named tuple: `points`, a matrix with one sampled point per column after burn-in, pooled
+over chains; `communities`, a named tuple `(A, r, J)` for each point; `diagnostics`; and
+`converged`. Throws an `ArgumentError` if the polytope is empty or unbounded.
+"""
+function sample_communities end
+
+"""
+    feasible_growth_rates([rng], web, x; maxiter = 1000, basal, consumer, kwargs...)
+
+Draw growth rates with [`draw_growth_rates`](@ref) until the [`FeasibleCommunities`](@ref) with
+those fixed rates (built with the other keywords) has a point, checked with a linear program
+through PolytopeSamplers.jl (load it to enable this method). Returns the rates `r`, the
+`communities` and the number of `draws`, or throws an `ErrorException` after `maxiter` draws.
+This reproduces the redraw loop of the published studies; rates as coordinates need no redraws.
+
+The scale of `x` sets the interaction strengths a point needs: each row of `r + A x = 0` divides
+a rate by biomasses, so with biomasses much smaller than the rates the magnitudes exceed
+`bounds` and no draw is feasible. Scale `x` so that `r ./ x` is within the bounds.
+"""
+function feasible_growth_rates end

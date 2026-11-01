@@ -14,21 +14,29 @@ TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 
 [weakdeps]
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+PolytopeSamplers = "23957194-1ca4-53c5-ae50-e0ed682cc5dc"
 
 [extensions]
 FoodWebsMakieExt = "Makie"
+FoodWebsPolytopeSamplersExt = "PolytopeSamplers"
 
 [compat]
 Distributions = "0.25"
 Graphs = "1.9"
 LinearAlgebra = "1"
 Makie = "0.24"
+PolytopeSamplers = "0.1"
 Random = "1"
 SpecialFunctions = "2"
 Statistics = "1"
 TOML = "1"
 julia = "1.13"
 
+[extras]
+PolytopeSamplers = "23957194-1ca4-53c5-ae50-e0ed682cc5dc"
+
+[sources]
+PolytopeSamplers = {url = "https://github.com/gabrielgellner/PolytopeSamplers.jl", rev = "bbe2ae2"}
 
 [workspace]
 projects = ["test"]
