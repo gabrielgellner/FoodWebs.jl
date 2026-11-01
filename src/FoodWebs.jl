@@ -42,6 +42,9 @@ include("data.jl")
 export FoodWeb, foodweb, foodweb_ids, read_foodweb
 public foodweb_cache
 
+include("biomass.jl")
+export biomass, biomass_ratios, is_inverted_pyramid, is_pyramid, pyramid_slope, steady_state_biomass
+
 include("layout.jl")
 export foodwebplot, foodwebplot!, trophic_layout
 public edge_crossings
