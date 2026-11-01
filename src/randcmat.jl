@@ -9,6 +9,10 @@ on the prey is `J[i, j] = -|a|` and the effect of the prey on the predator is
 `J[j, i] = f |b|`, with `a, b ~ dist` independent and `f` the conversion efficiency. The
 diagonal is `-1`. Cannibalistic links are ignored.
 
+When two species eat each other, each entry of the pair sums the two links' effects: species
+`i` loses `|a|` to `j` and gains `f |b'|` from eating `j`, so `J[i, j] = f |b'| - |a|`, of
+either sign, with all four magnitudes drawn independently.
+
 With `shuffle_prey = true` the two entries of each pair are randomly swapped, so the
 predator–prey sign structure is kept but not which species is the predator.
 """
@@ -27,8 +31,9 @@ function random_predprey(
             if shuffle_prey && rand(rng, Bool)
                 neg, pos = pos, neg
             end
-            J[i, j] = neg
-            J[j, i] = pos
+            # accumulate, so that a pair of species that eat each other gets both links' effects
+            J[i, j] += neg
+            J[j, i] += pos
         end
     end
     return J
