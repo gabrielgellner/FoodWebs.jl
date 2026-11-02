@@ -9,4 +9,4 @@ Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [sources]
 FoodWebs = {path = ".."}
-PolytopeSamplers = {rev = "release/v0.2.0", url = "https://github.com/gabrielgellner/PolytopeSamplers.jl"}
+PolytopeSamplers = {rev = "v0.2.0", url = "https://github.com/gabrielgellner/PolytopeSamplers.jl"}
