@@ -182,3 +182,52 @@ end
     @test !isbounded(loop)
     @test_throws ArgumentError sample_communities(Xoshiro(47), loop, CommunityPrior(; loss = ExponentialTilt(-1.0)))
 end
+
+@testset "sampling in per capita coordinates" begin
+    # biomasses over six orders of magnitude. The equilibrium rows of halfspaces(fc) hold at the
+    # points to within 1e-7 of their row lengths (sampling in the coordinates of fc left them at
+    # up to 2e-8 on these webs and 5e-3 on Tuesday Lake), and every constraint in the per capita
+    # coordinates to within 1e-6, as the warmup's linear programs hold to the solver's
+    # feasibility tolerance
+    function violations(fc, X)
+        P, Q = halfspaces(fc), halfspaces(fc; per_capita = true)
+        S = length(fc.x)
+        nC = [sqrt(sum(abs2, r)) for r in eachrow(P.C[1:S, :])]
+        Φ = X ./ Q.scale
+        per_capita = max(
+            maximum(Q.lower .- Φ), maximum(Φ .- Q.upper), maximum(abs.(Q.C * Φ .- Q.d)),
+            isempty(Q.b) ? -Inf : maximum(Q.A * Φ .- Q.b)
+        )
+        return (; equilibrium = maximum(abs.(P.C[1:S, :] * X .- P.d[1:S]) ./ nC), per_capita)
+    end
+    wide_communities(seed) = FeasibleCommunities(
+        niche_network(Xoshiro(seed + 500), 15, 0.15; basal_paths = true),
+        exp10.(6 .* rand(Xoshiro(seed + 900), 15) .- 3); efficiency = (0.0, 0.3)
+    )
+    for seed in 2:4
+        fc = wide_communities(seed)
+        s = sample_communities(Xoshiro(seed), fc; target_ess = 200)
+        @test s.converged && s.per_capita
+        v = violations(fc, s.points)
+        @test v.equilibrium < 1.0e-7 && v.per_capita < 1.0e-6
+    end
+    # the ellipsoid rounding of the default warmup fails in per capita coordinates on this web,
+    # and the warmup with extremes rounds it
+    fc = wide_communities(9)
+    Q = halfspaces(fc; per_capita = true)
+    @test PolytopeSamplers.warmup(Xoshiro(1), Polytope(Q.lower, Q.upper; Q.A, Q.b, Q.C, Q.d)).radius < 0.5
+    s = sample_communities(Xoshiro(9), fc; target_ess = 200)
+    @test s.converged && s.per_capita
+    v = violations(fc, s.points)
+    @test v.equilibrium < 1.0e-7 && v.per_capita < 1.0e-6
+    @test !sample_communities(Xoshiro(9), chain_communities(); target_ess = 100, per_capita = false).per_capita
+    @test_throws ArgumentError sample_communities(Xoshiro(1), chain_communities(); per_capita = :yes)
+    # both coordinates sample the same distributions, uniform and tilted
+    fc = chain_communities()
+    for prior in (nothing, CommunityPrior(; loss = ExponentialTilt(2.0), interaction = Exponential(1.0)))
+        args = prior === nothing ? () : (prior,)
+        a = sample_communities(Xoshiro(50), fc, args...; target_ess = 2000)
+        b = sample_communities(Xoshiro(51), fc, args...; target_ess = 2000, per_capita = false)
+        @test vec(mean(a.points; dims = 2)) ≈ vec(mean(b.points; dims = 2)) rtol = 0.05
+    end
+end

@@ -108,6 +108,13 @@ stable = count(c -> maximum(real, eigvals(c.J)) < 0, res.communities) / length(r
 res.converged, stable
 ```
 
+The chains run in the per capita coordinates `B = A diag(x)` of
+[`halfspaces`](@ref)`(fc; per_capita = true)`, where every equilibrium row has coefficients ±1,
+and the points come back in the magnitudes of `A`. In the magnitudes themselves the equilibrium
+rows have the biomasses as coefficients, and when these span orders of magnitude the chains
+leave the polytope: at the observed biomasses of Tuesday Lake in 1984 the points broke the
+equilibrium by up to 5e-3, against 7e-12 in per capita coordinates.
+
 The published constrained food web studies fix the growth rates instead, drawing them by role
 with [`draw_growth_rates`](@ref) and redrawing until the polytope has a point;
 [`feasible_growth_rates`](@ref) runs this loop. With magnitude `bounds` the biomasses must be on
