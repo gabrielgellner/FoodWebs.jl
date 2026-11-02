@@ -41,6 +41,9 @@ predictions. The research code in
   predictions of their bulk and outlier eigenvalues, and `blockplot` (Makie extension).
 - `src/randcmat.jl`: random community matrices with a web's structure (`random_predprey`).
 - `src/stability.jl`: spectral and numerical abscissa.
+- `src/dynamics.jl`: return time and the amplification envelope of a community matrix, and the
+  Lotka–Volterra dynamics of a community (`ext/FoodWebsSciMLBaseExt.jl`: integration with any
+  SciML solver, extinctions below a threshold, pulse responses against the linearization).
 - `src/elliptic_law.jl`: elliptic-law predictions and off-diagonal pair utilities.
 - `test/`: one test file per source file, each testset with its own seeded `Xoshiro`.
 - `validation/`: checks against other packages that the tests do not depend on, each with its

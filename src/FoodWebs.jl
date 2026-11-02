@@ -3,7 +3,7 @@ module FoodWebs
 using Distributions: Beta, Distribution, Uniform, logpdf, sample
 using Graphs: DiGraph, Graph, add_edge!, gdistances, has_path, is_connected, strongly_connected_components,
     vertices, weakly_connected_components
-using LinearAlgebra: Diagonal, I, LinearAlgebra, Symmetric, diag, diagind, diagm, eigmax, eigvals
+using LinearAlgebra: Diagonal, I, LinearAlgebra, Symmetric, diag, diagind, diagm, eigmax, eigvals, opnorm
 using Random: AbstractRNG, Random
 using SpecialFunctions: gamma
 using Statistics: cov, mean, quantile, std
@@ -24,6 +24,9 @@ export expected_community_matrix, random_predprey
 include("stability.jl")
 export numerical_abscissa, spectral_abscissa
 export λ_stability, ν_stability
+
+include("dynamics.jl")
+export amplification_envelope, lotka_volterra, lotka_volterra_problem, max_amplification, pulse_response, return_time
 
 include("utils.jl")
 export connectance, trophic_incoherence, trophic_levels

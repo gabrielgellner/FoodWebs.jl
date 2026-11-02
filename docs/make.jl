@@ -24,6 +24,7 @@ makedocs(;
         "Trophic levels and structure" => "properties.md",
         "Equilibrium biomass" => "biomass.md",
         "Feasible communities" => "feasible.md",
+        "Dynamics" => "dynamics.md",
         "Motifs" => "motifs.md",
         "Compartments" => "compartments.md",
         "Community matrices and stability" => "matrices.md",
