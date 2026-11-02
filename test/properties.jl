@@ -1,7 +1,7 @@
 using FoodWebs
 using Test
 using Random: Xoshiro
-using Statistics: mean
+using Statistics: mean, std
 
 # `x` agrees with a published value to the precision it is printed with
 function agrees(x, published::AbstractString)
@@ -151,5 +151,43 @@ end
     )
     for (web, D) in published
         @test agrees(characteristic_path_length(foodweb("williams_martinez_2000/$web")), D)
+    end
+end
+
+@testset "structural properties against cheddar" begin
+    # every cheddar web, from test/fixtures/make_structural_properties.R
+    header, rows = FoodWebs.read_csv(joinpath(@__DIR__, "fixtures", "structural_properties.csv"))
+    col = Dict(h => k for (k, h) in enumerate(header))
+    number(row, name) = parse(Float64, row[col[name]])
+    @test length(rows) == 19
+    for row in rows
+        fw = foodweb(row[col["web"]])
+        # cheddar ignores cannibalistic links in the species types and leaves isolated species
+        # out of them; here a cannibalistic link counts as prey and predator, and an isolated
+        # species is both basal and top
+        web, _ = remove_cannibalism(fw)
+        isolated = [i for i in axes(web, 1) if !any(web[i, :]) && !any(web[:, i])]
+        @test length(isolated) == number(row, "isolated")
+        @test length(setdiff(basal_species(web), isolated)) == number(row, "basal")
+        @test length(setdiff(top_species(web), isolated)) == number(row, "top")
+        @test length(intermediate_species(web)) == number(row, "intermediate")
+        @test length(cannibals(fw)) == number(row, "cannibals")
+        @test std(generality(fw)) ≈ number(row, "GenSD") rtol = 1.0e-12
+        @test std(vulnerability(fw)) ≈ number(row, "VulSD") rtol = 1.0e-12
+        # cheddar's similarity pools prey and predators into one set of neighbours, which is the
+        # similarity of Williams & Martinez on the web with every link made two-way
+        A = fw.web.links
+        @test mean_max_similarity(A .| permutedims(A)) ≈ number(row, "MxSim") rtol = 1.0e-12
+    end
+    # trophic levels with cannibalistic links removed, which these levels ignore
+    header, rows = FoodWebs.read_csv(joinpath(@__DIR__, "fixtures", "trophic_levels.csv"))
+    col = Dict(h => k for (k, h) in enumerate(header))
+    by_web = Dict{String, Vector{Vector{String}}}()
+    foreach(r -> push!(get!(by_web, r[col["web"]], Vector{String}[]), r), rows)
+    for (id, web_rows) in by_web
+        fw = foodweb(id)
+        for (method, name) in ((:prey_averaged, "prey_averaged"), (:shortest, "shortest"), (:short_weighted, "short_weighted"))
+            @test trophic_levels(fw; method) ≈ [parse(Float64, r[col[name]]) for r in web_rows] rtol = 1.0e-10
+        end
     end
 end

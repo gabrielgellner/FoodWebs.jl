@@ -11,7 +11,9 @@ predictions. The research code in
 - `src/utils.jl`: connectance, basal and top species, trophic levels,
   `disconnected_from_basal`.
 - `src/properties.jl`: the structural properties of Williams & Martinez (2000) and the
-  characteristic path length, tested against their published tables.
+  characteristic path length, tested against their published tables;
+  `test/fixtures/make_structural_properties.R` computes the properties of every cheddar web with
+  cheddar.
 - `src/biomass.jl`: observed biomass from node traits, steady-state biomass from energy flow,
   pyramid measures, and body mass summaries (mass ratios, mass-abundance slope and links, trophic
   level against mass), tested against cheddar and Cohen et al. (2003, 2009);
