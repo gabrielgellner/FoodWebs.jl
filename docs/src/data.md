@@ -49,10 +49,28 @@ julia --project=data/scripts data/scripts/fetch_mangal.jl        # 218 webs
 
 See `data/README.md` for sources, licenses and how the bundled data were converted.
 
+## Trophic species and aggregation
+
+Species with identical prey and identical predators form a trophic species, the unit of
+Williams & Martinez (2000), whose webs are trophic species already. [`trophic_species`](@ref)
+finds the groups, and [`lump_species`](@ref) aggregates a web over them or over any other
+partition, such as taxonomic or functional groups. Traits are combined: abundances summed, body
+masses averaged with abundance weights so that biomass is kept, and other traits averaged or
+joined. Lumping lowers the number of species and raises connectance, so results on lumped and
+unlumped webs differ:
+
+```@example data
+fw = foodweb("cheddar/tl84")
+lumped = lump_species(fw, trophic_species(fw))
+(species = (size(fw, 1), size(lumped, 1)), connectance = round.((connectance(fw), connectance(lumped)), digits = 3))
+```
+
 ```@docs
 FoodWeb
 foodweb
 foodweb_ids
 read_foodweb
 FoodWebs.foodweb_cache
+trophic_species
+lump_species
 ```

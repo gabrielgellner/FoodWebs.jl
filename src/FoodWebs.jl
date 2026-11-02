@@ -55,6 +55,9 @@ include("data.jl")
 export FoodWeb, foodweb, foodweb_ids, read_foodweb
 public foodweb_cache
 
+include("aggregation.jl")
+export lump_species, trophic_species
+
 include("foraging.jl")
 export PowerHandling, RatioHandling, diet_breadth_network, fit_diet_breadth
 
