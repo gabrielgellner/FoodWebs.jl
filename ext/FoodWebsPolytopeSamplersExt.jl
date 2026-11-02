@@ -72,30 +72,36 @@ end
 # A well rounded polytope holds a ball of radius near 1; below this the walk mixes slowly
 const MIN_ROUNDED_RADIUS = 0.5
 
+# The warmups tried in each coordinate system, in order: ellipsoid rounding from the Chebyshev
+# center, then from the extreme points of the coordinates (2n linear programs, which find the
+# thin directions), then rounding by billiard-walk samples
+const WARMUPS = ((; extremes = false), (; extremes = true), (; rounding = :samples))
+
 # The warmup of the polytope of `fc` in per capita coordinates (`true`) or in those of `fc`
 # (`false`), the scale from its coordinates to those of `fc`, and the coordinates used. The
 # ellipsoid rounding fails on some of these polytopes, whose coordinate widths span many orders
 # of magnitude: the warmup throws or leaves an inscribed ball far smaller than 1. Each system is
-# then tried again with `extremes = true`, whose 2n linear programs fix directions narrower than
-# its `atol` and so remove the thinnest ones, and `:auto` falls back to the coordinates of `fc`
-# only when both per capita attempts fail, as chains in them can leave the polytope. When every
-# attempt is poorly rounded it keeps the roundest; when every attempt throws it rethrows the
-# first error, which is also the error of an empty or unbounded polytope.
+# then tried with the other warmups of `WARMUPS`, and `:auto` falls back to the coordinates of
+# `fc` only when every per capita warmup fails, as chains in them can leave the polytope. Rounding
+# by samples is kept whenever it runs, as the inscribed ball of its result can be small on
+# polytopes it rounds well. When every warmup is poorly rounded it keeps the roundest; when every
+# warmup throws it rethrows the first error, which is also the error of an empty or unbounded
+# polytope.
 function feasible_warmup(rng, fc::FeasibleCommunities, per_capita)
     systems = per_capita === :auto ? (true, false) : (per_capita,)
     first_error, best = nothing, nothing
-    for pc in systems, extremes in (false, true)
+    for pc in systems, options in WARMUPS
         H = halfspaces(fc; per_capita = pc)
         P = Polytope(H.lower, H.upper; H.A, H.b, H.C, H.d)
         w = try
-            warmup(rng, P; extremes)
+            warmup(rng, P; options...)
         catch err
             err isa Union{ArgumentError, ErrorException} || rethrow()
             first_error = something(first_error, err)
             continue
         end
         found = (w, pc ? H.scale : ones(length(H.lower)), pc)
-        w.radius >= MIN_ROUNDED_RADIUS && return found
+        (w.radius >= MIN_ROUNDED_RADIUS || haskey(options, :rounding)) && return found
         (best === nothing || w.radius > best[1].radius) && (best = found)
     end
     best === nothing || return best

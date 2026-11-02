@@ -211,12 +211,12 @@ end
         v = violations(fc, s.points)
         @test v.equilibrium < 1.0e-7 && v.per_capita < 1.0e-6
     end
-    # the ellipsoid rounding of the default warmup fails in per capita coordinates on this web,
-    # and the warmup with extremes rounds it
-    fc = wide_communities(9)
+    # the ellipsoid rounding fails in per capita coordinates on this web, and rounding by
+    # samples rounds it
+    fc = wide_communities(1)
     Q = halfspaces(fc; per_capita = true)
     @test PolytopeSamplers.warmup(Xoshiro(1), Polytope(Q.lower, Q.upper; Q.A, Q.b, Q.C, Q.d)).radius < 0.5
-    s = sample_communities(Xoshiro(9), fc; target_ess = 200)
+    s = sample_communities(Xoshiro(1), fc; target_ess = 200)
     @test s.converged && s.per_capita
     v = violations(fc, s.points)
     @test v.equilibrium < 1.0e-7 && v.per_capita < 1.0e-6
