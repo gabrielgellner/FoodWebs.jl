@@ -2,7 +2,7 @@ using FoodWebs
 using Test
 using Random: Xoshiro
 using Distributions: Exponential, Uniform, pdf
-using PolytopeSamplers: PolytopeSamplers, CRHMC, Polytope
+using PolytopeSamplers: CRHMC, Polytope
 using Statistics: mean, std, var
 using LinearAlgebra: Diagonal
 
@@ -204,22 +204,13 @@ end
         niche_network(Xoshiro(seed + 500), 15, 0.15; basal_paths = true),
         exp10.(6 .* rand(Xoshiro(seed + 900), 15) .- 3); efficiency = (0.0, 0.3)
     )
-    for seed in 2:4
+    for seed in 1:4
         fc = wide_communities(seed)
         s = sample_communities(Xoshiro(seed), fc; target_ess = 200)
         @test s.converged && s.per_capita
         v = violations(fc, s.points)
         @test v.equilibrium < 1.0e-7 && v.per_capita < 1.0e-6
     end
-    # the ellipsoid rounding fails in per capita coordinates on this web, and rounding by
-    # samples rounds it
-    fc = wide_communities(1)
-    Q = halfspaces(fc; per_capita = true)
-    @test PolytopeSamplers.warmup(Xoshiro(1), Polytope(Q.lower, Q.upper; Q.A, Q.b, Q.C, Q.d)).radius < 0.5
-    s = sample_communities(Xoshiro(1), fc; target_ess = 200)
-    @test s.converged && s.per_capita
-    v = violations(fc, s.points)
-    @test v.equilibrium < 1.0e-7 && v.per_capita < 1.0e-6
     @test !sample_communities(Xoshiro(9), chain_communities(); target_ess = 100, per_capita = false).per_capita
     @test_throws ArgumentError sample_communities(Xoshiro(1), chain_communities(); per_capita = :yes)
     # both coordinates sample the same distributions, uniform and tilted
