@@ -26,6 +26,8 @@ predictions. The research code in
 - `src/motifs.jl`: three- and four-species motif census (mfinder IDs), species roles, and the
   rewiring null model for z-scores; `test/fixtures/make_motif_census.py` checks the census
   against igraph and NetworkX.
+- `src/foraging.jl`: the allometric diet breadth model (Petchey et al. 2008), diets from body
+  masses by optimal foraging, and its fit to an observed web.
 - `src/data.jl`: the `FoodWeb` type and readers for the empirical webs in `data/` (see
   `data/README.md`).
 - `src/blocks.jl`: block-structured random community matrices (Grilli, Rogers & Allesina 2016),

@@ -24,4 +24,5 @@ using ExplicitImports: test_explicit_imports
     include("motifs.jl")
     include("compartments.jl")
     include("blocks.jl")
+    include("foraging.jl")
 end

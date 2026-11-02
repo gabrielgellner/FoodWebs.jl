@@ -48,3 +48,55 @@ minimum_potential_niche_network
 probabilistic_niche_network
 probabilistic_niche_probabilities
 ```
+
+## Allometric diet breadth model
+
+The allometric diet breadth model of Petchey et al. (2008) predicts who eats whom in a given set
+of species from their body masses, where the models above generate random webs. Each consumer
+ranks its resources by profitability, energy over handling time, and eats the most profitable
+ones up to the diet that maximizes its rate of energy intake. Encounter rates, energy contents
+and handling times are power laws of the consumer and resource masses. With
+[`RatioHandling`](@ref), a consumer cannot eat resources heavier than a fraction `b` of its own
+mass, so the web has no loops and no cannibalism, and each diet is an interval of resource
+masses centered near `b / 2` of the consumer's mass. [`PowerHandling`](@ref) lets consumers eat
+heavier resources but gives every consumer the same ranking of resources.
+
+[`fit_diet_breadth`](@ref) fits the model to an observed web with body masses, holding the
+number of links at the observed number and maximizing the fraction of them in the right place.
+Petchey et al. predict 57% of the Benguela links with ratio handling times and 42% with power
+handling times; the fit below finds parameters that do better on the cheddar version of the
+web.
+
+```@example models
+fw = foodweb("cheddar/benguela")
+ratio = fit_diet_breadth(Xoshiro(1), fw; handling = :ratio)
+power = fit_diet_breadth(Xoshiro(1), fw; handling = :power)
+(ratio = round(ratio.fraction, digits = 2), power = round(power.fraction, digits = 2))
+```
+
+The fitted model comes close to the observed omnivory and spread of generality. Its web has no
+loops, since every consumer eats lighter species, while 41% of the Benguela species are in
+loops:
+
+```@example models
+using Statistics: mean
+
+S, C = size(fw, 1), connectance(fw)
+niche = [structural_properties(niche_network(rng, S, C; basal_paths = true)) for _ in 1:100]
+props = (:T, :B, :GenSD, :VulSD, :Loop, :Omniv, :TL)
+Dict(
+    "observed" => round.(getindex.(Ref(structural_properties(fw)), props), digits = 2),
+    "diet breadth (ratio)" => round.(getindex.(Ref(structural_properties(ratio.web)), props), digits = 2),
+    "niche (mean)" => round.(Tuple(mean(getindex.(niche, p)) for p in props), digits = 2),
+)
+```
+
+```@docs
+diet_breadth_network
+RatioHandling
+PowerHandling
+fit_diet_breadth
+```
+
+Petchey, O. L., Beckerman, A. P., Riede, J. O. & Warren, P. H. Size, foraging, and food web
+structure. PNAS 105, 4191–4196 (2008).
