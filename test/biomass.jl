@@ -159,3 +159,24 @@ end
     @test_throws DimensionMismatch mass_level_slope(food_chain_network(3), [1.0, 2.0])
     @test_throws ArgumentError mass_level_slope(food_chain_network(2), [1.0, -1.0])
 end
+
+@testset "body mass summaries against cheddar" begin
+    # every cheddar web with body mass and abundance, from test/fixtures/make_body_mass.R
+    header, rows = FoodWebs.read_csv(joinpath(@__DIR__, "fixtures", "body_mass.csv"))
+    col = Dict(h => k for (k, h) in enumerate(header))
+    value(row, name) = parse(Float64, row[col[name]])
+    @test length(rows) == 16
+    for row in rows
+        fw = foodweb(row[col["web"]])
+        fit = mass_abundance_slope(fw)
+        @test fit.slope ≈ value(row, "slope") rtol = 1.0e-12
+        @test fit.intercept ≈ value(row, "intercept") rtol = 1.0e-12
+        ratios = collect(skipmissing(r.ratio for r in mass_ratios(fw)))
+        @test length(ratios) == value(row, "ratios")
+        @test sum(log10, ratios) ≈ value(row, "sum_log10_ratio") rtol = 1.0e-12
+        links = mass_abundance_links(fw)
+        @test length(links) == value(row, "links")
+        @test mean(l.length for l in links) ≈ value(row, "mean_length") rtol = 1.0e-12
+        @test mean(l.angle for l in links) ≈ value(row, "mean_angle") rtol = 1.0e-12
+    end
+end
