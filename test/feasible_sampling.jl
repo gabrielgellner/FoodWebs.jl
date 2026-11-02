@@ -141,3 +141,44 @@ end
     # basal species that must lose biomass can never balance
     @test_throws ErrorException feasible_growth_rates(Xoshiro(5), web, x; basal = Uniform(-2, -1), maxiter = 5)
 end
+
+@testset "exponential priors and tilts" begin
+    fc = chain_communities()
+    n = length(coordinates(fc))
+    kinds = [c.kind for c in coordinates(fc)]
+    θ = sample_communities(Xoshiro(40), fc; target_ess = 200).points[:, 1]
+    # logdensity of a tilt is −Σ rate θ over the tilted coordinates, with one rate or one per coordinate
+    tilt = CommunityPrior(; loss = ExponentialTilt(2.0), gain = ExponentialTilt([-1.0, 3.0]))
+    gains = findall(==(:gain), kinds)
+    @test logdensity(tilt, fc, θ) ≈ -2 * sum(θ[kinds .== :loss]) - (-θ[gains[1]] + 3θ[gains[2]])
+    @test_throws DimensionMismatch logdensity(CommunityPrior(; loss = ExponentialTilt([1.0])), fc, θ)
+
+    # the uniform means, and a tilt of rate 0 gives them
+    means = mean_coordinates(Xoshiro(41), fc; target_ess = 2000)
+    @test length(means.coordinate) == n && length(means.loss) == count(==(:loss), kinds)
+    flat = sample_communities(Xoshiro(42), fc, CommunityPrior(; loss = ExponentialTilt(0.0)); target_ess = 2000)
+    @test vec(mean(flat.points; dims = 2)) ≈ means.coordinate rtol = 0.05
+
+    # the exact path (ExponentialTarget) and the general density agree, for both signs of the tilt
+    # and for exponential distributions
+    for prior in (
+            CommunityPrior(; loss = ExponentialTilt(2 ./ means.loss), gain = ExponentialTilt(2 ./ means.gain)),
+            CommunityPrior(; loss = ExponentialTilt(-1 ./ means.loss), gain = ExponentialTilt(-1 ./ means.gain)),
+            CommunityPrior(; interaction = Exponential(1.0)),
+        )
+        exact = sample_communities(Xoshiro(43), fc, prior; target_ess = 2000)
+        general = sample_communities(Xoshiro(44), fc, prior; target_ess = 2000, exact = false)
+        @test exact.converged && general.converged
+        @test vec(mean(exact.points; dims = 2)) ≈ vec(mean(general.points; dims = 2)) rtol = 0.06
+    end
+    # a positive tilt lowers the losses, a negative one raises them
+    down = sample_communities(Xoshiro(45), fc, CommunityPrior(; loss = ExponentialTilt(2 ./ means.loss)); target_ess = 1000)
+    up = sample_communities(Xoshiro(46), fc, CommunityPrior(; loss = ExponentialTilt(-1 ./ means.loss)); target_ess = 1000)
+    losses = kinds .== :loss
+    @test all(vec(mean(down.points[losses, :]; dims = 2)) .< means.loss .< vec(mean(up.points[losses, :]; dims = 2)))
+
+    # a tilt that does not decrease does not normalize on an unbounded polytope
+    loop = FeasibleCommunities(Bool[0 1; 1 0], ones(2); self_regulation = :none)
+    @test !isbounded(loop)
+    @test_throws ArgumentError sample_communities(Xoshiro(47), loop, CommunityPrior(; loss = ExponentialTilt(-1.0)))
+end
