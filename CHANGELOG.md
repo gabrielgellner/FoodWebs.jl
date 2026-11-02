@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.0] - 2026-11-02
+
+### Bug Fixes
+
+- **feasible**: Sample in per capita coordinates when biomasses span orders of magnitude (#117)
+
+### Features
+
+- **feasible**: Sample exponential priors exactly and add exponential tilts (#111, #100)
+- **foraging**: Add the allometric diet breadth model and its fit to observed webs (#72)
+- **biomass**: Add body mass ratios, mass-abundance slopes and links, and massplot (#80)
+- **aggregation**: Add trophic species and lumping of species into groups (#77)
+- **feasible**: Retry a poorly rounded warmup with rounding by samples (#117)
+
+### Miscellaneous
+
+- **deps**: Require PolytopeSamplers 0.2, whose warmup rescales variables before rounding and samples thin directions instead of fixing them
+
+### Testing
+
+- **biomass**: Check body mass summaries of every cheddar web against cheddar (#80)
+- **properties**: Check structural properties of every cheddar web against cheddar (#19)
+- **validation**: Compare the niche and cascade models with EcologicalNetworksDynamics.jl (#19)
+- **feasible**: Sample the web the warmup now rounds with the other wide webs (#117)
+
+## [0.8.1] - 2026-11-02
+
+### Bug Fixes
+
+- **deps**: Allow PolytopeSamplers 0.2, so that projects can use FoodWebs with it
+
 ## [0.8.0] - 2026-11-01
 
 ### Features
