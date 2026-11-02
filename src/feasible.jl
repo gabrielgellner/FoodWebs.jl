@@ -658,10 +658,11 @@ polytope: on Tuesday Lake in 1984 at the observed biomasses (4.8 orders of magni
 violated the equilibrium by up to 5e-3, against 7e-12 in per capita coordinates. The ellipsoid
 rounding of the warmup can fail in either system: it throws or leaves an inscribed ball of
 radius below 0.5, where a rounded polytope holds one of radius 1. On random webs with biomasses
-spanning six orders of magnitude it failed in about one in five in each. A failed warmup is
-retried with `extremes = true`, which removes the thinnest directions. The default
-`per_capita = :auto` uses per capita coordinates and falls back to those of `fc` only when both
-per capita warmups fail. The map is diagonal, so the prior keeps its form, and the effective sample size and
+spanning six orders of magnitude it failed in about one in ten per capita and one in five in
+the coordinates of `fc`. A failed warmup is retried from the extreme points of the coordinates
+(`extremes = true`) and then with rounding by samples (`rounding = :samples`). The default
+`per_capita = :auto` uses per capita coordinates and falls back to those of `fc` only when every
+per capita warmup fails. The map is diagonal, so the prior keeps its form, and the effective sample size and
 R̂ of a coordinate do not depend on its scale.
 
 Returns a named tuple: `points`, a matrix with one sampled point per column after burn-in, pooled

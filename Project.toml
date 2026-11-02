@@ -25,7 +25,7 @@ Distributions = "0.25"
 Graphs = "1.15"
 LinearAlgebra = "1"
 Makie = "0.24"
-PolytopeSamplers = "0.1"
+PolytopeSamplers = "0.2"
 Random = "1"
 SpecialFunctions = "2"
 Statistics = "1"
@@ -36,7 +36,7 @@ julia = "1.13"
 PolytopeSamplers = "23957194-1ca4-53c5-ae50-e0ed682cc5dc"
 
 [sources]
-PolytopeSamplers = {url = "https://github.com/gabrielgellner/PolytopeSamplers.jl", rev = "v0.1.0"}
+PolytopeSamplers = {url = "https://github.com/gabrielgellner/PolytopeSamplers.jl", rev = "v0.2.0"}
 
 [workspace]
 projects = ["test"]
