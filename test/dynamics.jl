@@ -84,13 +84,26 @@ dynamics_communities(seed) = FeasibleCommunities(
     @test_throws DimensionMismatch lotka_volterra(Tsit5(), [-1.0;;], [1.0], [1.0, 1.0], (0.0, 1.0))
     @test_throws DimensionMismatch lotka_volterra(Tsit5(), [-1.0;;], [1.0], [1.0], (0.0, 1.0); extinction_threshold = [1.0, 1.0])
 
+    # with A + A' negative definite the equilibrium is globally stable (Goh 1977), and the
+    # dynamics return to it from starts off by up to a factor of 10
+    A = [-1.0 -0.5 0; 0.2 -1 -0.5; 0 0.2 -1]
+    x̂ = [2.0, 1.0, 0.5]
+    r = -A * x̂
+    rng = Xoshiro(22)
+    for _ in 1:5
+        s = lotka_volterra(Rodas5P(), A, r, x̂ .* exp10.(2 .* rand(rng, 3) .- 1), (0.0, 200.0); abstol = 1.0e-12, reltol = 1.0e-10)
+        @test all(s.survivors)
+        @test s.x[:, end] ≈ x̂ rtol = 1.0e-6
+    end
+
     for seed in 1:3
         fc = dynamics_communities(seed)
         samples = sample_communities(Xoshiro(seed), fc; target_ess = 200).communities
         stable = samples[findfirst(c -> spectral_abscissa(c.J) < 0, samples)]
         T = return_time(stable.J)
-        # a stable community returns to its equilibrium from a large perturbation, with either solver
-        start = fc.x .* exp.(0.5 .* randn(Xoshiro(seed + 1), 12))
+        # a stable community returns to its equilibrium from a small perturbation, with either
+        # solver; from a large one it can reach another attractor
+        start = fc.x .* (1 .+ 0.01 .* randn(Xoshiro(seed + 1), 12))
         for alg in (Tsit5(), Rodas5P())
             s = lotka_volterra(alg, stable, start, (0.0, 100T); abstol = 1.0e-12, reltol = 1.0e-10)
             @test all(s.survivors)
