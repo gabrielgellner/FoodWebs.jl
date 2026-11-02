@@ -495,7 +495,7 @@ end
                    self_regulation = nothing, growth = nothing)
 
 A prior on the coordinates of a [`FeasibleCommunities`](@ref): a univariate distribution for each
-kind of coordinate, or `nothing` for uniform. `interaction` sets both `loss` and `gain`. `growth`
+kind of coordinate, an [`ExponentialTilt`](@ref), or `nothing` for uniform. `interaction` sets both `loss` and `gain`. `growth`
 is one distribution for every growth rate or a named tuple `(basal = d₁, consumer = d₂)` by role.
 [`logdensity`](@ref) gives the density restricted to the polytope.
 
@@ -503,6 +503,9 @@ A density on the growth rates times a uniform distribution on the interaction st
 restricted to the polytope, conditions a joint prior on the equilibrium holding: each rate vector
 is weighted by the volume of interaction strengths it allows. Drawing the rates first and then
 sampling the interaction strengths uniformly does not weight by that volume, so the two differ.
+
+[`sample_communities`](@ref) draws a prior of `nothing`, `ExponentialTilt` and `Exponential`
+(on coordinates that cannot be negative) exactly on each chord of the sampler.
 """
 struct CommunityPrior{L, G, S, R}
     loss::L
@@ -514,6 +517,51 @@ function CommunityPrior(; loss = nothing, gain = nothing, interaction = nothing,
     loss = something(loss, interaction, Some(nothing))
     gain = something(gain, interaction, Some(nothing))
     return CommunityPrior(loss, gain, self_regulation, growth)
+end
+
+"""
+    ExponentialTilt(rate)
+
+A prior for one kind of coordinate in a [`CommunityPrior`](@ref), with density proportional to
+`exp(-rate * θ)` for each coordinate `θ` of that kind, restricted to the polytope: `rate = 0` is
+uniform, `rate > 0` tilts towards weak interactions and `rate < 0` towards strong ones. `rate` is
+a number for every coordinate of the kind, or a vector with one rate for each coordinate of the
+kind, in the order of [`coordinates`](@ref). Unlike `Exponential`, any sign is allowed, as the
+density need only normalize on the polytope, which is bounded unless the constraints leave it
+open (see [`isbounded`](@ref)); sampling a tilt with a rate `≤ 0` on an unbounded polytope throws
+an `ArgumentError`.
+
+The tilt `exp(-λ Σ_k θ_k / μ_k)`, with `μ_k` the uniform mean of each coordinate, skews the
+interaction strengths by `λ` relative to the scale of each: `ExponentialTilt(λ ./ means.loss)`
+with `means = mean_coordinates(fc)` ([`mean_coordinates`](@ref)). One rate for the whole kind
+weights coordinates with large uniform means far more strongly, concentrating the density and
+slowing the samplers.
+"""
+struct ExponentialTilt{R <: Union{Float64, Vector{Float64}}}
+    rate::R
+end
+ExponentialTilt(rate::Real) = ExponentialTilt{Float64}(float(rate))
+ExponentialTilt(rate::AbstractVector{<:Real}) = ExponentialTilt{Vector{Float64}}(Vector{Float64}(rate))
+
+# the rate of a tilt for the `j`th coordinate of its kind
+tilt_rate(d::ExponentialTilt{Float64}, j) = d.rate
+tilt_rate(d::ExponentialTilt{Vector{Float64}}, j) = d.rate[j]
+
+# the log density of a coordinate prior, up to a constant, for the `j`th coordinate of its kind
+coordinate_logpdf(d::ExponentialTilt, x, j) = -tilt_rate(d, j) * x
+coordinate_logpdf(d, x, j) = logpdf(d, x)
+
+# the position of each coordinate among the coordinates of its kind
+kind_positions(fc) = (seen = Dict{Symbol, Int}(); [seen[c.kind] = get(seen, c.kind, 0) + 1 for c in coordinates(fc)])
+
+# a vector of tilt rates must have one rate for each coordinate of its kind
+function check_tilt_lengths(prior, fc)
+    counts = Dict(kind => count(c -> c.kind === kind, coordinates(fc)) for kind in (:loss, :gain, :self, :growth))
+    for (kind, d) in ((:loss, prior.loss), (:gain, prior.gain), (:self, prior.self_regulation), (:growth, prior.growth))
+        d isa ExponentialTilt{Vector{Float64}} && length(d.rate) != counts[kind] &&
+            throw(DimensionMismatch("the $kind tilt has $(length(d.rate)) rates, for $(counts[kind]) coordinates"))
+    end
+    return nothing
 end
 
 function coordinate_distribution(prior::CommunityPrior, fc::FeasibleCommunities, c)
@@ -536,10 +584,12 @@ function logdensity(prior::CommunityPrior, fc::FeasibleCommunities, θ::Abstract
     inside = all(P.lower .- atol .<= θ .<= P.upper .+ atol) && all(P.A * θ .<= P.b .+ atol) &&
         all(abs.(P.C * θ .- P.d) .<= atol)
     inside || return -Inf
+    check_tilt_lengths(prior, fc)
     ℓ = 0.0
+    positions = kind_positions(fc)
     for (k, c) in enumerate(fc.coordinates)
         dist = coordinate_distribution(prior, fc, c)
-        dist === nothing || (ℓ += logpdf(dist, θ[k]))
+        dist === nothing || (ℓ += coordinate_logpdf(dist, θ[k], positions[k]))
     end
     return ℓ
 end
@@ -563,7 +613,7 @@ draw_growth_rates(web::AbstractMatrix; kwargs...) = draw_growth_rates(Random.def
 
 """
     sample_communities([rng], fc::FeasibleCommunities[, prior::CommunityPrior]; target_ess = 1000,
-                       sampler, kwargs...)
+                       sampler, exact = true, kwargs...)
 
 Sample the polytope of `fc`, uniformly or from the density of `prior`, with PolytopeSamplers.jl
 (load it to enable this method), running chains until their smallest effective sample size
@@ -572,11 +622,29 @@ distribution and coordinate hit-and-run for a prior (`BilliardWalk` samples only
 targets); CRHMC uses the gradient of the prior's log density. Other keywords go to
 `PolytopeSamplers.sample_until_converged`.
 
+When every coordinate's prior is `nothing`, an [`ExponentialTilt`](@ref) or an `Exponential` on a
+coordinate that cannot be negative, the density is `exp(-cᵀθ)` on the polytope, and with
+`exact = true` it is sampled as a `PolytopeSamplers.ExponentialTarget`, which hit-and-run draws
+exactly on each chord, several times faster than the slice sampling of a general density and
+more reliable in convergence. `exact = false` uses the general density. A tilt with `rate ≤ 0` on
+an unbounded polytope throws an `ArgumentError`, as its density does not normalize.
+
 Returns a named tuple: `points`, a matrix with one sampled point per column after burn-in, pooled
 over chains; `communities`, a named tuple `(A, r, J)` for each point; `diagnostics`; and
 `converged`. Throws an `ArgumentError` if the polytope is empty or unbounded.
 """
 function sample_communities end
+
+"""
+    mean_coordinates([rng], fc::FeasibleCommunities; target_ess = 1000, kwargs...)
+
+The means of the coordinates of `fc` under the uniform distribution, from
+[`sample_communities`](@ref) (load PolytopeSamplers.jl to enable this method): a named tuple with
+the mean of every coordinate, `coordinate`, and the means of the coordinates of each kind, in the
+order of [`coordinates`](@ref), `loss`, `gain`, `self` and `growth`. Use them to match a prior to
+the uniform, such as `ExponentialTilt(λ ./ means.loss)`.
+"""
+function mean_coordinates end
 
 """
     feasible_growth_rates([rng], web, x; maxiter = 1000, basal, consumer, kwargs...)

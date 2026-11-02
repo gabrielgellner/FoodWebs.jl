@@ -144,8 +144,31 @@ energetic = sample_communities(rng, FeasibleCommunities(web, x; efficiency = (0.
 The gallery note `gallery/equilibria.qmd` compares the feasible ensembles across biomass
 pyramids, from Eltonian to inverted, and on the observed biomasses of the Tuesday Lake webs.
 
+### Tilting towards weak or strong interactions
+
+An [`ExponentialTilt`](@ref) weights each coordinate of a kind by `exp(-rate θ)`: a positive rate
+tilts towards weak interactions and a negative rate towards strong ones, which no distribution
+on `[0, ∞)` can express. Scaling the rate of each coordinate by its uniform mean, from
+[`mean_coordinates`](@ref), skews every interaction by the same amount relative to its scale. Priors
+made of tilts and exponential distributions are sampled exactly on each chord, faster and more
+reliably than a general density; strong tilts push the density towards the faces of the polytope
+and still need more steps than the uniform:
+
+```@example feasible
+means = mean_coordinates(rng, fc; target_ess = 200)
+losses = findall(c -> c.kind === :loss, coordinates(fc))
+map((-1.0, 2.0)) do λ
+    prior = CommunityPrior(; loss = ExponentialTilt(λ ./ means.loss), gain = ExponentialTilt(λ ./ means.gain))
+    tilted = sample_communities(rng, fc, prior; target_ess = 200)
+    ratio = sum(tilted.points[losses, :]; dims = 2) ./ size(tilted.points, 2) ./ means.loss
+    (; λ, mean_ratio = round(sum(ratio) / length(ratio); digits = 2), tilted.converged)
+end
+```
+
 ```@docs
 sample_communities
+mean_coordinates
+ExponentialTilt
 feasible_growth_rates
 draw_growth_rates
 ```
