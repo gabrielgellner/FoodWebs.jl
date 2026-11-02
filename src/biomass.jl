@@ -130,9 +130,7 @@ inverted one. Biomasses must be positive.
 function pyramid_slope(web::AbstractMatrix, x::AbstractVector; levels::AbstractVector = trophic_levels(web))
     length(x) == length(levels) || throw(DimensionMismatch("x and levels must have the same length"))
     all(>(0), x) || throw(ArgumentError("biomasses must be positive"))
-    y = log.(x)
-    l̄, ȳ = mean(levels), mean(y)
-    return sum((levels .- l̄) .* (y .- ȳ)) / sum(abs2, levels .- l̄)
+    return least_squares(levels, log.(x)).slope
 end
 
 """
@@ -154,4 +152,106 @@ Whether every consumer's biomass is at least each of its prey's, along the feedi
 """
 function is_inverted_pyramid(web::AbstractMatrix, x::AbstractVector)
     return all(r.ratio >= 1 for r in biomass_ratios(web, x))
+end
+
+# # Body mass
+# Summaries of body mass `M` and numerical abundance `N` that test allometric theory, following
+# cheddar (Hudson, Reuman & Emerson 2013), Cohen, Jonsson & Carpenter (2003) and Cohen,
+# Schittler, Raffaelli & Reuman (2009).
+
+# The least-squares slope and intercept of y against x
+function least_squares(x, y)
+    x̄, ȳ = mean(x), mean(y)
+    slope = sum((x .- x̄) .* (y .- ȳ)) / sum(abs2, x .- x̄)
+    return (; slope, intercept = ȳ - slope * x̄)
+end
+
+function species_trait(fw::FoodWeb, trait)
+    haskey(fw.traits, trait) || throw(ArgumentError("$(fw.name) has no trait \"$trait\""))
+    return fw.traits[trait]
+end
+
+"""
+    mass_ratios(web, M)
+    mass_ratios(fw::FoodWeb)
+
+The predator-to-prey body mass ratio `M[predator] / M[prey]` on each feeding link of `web`, as
+named tuples `(prey, predator, ratio)`, leaving out cannibalism. For a `FoodWeb` the masses are
+its `"M"` trait, and links to species without a mass have a `missing` ratio.
+"""
+mass_ratios(web::AbstractMatrix, M::AbstractVector) = biomass_ratios(web, M)
+mass_ratios(fw::FoodWeb) = mass_ratios(fw.web, species_trait(fw, "M"))
+
+"""
+    mass_abundance_slope(M, N)
+    mass_abundance_slope(fw::FoodWeb)
+
+The least-squares slope and intercept of `log10(N)` against `log10(M)` over the species, as a
+named tuple `(slope, intercept)`. For a `FoodWeb` the masses and abundances are its `"M"` and
+`"N"` traits, and species missing either are left out. Damuth's rule predicts a slope near
+`-3/4`; Cohen, Jonsson & Carpenter (2003) find `-0.83` for Tuesday Lake in 1984.
+"""
+function mass_abundance_slope(M::AbstractVector, N::AbstractVector)
+    length(M) == length(N) || throw(DimensionMismatch("M and N must have the same length"))
+    all(>(0), M) && all(>(0), N) || throw(ArgumentError("masses and abundances must be positive"))
+    length(M) >= 2 || throw(ArgumentError("need at least two species"))
+    return least_squares(log10.(M), log10.(N))
+end
+function mass_abundance_slope(fw::FoodWeb)
+    M, N = species_trait(fw, "M"), species_trait(fw, "N")
+    keep = [i for i in eachindex(M) if !ismissing(M[i]) && !ismissing(N[i])]
+    return mass_abundance_slope(M[keep], N[keep])
+end
+
+"""
+    mass_abundance_links(web, M, N)
+    mass_abundance_links(fw::FoodWeb)
+
+Each feeding link of `web` drawn as an arrow from prey to predator in the plane of `log10(M)` and
+`log10(N)`, following Cohen, Schittler, Raffaelli & Reuman (2009, PNAS 106:22335). Returns named
+tuples `(prey, predator, length, angle, slope)`, one per link, leaving out cannibalism and, for a
+`FoodWeb`, species without a mass or abundance:
+
+- `length`: the L1 length `|Δlog10 M| + |Δlog10 N|`;
+- `angle`: the counterclockwise angle in degrees, in `[-180, 180)`, from the direction of
+  increasing mass to the link; `-45` is a slope of `-1`, and links to heavier, rarer predators
+  have angles between `-90` and `0`;
+- `slope`: `Δlog10 N / Δlog10 M`.
+
+Here `Δ` is the predator's value minus the prey's.
+"""
+function mass_abundance_links(web::AbstractMatrix, M::AbstractVector, N::AbstractVector)
+    S = LinearAlgebra.checksquare(web)
+    length(M) == S && length(N) == S || throw(DimensionMismatch("M and N must have length $S"))
+    keep = [!ismissing(M[i]) && !ismissing(N[i]) for i in 1:S]
+    all(M[i] > 0 && N[i] > 0 for i in 1:S if keep[i]) ||
+        throw(ArgumentError("masses and abundances must be positive"))
+    links = [(i, j) for j in 1:S for i in 1:S if i != j && web[i, j] != 0 && keep[i] && keep[j]]
+    return map(links) do (i, j)
+        x, y = log10(M[j]) - log10(M[i]), log10(N[j]) - log10(N[i])
+        angle = rad2deg(atan(y, x))
+        (prey = i, predator = j, length = abs(x) + abs(y), angle = angle == 180 ? -180.0 : angle, slope = y / x)
+    end
+end
+mass_abundance_links(fw::FoodWeb) = mass_abundance_links(fw.web, species_trait(fw, "M"), species_trait(fw, "N"))
+
+"""
+    mass_level_slope(web, M; levels = trophic_levels(web))
+    mass_level_slope(fw::FoodWeb; levels = trophic_levels(fw))
+
+The least-squares slope and intercept of the trophic `levels` against `log10(M)`, as a named
+tuple `(slope, intercept)`: the trophic levels gained per tenfold increase in body mass. For a
+`FoodWeb` the masses are its `"M"` trait, and species without a mass are left out after the
+levels are computed on the whole web.
+"""
+function mass_level_slope(web::AbstractMatrix, M::AbstractVector; levels::AbstractVector = trophic_levels(web))
+    S = LinearAlgebra.checksquare(web)
+    length(M) == S && length(levels) == S || throw(DimensionMismatch("M and levels must have length $S"))
+    keep = [i for i in 1:S if !ismissing(M[i])]
+    all(>(0), M[keep]) || throw(ArgumentError("masses must be positive"))
+    length(keep) >= 2 || throw(ArgumentError("need at least two species with a mass"))
+    return least_squares(log10.(M[keep]), levels[keep])
+end
+function mass_level_slope(fw::FoodWeb; levels::AbstractVector = trophic_levels(fw))
+    return mass_level_slope(fw.web, species_trait(fw, "M"); levels)
 end

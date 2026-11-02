@@ -158,3 +158,27 @@ function foodwebplot end
 Draw `web` into the Makie axis `ax`; see [`foodwebplot`](@ref) for the keywords.
 """
 function foodwebplot! end
+
+"""
+    massplot(fw::FoodWeb; y = :abundance, kwargs...)
+    massplot(web, M, y; ylabel = "", kwargs...)
+    massplot!(ax, fw::FoodWeb; y = :abundance, kwargs...)
+    massplot!(ax, web, M, y; kwargs...)
+
+Draw `web` with each species at `log10` of its body mass `M` on the horizontal axis and `y` on
+the vertical axis, with arrows from prey to predator. For a `FoodWeb` the masses are its `"M"`
+trait, and `y = :abundance` plots `log10` of the abundance trait `"N"`, the plane of Cohen,
+Jonsson & Carpenter (2003), while `y = :level` plots trophic levels. Species missing a mass or a
+`y` value are left out; labels are the species indices in the whole web. Requires Makie.
+`massplot` returns the figure and axis; `massplot!` draws into an existing axis. Other keywords
+go to [`foodwebplot!`](@ref), except `levels` and `layout`, which the masses set.
+"""
+function massplot end
+
+"""
+    massplot!(ax, fw::FoodWeb; y = :abundance, kwargs...)
+    massplot!(ax, web, M, y; kwargs...)
+
+Draw `web` by body mass into the Makie axis `ax`; see [`massplot`](@ref).
+"""
+function massplot! end

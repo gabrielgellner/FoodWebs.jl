@@ -1,6 +1,6 @@
 module FoodWebsMakieExt
 
-using FoodWebs: FoodWebs, block_spectrum, elliptic_law, trophic_layout, trophic_levels
+using FoodWebs: FoodWebs, FoodWeb, block_spectrum, elliptic_law, trophic_layout, trophic_levels
 using LinearAlgebra: LinearAlgebra, eigvals
 using Makie: Makie, Axis, Colorbar, DataAspect, Figure, Legend, MarkerElement, Point2f, Vec2f, arrows2d!,
     heatmap!, hidespines!, hidexdecorations!, hlines!, limits!, lift, lines!, scatter!, text!, vlines!
@@ -164,6 +164,51 @@ function FoodWebs.foodwebplot!(
     return ax
 end
 
+
+function FoodWebs.massplot(
+        web::AbstractMatrix, M::AbstractVector, y::AbstractVector; size = (500, 500), title = "",
+        ylabel = "", kwargs...
+    )
+    fig = Figure(; size)
+    ax = Axis(fig[1, 1]; title, xlabel = "log₁₀ body mass", ylabel)
+    FoodWebs.massplot!(ax, web, M, y; kwargs...)
+    return fig, ax
+end
+function FoodWebs.massplot(fw::FoodWeb; y::Symbol = :abundance, kwargs...)
+    values, ylabel = mass_plot_values(fw, y)
+    return FoodWebs.massplot(fw, fw.traits["M"], values; ylabel, kwargs...)
+end
+
+function FoodWebs.massplot!(ax, web::AbstractMatrix, M::AbstractVector, y::AbstractVector; labels = :auto, kwargs...)
+    S = LinearAlgebra.checksquare(web)
+    length(M) == S && length(y) == S || throw(DimensionMismatch("M and y must have length $S"))
+    keep = [i for i in 1:S if !ismissing(M[i]) && !ismissing(y[i])]
+    labels === :auto && (labels = length(keep) <= 60 ? string.(keep) : nothing)
+    levels = float.(y[keep])
+    layout = [(log10(M[i]), float(y[i])) for i in keep]
+    FoodWebs.foodwebplot!(ax, web[keep, keep]; levels, layout, labels, kwargs...)
+    # foodwebplot! hides the horizontal axis, which here carries the masses
+    ax.bottomspinevisible = true
+    ax.xticksvisible = true
+    ax.xticklabelsvisible = true
+    ax.xlabelvisible = true
+    return ax
+end
+function FoodWebs.massplot!(ax, fw::FoodWeb; y::Symbol = :abundance, kwargs...)
+    values, _ = mass_plot_values(fw, y)
+    return FoodWebs.massplot!(ax, fw, fw.traits["M"], values; kwargs...)
+end
+
+function mass_plot_values(fw::FoodWeb, y::Symbol)
+    haskey(fw.traits, "M") || throw(ArgumentError("$(fw.name) has no body mass trait \"M\""))
+    if y === :abundance
+        haskey(fw.traits, "N") || throw(ArgumentError("$(fw.name) has no abundance trait \"N\""))
+        return [ismissing(n) ? missing : log10(n) for n in fw.traits["N"]], "log₁₀ abundance"
+    elseif y === :level
+        return trophic_levels(fw), "trophic level"
+    end
+    throw(ArgumentError("y must be :abundance or :level, given :$y"))
+end
 
 function FoodWebs.eigenplot(M::AbstractMatrix; size = (500, 500), title = "", kwargs...)
     fig = Figure(; size)

@@ -49,3 +49,36 @@ pyramid_slope
 is_pyramid
 is_inverted_pyramid
 ```
+
+## Body mass
+
+Body mass `M` and abundance `N` test allometric theory along a web's links. Use
+[`mass_ratios`](@ref) for the predator-to-prey mass ratio on every link and
+[`mass_abundance_slope`](@ref) for the regression of `log10(N)` on `log10(M)` across species.
+[`mass_abundance_links`](@ref) treats each link as an arrow in the plane of log mass and log
+abundance (Cohen, Schittler, Raffaelli & Reuman 2009), and [`mass_level_slope`](@ref) gives
+the trophic levels gained per tenfold increase in mass.
+
+In Tuesday Lake in 1984 abundance falls as `M^-0.83` (Cohen, Jonsson & Carpenter 2003). On all
+but 2 of its 264 links the predator outweighs its prey, and the median ratio is about 1,900.
+
+```@example biomass
+using Statistics: median
+
+fw = foodweb("cheddar/tl84")
+ratios = [r.ratio for r in mass_ratios(fw)]
+(
+    slope = round(mass_abundance_slope(fw).slope, digits = 3),
+    heavier_prey = count(<(1), ratios),
+    median_ratio = round(median(ratios)),
+    mean_link_length = round(sum(l.length for l in mass_abundance_links(fw)) / length(ratios), digits = 2),
+    levels_per_decade = round(mass_level_slope(fw).slope, digits = 3),
+)
+```
+
+```@docs
+mass_ratios
+mass_abundance_slope
+mass_abundance_links
+mass_level_slope
+```
