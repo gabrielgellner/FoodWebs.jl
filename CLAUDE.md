@@ -43,6 +43,9 @@ predictions. The research code in
 - `src/stability.jl`: spectral and numerical abscissa.
 - `src/elliptic_law.jl`: elliptic-law predictions and off-diagonal pair utilities.
 - `test/`: one test file per source file, each testset with its own seeded `Xoshiro`.
+- `validation/`: checks against other packages that the tests do not depend on, each with its
+  own environment; `end_models.jl` compares the niche and cascade models with
+  EcologicalNetworksDynamics.jl (AGPL-3.0).
 - `docs/`: the Documenter site (own environment), deployed to GitHub Pages by
   `.github/workflows/Documentation.yml` on pushes to main and release tags.
 
