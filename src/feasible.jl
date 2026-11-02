@@ -206,14 +206,35 @@ coordinates(fc::FeasibleCommunities) = fc.coordinates
 coordinate_sign(c) = c.kind === :gain ? 1 : -1
 
 """
-    halfspaces(fc::FeasibleCommunities)
+    halfspaces(fc::FeasibleCommunities; per_capita = false)
 
 The polytope of `fc` as `(lower, upper, A, b, C, d)`: `lower .≤ θ .≤ upper`, `A θ .≤ b` and
 `C θ .== d`, the form of PolytopeSamplers.jl, with `θ` in the order of [`coordinates`](@ref). The
 equilibrium rows `r + A x = 0` come first in `C`, then fixed efficiencies and shares; efficiency
 and share bands are in `A`.
+
+With `per_capita = true`, the polytope is in the per capita coordinates `φ = θ ./ scale`: the
+entries of `A diag(x)` for the interactions (`scale[k] = 1 / x_j` for the coordinate of `A[i, j]`)
+and the growth rates themselves (`scale[k] = 1`). The result also holds `scale`, and every row of
+`A` and `C` has unit length. In these coordinates the equilibrium rows `r_i + Σ_j ±φ_k = 0` have
+coefficients ±1 whatever the biomasses, while in `θ` they have coefficients `x_j`, which can span
+orders of magnitude. The map is diagonal, so it takes the uniform distribution on one polytope to
+the uniform distribution on the other.
 """
-function halfspaces(fc::FeasibleCommunities)
+function halfspaces(fc::FeasibleCommunities; per_capita::Bool = false)
+    P = theta_halfspaces(fc)
+    per_capita || return P
+    scale = [c.kind === :growth ? 1.0 : 1 / fc.x[c.j] for c in fc.coordinates]
+    A, C = P.A .* scale', P.C .* scale'
+    nA = [sqrt(sum(abs2, row)) for row in eachrow(A)]
+    nC = [sqrt(sum(abs2, row)) for row in eachrow(C)]
+    return (;
+        lower = P.lower ./ scale, upper = P.upper ./ scale, A = A ./ nA, b = P.b ./ nA, C = C ./ nC,
+        d = P.d ./ nC, scale,
+    )
+end
+
+function theta_halfspaces(fc::FeasibleCommunities)
     coords = fc.coordinates
     n = length(coords)
     S = length(fc.x)
@@ -613,7 +634,7 @@ draw_growth_rates(web::AbstractMatrix; kwargs...) = draw_growth_rates(Random.def
 
 """
     sample_communities([rng], fc::FeasibleCommunities[, prior::CommunityPrior]; target_ess = 1000,
-                       sampler, exact = true, kwargs...)
+                       sampler, exact = true, per_capita = :auto, kwargs...)
 
 Sample the polytope of `fc`, uniformly or from the density of `prior`, with PolytopeSamplers.jl
 (load it to enable this method), running chains until their smallest effective sample size
@@ -629,9 +650,24 @@ exactly on each chord, several times faster than the slice sampling of a general
 more reliable in convergence. `exact = false` uses the general density. A tilt with `rate ≤ 0` on
 an unbounded polytope throws an `ArgumentError`, as its density does not normalize.
 
+The chains run in the per capita coordinates of [`halfspaces`](@ref)`(fc; per_capita = true)`
+(`per_capita = true`) or in the coordinates of `fc` (`false`), and the points are mapped back to
+the coordinates of `fc`. When the biomasses span orders of magnitude, the equilibrium rows in the
+coordinates of `fc` have coefficients of that range, and chains run in them can leave the
+polytope: on Tuesday Lake in 1984 at the observed biomasses (4.8 orders of magnitude) the points
+violated the equilibrium by up to 5e-3, against 7e-12 in per capita coordinates. The ellipsoid
+rounding of the warmup can fail in either system: it throws or leaves an inscribed ball of
+radius below 0.5, where a rounded polytope holds one of radius 1. On random webs with biomasses
+spanning six orders of magnitude it failed in about one in five in each. A failed warmup is
+retried with `extremes = true`, which removes the thinnest directions. The default
+`per_capita = :auto` uses per capita coordinates and falls back to those of `fc` only when both
+per capita warmups fail. The map is diagonal, so the prior keeps its form, and the effective sample size and
+R̂ of a coordinate do not depend on its scale.
+
 Returns a named tuple: `points`, a matrix with one sampled point per column after burn-in, pooled
-over chains; `communities`, a named tuple `(A, r, J)` for each point; `diagnostics`; and
-`converged`. Throws an `ArgumentError` if the polytope is empty or unbounded.
+over chains; `communities`, a named tuple `(A, r, J)` for each point; `diagnostics`;
+`converged`; and `per_capita`, whether the chains ran in per capita coordinates. Throws an
+`ArgumentError` if the polytope is empty or unbounded.
 """
 function sample_communities end
 

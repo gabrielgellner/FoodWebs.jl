@@ -4,7 +4,7 @@ using Distributions: Exponential, gradlogpdf, rate
 using FoodWebs: FoodWebs, CommunityPrior, ExponentialTilt, FeasibleCommunities, community_matrix, coordinates,
     draw_growth_rates, growth_rates, halfspaces, interaction_matrix, isbounded
 using PolytopeSamplers: PolytopeSamplers, BilliardWalk, CoordinateHitAndRun, ExponentialTarget, Polytope,
-    Target, sample_until_converged, warmup
+    Target, Warmup, sample_until_converged, warmup
 using Statistics: mean
 using Random: AbstractRNG, Random
 
@@ -20,23 +20,24 @@ Whether the polytope of `fc` has no point, by a linear program through PolytopeS
 """
 Base.isempty(fc::FeasibleCommunities; kwargs...) = isempty(Polytope(fc); kwargs...)
 
-# The log density of a prior and its gradient on the coordinates, without the feasibility check of
-# `logdensity`, as the sampler only proposes points of the polytope
-function prior_target(P::Polytope, prior::CommunityPrior, fc::FeasibleCommunities)
+# The log density of a prior and its gradient on the sampled coordinates φ, with θ = scale .* φ,
+# without the feasibility check of `logdensity`, as the sampler only proposes points of the
+# polytope. The map is diagonal and constant, so the density in φ is that of θ up to a constant.
+function prior_target(w::Warmup, prior::CommunityPrior, fc::FeasibleCommunities, scale)
     dists = [FoodWebs.coordinate_distribution(prior, fc, c) for c in coordinates(fc)]
     active = [k for k in eachindex(dists) if dists[k] !== nothing]
     positions = FoodWebs.kind_positions(fc)
-    ℓ(θ) = sum((FoodWebs.coordinate_logpdf(dists[k], θ[k], positions[k]) for k in active); init = 0.0)
+    ℓ(φ) = sum((FoodWebs.coordinate_logpdf(dists[k], scale[k] * φ[k], positions[k]) for k in active); init = 0.0)
     gradient(d::ExponentialTilt, x, j) = -FoodWebs.tilt_rate(d, j)
     gradient(d, x, j) = gradlogpdf(d, x)
-    function ∇ℓ(g, θ)
+    function ∇ℓ(g, φ)
         fill!(g, 0)
         for k in active
-            g[k] = gradient(dists[k], θ[k], positions[k])
+            g[k] = scale[k] * gradient(dists[k], scale[k] * φ[k], positions[k])
         end
         return g
     end
-    return Target(P, ℓ; gradient = ∇ℓ)
+    return Target(w, ℓ; gradient = ∇ℓ)
 end
 
 # The rates c of a prior whose density is exp(-cᵀθ) on the polytope, or `nothing` if it is not:
@@ -68,27 +69,65 @@ function check_tilts(prior::CommunityPrior, fc::FeasibleCommunities)
     return nothing
 end
 
+# A well rounded polytope holds a ball of radius near 1; below this the walk mixes slowly
+const MIN_ROUNDED_RADIUS = 0.5
+
+# The warmup of the polytope of `fc` in per capita coordinates (`true`) or in those of `fc`
+# (`false`), the scale from its coordinates to those of `fc`, and the coordinates used. The
+# ellipsoid rounding fails on some of these polytopes, whose coordinate widths span many orders
+# of magnitude: the warmup throws or leaves an inscribed ball far smaller than 1. Each system is
+# then tried again with `extremes = true`, whose 2n linear programs fix directions narrower than
+# its `atol` and so remove the thinnest ones, and `:auto` falls back to the coordinates of `fc`
+# only when both per capita attempts fail, as chains in them can leave the polytope. When every
+# attempt is poorly rounded it keeps the roundest; when every attempt throws it rethrows the
+# first error, which is also the error of an empty or unbounded polytope.
+function feasible_warmup(rng, fc::FeasibleCommunities, per_capita)
+    systems = per_capita === :auto ? (true, false) : (per_capita,)
+    first_error, best = nothing, nothing
+    for pc in systems, extremes in (false, true)
+        H = halfspaces(fc; per_capita = pc)
+        P = Polytope(H.lower, H.upper; H.A, H.b, H.C, H.d)
+        w = try
+            warmup(rng, P; extremes)
+        catch err
+            err isa Union{ArgumentError, ErrorException} || rethrow()
+            first_error = something(first_error, err)
+            continue
+        end
+        found = (w, pc ? H.scale : ones(length(H.lower)), pc)
+        w.radius >= MIN_ROUNDED_RADIUS && return found
+        (best === nothing || w.radius > best[1].radius) && (best = found)
+    end
+    best === nothing || return best
+    throw(first_error)
+end
+
 function FoodWebs.sample_communities(
         rng::AbstractRNG, fc::FeasibleCommunities, prior::Union{Nothing, CommunityPrior} = nothing;
-        target_ess::Real = 1000, sampler = nothing, exact::Bool = true, kwargs...
+        target_ess::Real = 1000, sampler = nothing, exact::Bool = true,
+        per_capita::Union{Bool, Symbol} = :auto, kwargs...
     )
-    P = Polytope(fc)
-    model = if prior === nothing
-        warmup(rng, P)
-    else
+    per_capita in (true, false, :auto) ||
+        throw(ArgumentError("per_capita must be true, false or :auto, given $per_capita"))
+    if prior !== nothing
         FoodWebs.check_tilt_lengths(prior, fc)
         check_tilts(prior, fc)
+    end
+    w, scale, used = feasible_warmup(rng, fc, per_capita)
+    model = if prior === nothing
+        w
+    else
         c = exact ? exponential_rates(prior, fc) : nothing
-        c === nothing ? prior_target(P, prior, fc) : ExponentialTarget(warmup(rng, P), c)
+        c === nothing ? prior_target(w, prior, fc, scale) : ExponentialTarget(w, c .* scale)
     end
     method = something(sampler, prior === nothing ? BilliardWalk() : CoordinateHitAndRun())
     result = sample_until_converged(rng, model, method; target_ess, kwargs...)
-    points = reduce(hcat, result.chains)
+    points = scale .* reduce(hcat, result.chains)
     communities = [
         (A = interaction_matrix(fc, θ), r = growth_rates(fc, θ), J = community_matrix(fc, θ))
             for θ in eachcol(points)
     ]
-    return (; points, communities, result.diagnostics, result.converged)
+    return (; points, communities, result.diagnostics, result.converged, per_capita = used)
 end
 function FoodWebs.sample_communities(fc::FeasibleCommunities, args...; kwargs...)
     return FoodWebs.sample_communities(Random.default_rng(), fc, args...; kwargs...)

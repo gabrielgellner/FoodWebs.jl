@@ -84,6 +84,34 @@ isnonempty(P) = lp_point(P, zeros(length(P.lower))) !== nothing
     @test_throws ArgumentError FeasibleCommunities(chain, ones(3); per_capita_bounds = (-1.0, 1.0))
 end
 
+@testset "per capita coordinates" begin
+    # φ = θ ./ scale with scale 1 / x[j] at A[i, j] and 1 for growth rates; the rows of A and C
+    # are those of halfspaces(fc) times scale, normalized to unit length
+    web = niche_network(Xoshiro(30), 10, 0.2; basal_paths = true)
+    x = exp10.(range(-3, 3; length = 10))
+    fc = FeasibleCommunities(web, x; efficiency = (0.05, 0.3), self_share = (0.0, 0.5), per_capita_bounds = (0.0, 2.0))
+    P, Q = halfspaces(fc), halfspaces(fc; per_capita = true)
+    @test Q.scale == [c.kind === :growth ? 1.0 : 1 / x[c.j] for c in coordinates(fc)]
+    @test all(r -> sqrt(sum(abs2, r)) ≈ 1, eachrow(Q.A)) && all(r -> sqrt(sum(abs2, r)) ≈ 1, eachrow(Q.C))
+    # per capita bounds are plain bounds on φ
+    interactions = [c.kind !== :growth for c in coordinates(fc)]
+    @test all(Q.lower[interactions] .== 0) && all(Q.upper[interactions] .≈ 2)
+    # every equilibrium row has coefficients of one magnitude
+    S = length(x)
+    @test all(r -> (a = abs.(filter(!iszero, r)); all(a .≈ first(a))), eachrow(Q.C[1:S, :]))
+    # the residuals at φ are those at θ over the row norms of the scaled rows
+    for seed in 1:3
+        θ = rand(Xoshiro(seed), length(Q.scale))
+        φ = θ ./ Q.scale
+        nA = [sqrt(sum(abs2, r)) for r in eachrow(P.A .* Q.scale')]
+        nC = [sqrt(sum(abs2, r)) for r in eachrow(P.C .* Q.scale')]
+        @test Q.A * φ .- Q.b ≈ (P.A * θ .- P.b) ./ nA
+        @test Q.C * φ .- Q.d ≈ (P.C * θ .- P.d) ./ nC
+        @test (Q.lower .<= φ .<= Q.upper) == (P.lower .<= θ .<= P.upper)
+    end
+    @test !haskey(P, :scale)
+end
+
 @testset "per capita bounds" begin
     # a coordinate at A[i, j] has the per capita rate θ x[j], so (lo, hi) bounds it by lo / x[j]
     # and hi / x[j]; growth rates keep their intervals
