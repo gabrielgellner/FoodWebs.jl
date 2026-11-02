@@ -55,6 +55,9 @@ include("data.jl")
 export FoodWeb, foodweb, foodweb_ids, read_foodweb
 public foodweb_cache
 
+include("foraging.jl")
+export PowerHandling, RatioHandling, diet_breadth_network, fit_diet_breadth
+
 include("biomass.jl")
 export biomass, biomass_ratios, is_inverted_pyramid, is_pyramid, pyramid_slope, steady_state_biomass
 
