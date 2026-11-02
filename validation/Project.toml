@@ -1,0 +1,13 @@
+[deps]
+EcologicalNetworksDynamics = "2fd9189a-c387-4076-88b7-22b33b5a4388"
+FoodWebs = "6d07a039-1ac1-577b-a10e-abe3f3d3fc7d"
+Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+
+[sources]
+FoodWebs = {path = ".."}
+
+[compat]
+EcologicalNetworksDynamics = "0.3"
