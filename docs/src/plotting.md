@@ -24,6 +24,17 @@ foodwebplot!(Axis(fig[1, 2]; title = "MacKay levels"), fw; levels = trophic_leve
 fig
 ```
 
+[`massplot`](@ref) places the species by body mass instead, against log abundance (the plane of
+Cohen, Jonsson & Carpenter 2003) or trophic level:
+
+```@example plotting
+fw = foodweb("cheddar/tl84")
+fig = Figure(size = (1100, 450))
+massplot!(Axis(fig[1, 1]; xlabel = "log₁₀ body mass", ylabel = "log₁₀ abundance"), fw; labels = nothing)
+massplot!(Axis(fig[1, 2]; xlabel = "log₁₀ body mass", ylabel = "trophic level"), fw; y = :level, labels = nothing)
+fig
+```
+
 Node size, edge opacity and arrowhead size scale with the size of the web, and labels are left
 out above 60 species; each can be set by keyword. The repository's `gallery/` holds Quarto notes
 drawing every bundled web and the random-matrix reference cases (`just gallery`).
@@ -33,6 +44,8 @@ trophic_layout
 FoodWebs.edge_crossings
 foodwebplot
 foodwebplot!
+massplot
+massplot!
 eigenplot
 eigenplot!
 ```

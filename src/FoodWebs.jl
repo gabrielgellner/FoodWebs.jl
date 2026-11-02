@@ -60,6 +60,7 @@ export PowerHandling, RatioHandling, diet_breadth_network, fit_diet_breadth
 
 include("biomass.jl")
 export biomass, biomass_ratios, is_inverted_pyramid, is_pyramid, pyramid_slope, steady_state_biomass
+export mass_abundance_links, mass_abundance_slope, mass_level_slope, mass_ratios, massplot, massplot!
 
 include("layout.jl")
 export foodwebplot, foodwebplot!, trophic_layout

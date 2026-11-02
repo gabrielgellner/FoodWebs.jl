@@ -13,7 +13,8 @@ predictions. The research code in
 - `src/properties.jl`: the structural properties of Williams & Martinez (2000) and the
   characteristic path length, tested against their published tables.
 - `src/biomass.jl`: observed biomass from node traits, steady-state biomass from energy flow,
-  and pyramid measures.
+  pyramid measures, and body mass summaries (mass ratios, mass-abundance slope and links, trophic
+  level against mass), tested against cheddar and Cohen et al. (2003, 2009).
 - `src/feasible.jl`: `FeasibleCommunities`, the polytope of Lotka–Volterra parameters with a
   given equilibrium, its structure without a solver, and priors on it.
 - `src/compartments.jl`: modularity of partitions of webs and weight matrices, and partition

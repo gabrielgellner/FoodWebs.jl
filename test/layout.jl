@@ -136,6 +136,21 @@ end
     @test colors[1] == :red && colors[3] == :blue && colors[2] == ext.SINGLE_COLOR
     @test_throws DimensionMismatch foodwebplot(web; groups = groups[1:3])
 
+    # webs drawn by body mass, against abundance or trophic level
+    for y in (:abundance, :level)
+        fig, ax = massplot(foodweb("cheddar/tl84"); y)
+        path = tempname() * ".png"
+        CairoMakie.save(path, fig)
+        @test filesize(path) > 0
+        @test ax.xticklabelsvisible[]
+    end
+    # Ythan's detritus has no mass and is left out
+    fig, ax = massplot(foodweb("cheddar/ythanestuary"); y = :level, labels = nothing)
+    @test only(p for p in ax.scene.plots if p isa CairoMakie.Scatter)[1][] |> length == 91
+    @test massplot!(CairoMakie.Axis(CairoMakie.Figure()[1, 1]), food_chain_network(3), [1.0, 10.0, 100.0], [3.0, 2.0, 1.0]) isa CairoMakie.Axis
+    @test_throws ArgumentError massplot(foodweb("cheddar/tl84"); y = :biomass)
+    @test_throws ArgumentError massplot(foodweb("cheddar/benguela"))
+
     # block-ordered heatmaps of a signed community matrix and of a co-assignment matrix
     J = random_predprey(Xoshiro(9), PredationMatrix(web), Uniform(0, 1), 0.3)
     fig, ax = blockplot(J, groups)
