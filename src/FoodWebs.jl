@@ -71,6 +71,10 @@ export mass_abundance_links, mass_abundance_slope, mass_level_slope, mass_ratios
 include("energetics.jl")
 export assimilation_efficiencies, fluxes_from_metabolism
 
+include("flow_networks.jl")
+export FlowNetwork, ascendency, average_path_length, finn_cycling_index, mixed_trophic_impact, omnivory_index,
+    throughflow, total_system_throughflow, total_system_throughput
+
 include("layout.jl")
 export foodwebplot, foodwebplot!, trophic_layout
 public edge_crossings

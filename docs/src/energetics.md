@@ -47,8 +47,61 @@ fluxes_from_metabolism
 assimilation_efficiencies
 ```
 
+## Flow networks
+
+A [`FlowNetwork`](@ref) holds the flows between compartments at steady state, with each
+compartment's input, export and respiration. Its indices follow enaR (Borrett & Lau 2014):
+[`throughflow`](@ref), [`total_system_throughflow`](@ref), [`total_system_throughput`](@ref),
+[`average_path_length`](@ref), [`finn_cycling_index`](@ref) (cycled throughflow over total
+system throughflow, Finn 1980), [`ascendency`](@ref) with development capacity and overhead in
+bits, and [`mixed_trophic_impact`](@ref) (Ulanowicz & Puccia 1990). The flow-weighted
+[`trophic_levels`](@ref trophic_levels(::FlowNetwork)) and [`omnivory_index`](@ref) follow
+NetIndices (Kones et al. 2009), without cannibalism.
+
+The fluxes of Tuesday Lake give a budget at steady state: producers take in what their consumers
+eat, and each consumer respires its metabolic losses and exports what it does not assimilate.
+
+```@example energetics
+e = assimilation_efficiencies(fw)
+M = fw.traits["M"]
+intake = vec(sum(F; dims = 1))
+consumer = intake .> 0
+net = FlowNetwork(
+    F; inputs = .!consumer .* vec(sum(F; dims = 2)),
+    exports = intake .- vec(sum(e .* F; dims = 1)),
+    respiration = [consumer[i] ? 0.71 * M[i]^-0.25 * x[i] : 0.0 for i in eachindex(x)],
+    names = fw.species,
+)
+a = ascendency(net)
+(
+    path_length = average_path_length(net),
+    cycling = finn_cycling_index(net),
+    relative_ascendency = a.ascendency / a.capacity,
+    max_omnivory = maximum(omnivory_index(net)),
+)
+```
+
+```@docs
+FlowNetwork
+throughflow
+total_system_throughflow
+total_system_throughput
+average_path_length
+finn_cycling_index
+ascendency
+trophic_levels(::FlowNetwork)
+omnivory_index
+mixed_trophic_impact
+```
+
 ## References
 
+- Borrett, S. R. & Lau, M. K. enaR: An R package for Ecosystem Network Analysis. Methods Ecol.
+  Evol. 5, 1206–1213 (2014).
+- Finn, J. T. Flow analysis of models of the Hubbard Brook ecosystem. Ecology 61, 562–571 (1980).
+- Kones, J. K., Soetaert, K., van Oevelen, D. & Owino, J. O. Are network indices robust indicators
+  of food web functioning? A Monte Carlo approach. Ecol. Model. 220, 370–382 (2009).
+- Ulanowicz, R. E. & Puccia, C. J. Mixed trophic impacts in ecosystems. Coenoses 5, 7–16 (1990).
 - Gauzens, B. et al. fluxweb: An R package to easily estimate energy fluxes in food webs.
   Methods Ecol. Evol. 10, 270–279 (2019).
 - Lang, B., Ehnes, R. B., Brose, U. & Rall, B. C. Temperature and consumer type dependencies of
