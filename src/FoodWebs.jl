@@ -25,6 +25,9 @@ include("stability.jl")
 export numerical_abscissa, spectral_abscissa
 export λ_stability, ν_stability
 
+include("loops.jl")
+export feeding_loops, heaviest_loop, loop_mask, loop_membership, loopplot, loopplot!, min_self_regulation
+
 include("dynamics.jl")
 export amplification_envelope, lotka_volterra, lotka_volterra_problem, max_amplification, pulse_response, return_time
 

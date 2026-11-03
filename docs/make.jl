@@ -26,6 +26,7 @@ makedocs(;
         "Energy fluxes" => "energetics.md",
         "Feasible communities" => "feasible.md",
         "Dynamics" => "dynamics.md",
+        "Feeding loops" => "loops.md",
         "Motifs" => "motifs.md",
         "Compartments" => "compartments.md",
         "Community matrices and stability" => "matrices.md",
