@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.11.0] - 2026-11-03
+
+### Features
+
+- **energetics**: Estimate link fluxes from metabolism and fix them in feasible communities (#73)
+- **energetics**: Add flow networks and their network analysis indices (#74)
+- **dynamics**: Build Holling type II models with the equilibrium and fluxes of a feasible community (#132)
+- **stability**: Add feeding loops, their weights and plots, and the minimum self-regulation for stability (#131)
+
 ## [0.10.0] - 2026-11-03
 
 ### Features
