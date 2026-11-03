@@ -22,6 +22,7 @@ using ExplicitImports: test_explicit_imports
     include("feasible_sampling.jl")
     include("dynamics.jl")
     include("type2.jl")
+    include("loops.jl")
     include("energetics.jl")
     include("flow_networks.jl")
     include("properties.jl")

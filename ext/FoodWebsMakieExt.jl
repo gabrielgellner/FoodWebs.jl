@@ -1,6 +1,6 @@
 module FoodWebsMakieExt
 
-using FoodWebs: FoodWebs, FoodWeb, block_spectrum, elliptic_law, trophic_layout, trophic_levels
+using FoodWebs: FoodWebs, FoodWeb, block_spectrum, elliptic_law, foodwebplot!, trophic_layout, trophic_levels
 using LinearAlgebra: LinearAlgebra, eigvals
 using Makie: Makie, Axis, Colorbar, DataAspect, Figure, Legend, MarkerElement, Point2f, Vec2f, arrows2d!,
     heatmap!, hidespines!, hidexdecorations!, hlines!, limits!, lift, lines!, scatter!, text!, vlines!
@@ -164,6 +164,64 @@ function FoodWebs.foodwebplot!(
     return ax
 end
 
+
+function FoodWebs.loopplot(web, loops::AbstractVector; size = (650, 500), title = "", palette = Makie.wong_colors(), kwargs...)
+    fig = Figure(; size)
+    ax = Axis(fig[1, 1]; title, ylabel = "trophic level")
+    FoodWebs.loopplot!(ax, web, loops; palette, kwargs...)
+    if !isempty(loops)
+        elements = [
+            Makie.LineElement(; color = palette[mod1(k, length(palette))], linewidth = 3)
+                for k in eachindex(loops)
+        ]
+        names = [join(l.species, " → ") * " (w = $(round(l.weight; sigdigits = 3)))" for l in loops]
+        Legend(fig[1, 2], elements, names; framevisible = false)
+    end
+    return fig, ax
+end
+
+# Origins and directions of arrows from `a[k]` to `b[k]` as in `arrow_geometry`, moved `offset`
+# pixels to the right of their direction
+function offset_arrow_geometry(a, b, ra, rb, scale, offset)
+    origins, directions = arrow_geometry(a, b, ra, rb, scale)
+    for k in eachindex(origins, directions)
+        d = directions[k] .* scale
+        n = Vec2f(d[2], -d[1]) ./ sqrt(sum(abs2, d))
+        origins[k] = origins[k] .+ offset .* n ./ scale
+    end
+    return origins, directions
+end
+
+function FoodWebs.loopplot!(
+        ax, web, loops::AbstractVector; levels = trophic_levels(web), layout = nothing,
+        palette = Makie.wong_colors(), linewidth = 4, spacing = 3, markersize = nothing,
+        edgealpha = 0.08, kwargs...
+    )
+    S = size(web, 1)
+    all(l -> all(in(1:S), l.species), loops) || throw(ArgumentError("loops name species outside 1:$S"))
+    layout = something(layout, trophic_layout(web; levels))
+    markersize = something(markersize, default_markersize(S))
+    foodwebplot!(ax, web; levels, layout, markersize, edgealpha, kwargs...)
+    isempty(loops) && return ax
+    wmax = maximum(l -> l.weight, loops)
+    # the lightest loops first, so the heaviest is drawn on top
+    for k in reverse(eachindex(loops))
+        loop = loops[k]
+        a = [Point2f(layout[i]) for (i, _) in loop.links]
+        b = [Point2f(layout[j]) for (_, j) in loop.links]
+        r = fill(markersize / 2 + 2, length(a))
+        offset = spacing * k
+        geometry = lift(ax.scene.viewport, ax.finallimits) do viewport, limits
+            offset_arrow_geometry(a, b, r, r, Vec2f(viewport.widths ./ limits.widths), offset)
+        end
+        width = max(linewidth * loop.weight / wmax, 0.75)
+        arrows2d!(
+            ax, lift(first, geometry), lift(last, geometry); color = palette[mod1(k, length(palette))],
+            shaftwidth = width, tipwidth = 2width + 5, tiplength = 2width + 5,
+        )
+    end
+    return ax
+end
 
 function FoodWebs.massplot(
         web::AbstractMatrix, M::AbstractVector, y::AbstractVector; size = (500, 500), title = "",
