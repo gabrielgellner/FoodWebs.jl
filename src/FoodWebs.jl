@@ -43,6 +43,9 @@ export FeasibleCommunities, CommunityPrior, community_matrix, coordinates, diagn
     fluxes, growth_rates, halfspaces, interaction_matrix, isbounded, logdensity, structurally_singular
 export ExponentialTilt, draw_growth_rates, feasible_growth_rates, mean_coordinates, sample_communities
 
+include("type2.jl")
+export TypeIIModel, handling_fractions, type2_dynamics, type2_model, type2_problem
+
 include("motifs.jl")
 export motif_census, motif_ids, motif_name, motif_roles, motif_zscores, rewire_links
 

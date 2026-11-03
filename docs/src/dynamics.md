@@ -21,7 +21,8 @@ rng = Xoshiro(3)
 web = niche_network(rng, 15, 0.15; basal_paths = true)
 x = exp10.(2 .* rand(rng, 15) .- 1)
 fc = FeasibleCommunities(web, x; efficiency = (0.0, 0.3))
-communities = sample_communities(rng, fc; target_ess = 200).communities
+samples = sample_communities(rng, fc; target_ess = 200)
+communities = samples.communities
 stable = filter(c -> spectral_abscissa(c.J) < 0, communities[1:10:end])
 length(stable), length(communities[1:10:end])
 ```
@@ -87,6 +88,41 @@ fig
 count(s.survivors), filter(isfinite, s.extinction_times)
 ```
 
+## Saturating functional responses
+
+[`type2_model`](@ref) turns a point of the polytope into a multi-prey Holling type II model
+([`TypeIIModel`](@ref)) with the same equilibrium and link fluxes. Each predator gets a handling
+time; its attack rates rise to `λ / (1 - τ)`, where `τ` is the fraction of its time spent
+handling prey at the equilibrium ([`handling_fractions`](@ref)), so the fluxes stay the same, as
+do the growth rates, self-regulation and efficiencies. Saturation changes the Jacobian
+([`community_matrix`](@ref community_matrix(::TypeIIModel))): a satiated predator takes a smaller
+share of a growing prey, which gives each prey positive density dependence and a positive effect
+on the other prey of its predators, and the predator responds less to its prey.
+
+`match_jacobian = true` raises the self-regulation and efficiencies to cancel all but the effects
+between prey of a shared predator. Across handling fractions, saturation alone destabilizes the
+stable communities sampled above within `τ = 0.1`. With the compensation their spectral abscissa
+barely moves, except in one community that the remaining effects between prey destabilize beyond
+`τ = 0.3`:
+
+```@example dynamics
+points = samples.points[:, 1:10:end]
+θs = [θ for (θ, c) in zip(eachcol(points), communities[1:10:end]) if spectral_abscissa(c.J) < 0][1:5]
+τs = 0:0.05:0.6
+abscissa(θ, τ; kwargs...) = spectral_abscissa(community_matrix(type2_model(fc, θ; handling_fraction = τ, kwargs...)))
+fig = Figure(size = (800, 350))
+ax1 = Axis(fig[1, 1]; xlabel = "handling fraction τ", ylabel = "spectral abscissa", title = "saturation")
+ax2 = Axis(fig[1, 2]; xlabel = "handling fraction τ", title = "saturation, compensated")
+for θ in θs
+    lines!(ax1, τs, [abscissa(θ, τ) for τ in τs])
+    lines!(ax2, τs, [abscissa(θ, τ; match_jacobian = true) for τ in τs])
+end
+fig
+```
+
+[`type2_dynamics`](@ref) integrates a type II model with the extinctions of
+[`lotka_volterra`](@ref), and [`pulse_response`](@ref) follows a pulse away from its equilibrium.
+
 ```@docs
 return_time
 amplification_envelope
@@ -94,4 +130,13 @@ max_amplification
 lotka_volterra_problem
 lotka_volterra
 pulse_response
+```
+
+```@docs
+TypeIIModel
+type2_model
+community_matrix(::TypeIIModel)
+handling_fractions
+type2_problem
+type2_dynamics
 ```
