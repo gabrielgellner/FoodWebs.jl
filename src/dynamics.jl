@@ -89,10 +89,13 @@ function lotka_volterra end
 """
     pulse_response(alg, A, r, x̂, δ, times; kwargs...)
     pulse_response(alg, community, x̂, δ, times; kwargs...)
+    pulse_response(alg, m::TypeIIModel, δ, times; kwargs...)
 
 The response of the Lotka–Volterra dynamics to a pulse `δ` away from the equilibrium `x̂`
 (`r + A x̂ = 0`), integrated by [`lotka_volterra`](@ref) with solver `alg` and saved at `times`
-(load SciMLBase.jl to enable this method). Keywords go to [`lotka_volterra`](@ref).
+(load SciMLBase.jl to enable this method). Keywords go to [`lotka_volterra`](@ref). For a
+[`TypeIIModel`](@ref) the pulse is away from its equilibrium `m.x`, integrated by
+[`type2_dynamics`](@ref), and the linearization uses its [`community_matrix`](@ref).
 
 Returns a named tuple: `t`; `deviation`, the distance `‖x(t) - x̂‖ / ‖δ‖`; `linear`, the same
 distance in the linearization, `‖exp(tJ) δ‖ / ‖δ‖` with `J = diag(x̂) A`; `amplification`, the

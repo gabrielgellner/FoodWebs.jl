@@ -51,6 +51,8 @@ predictions. The research code in
 - `src/dynamics.jl`: return time and the amplification envelope of a community matrix, and the
   Lotka–Volterra dynamics of a community (`ext/FoodWebsSciMLBaseExt.jl`: integration with any
   SciML solver, extinctions below a threshold, pulse responses against the linearization).
+- `src/type2.jl`: multi-prey Holling type II models with the equilibrium and link fluxes of a
+  feasible community, their Jacobian, and the compensation of saturation's effects on it.
 - `src/elliptic_law.jl`: elliptic-law predictions and off-diagonal pair utilities.
 - `test/`: one test file per source file, each testset with its own seeded `Xoshiro`.
 - `validation/`: checks against other packages that the tests do not depend on, each with its
