@@ -21,6 +21,10 @@ predictions. The research code in
 - `src/energetics.jl`: link fluxes at equilibrium from metabolism (fluxweb, Gauzens et al. 2019)
   and assimilation efficiencies by resource type; `test/fixtures/make_fluxweb.R` computes the
   fluxes and Jacobian of fluxweb's example webs with fluxweb.
+- `src/flow_networks.jl`: `FlowNetwork` and ecological network analysis of flows at steady
+  state (throughflow, Finn's cycling index, path length, ascendency, mixed trophic impact,
+  flow-weighted trophic levels and omnivory); `test/fixtures/make_flow_indices.R` computes the
+  indices of the Chesapeake Bay network with enaR and NetIndices.
 - `src/feasible.jl`: `FeasibleCommunities`, the polytope of Lotka–Volterra parameters with a
   given equilibrium, its structure without a solver, and priors on it.
 - `src/compartments.jl`: modularity of partitions of webs and weight matrices, and partition
