@@ -125,10 +125,14 @@ dynamics_communities(seed) = FeasibleCommunities(
         @test all(p.linear .<= [amplification_envelope(stable.J, t) for t in p.t] .+ 1.0e-9)
 
         # an unstable community leaves its equilibrium for another state, with abundances that
-        # stay nonnegative and extinct species at zero
+        # stay nonnegative and extinct species at zero; at the default tolerances Rodas5P damps a
+        # weakly unstable oscillation (abscissa 0.02, frequency 3.4) back to the equilibrium
         k = findfirst(c -> spectral_abscissa(c.J) > 0, samples)
         k === nothing && continue
-        s = lotka_volterra(Rodas5P(), samples[k], fc.x .* (1 .+ 1.0e-3 .* randn(Xoshiro(seed + 3), 12)), (0.0, 1.0e3))
+        s = lotka_volterra(
+            Rodas5P(), samples[k], fc.x .* (1 .+ 1.0e-3 .* randn(Xoshiro(seed + 3), 12)), (0.0, 1.0e3);
+            abstol = 1.0e-12, reltol = 1.0e-10
+        )
         @test s.retcode == SciMLBase.ReturnCode.Success
         @test all(>=(0), s.x)
         @test s.survivors == (s.x[:, end] .> 0)
