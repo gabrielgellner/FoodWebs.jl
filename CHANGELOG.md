@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.0] - 2026-11-03
+
+### Features
+
+- **dynamics**: Integrate Lotka-Volterra dynamics of communities and measure transient amplification (#79)
+
+### Miscellaneous
+
+- **deps**: Accept PolytopeSamplers 0.2 and later, and use 0.4.0
+
+### Testing
+
+- **dynamics**: Check global convergence on a food chain with negative definite A + A' (#79)
+- **dynamics**: Integrate the unstable community at tight tolerances
+
 ## [0.9.2] - 2026-11-02
 
 ### Bug Fixes
