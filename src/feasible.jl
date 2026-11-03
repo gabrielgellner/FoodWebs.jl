@@ -35,7 +35,8 @@
 
 """
     FeasibleCommunities(web, x; rates, self_regulation = :all, efficiency = nothing,
-                        self_share = nothing, bounds = (0.0, Inf), per_capita_bounds = nothing)
+                        self_share = nothing, bounds = (0.0, Inf), per_capita_bounds = nothing,
+                        fixed_fluxes = nothing)
 
 The Lotka–Volterra parameters on the food web `web` (`web[i, j] != 0` when species `j` eats
 species `i`) that have the equilibrium biomasses `x > 0`: the interaction matrix `A` and growth
@@ -53,9 +54,9 @@ variables.
   uniform prior), `:all_but_top` (species no other eats, as in Gellner, McCann & Hastings),
   `:basal`, `:none`, or a vector of booleans. Cannibals always have one, which holds their net
   cannibalism.
-- `efficiency`: `nothing`, a number `e`, a band `(e_min, e_max)`, or a matrix or pair of
-  matrices over `[prey, predator]`, constraining each link's gain to `e_min λ ≤ γ ≤ e_max λ` with
-  `0 ≤ e_min ≤ e_max ≤ 1`.
+- `efficiency`: `nothing`, a number `e`, a vector over prey species, a band `(e_min, e_max)`, or
+  a matrix or pair of matrices over `[prey, predator]`, constraining each link's gain to
+  `e_min λ ≤ γ ≤ e_max λ` with `0 ≤ e_min ≤ e_max ≤ 1`.
 - `self_share`: `nothing`, a share `s` or a band `(s_min, s_max)` in `[0, 1]` of each
   self-regulated species' turnover taken by its self-regulation, `s_min T_i ≤ x_i σ_i ≤ s_max T_i`.
 - `bounds`: `(lo, hi)` for every loss, gain and self-regulation magnitude.
@@ -63,6 +64,11 @@ variables.
   self-regulation term: a coordinate `θ` at `A[i, j]` contributes `θ x[j]` to species `i`'s per
   capita growth rate, so the bound is `lo / x[j] ≤ θ ≤ hi / x[j]`. It applies together with
   `bounds`.
+- `fixed_fluxes`: `nothing`, or the biomass flux on each link, a matrix `F[prey, predator]` such as
+  [`fluxes_from_metabolism`](@ref) gives, that fixes each loss at `λ = F[i, j] / (x_i x_j)`. With
+  a fixed `efficiency` the gains are fixed too, and only self-regulation and growth rates vary:
+  each species' equilibrium row fixes `r_i - σ_i x_i`. Cannibalism merges into self-regulation, so
+  the diagonal of `F` is left out, and a cannibal's `σ_i` must hold its net cannibalism.
 
 The community matrix `J = diag(x) A` has the eigenvalues of `A diag(x)`, the matrix of per capita
 rates, and the equilibrium, the rate intervals, `self_share` and `per_capita_bounds` constrain per
@@ -88,13 +94,15 @@ struct FeasibleCommunities
     self_share::Union{Nothing, Tuple{Float64, Float64}}
     bounds::Tuple{Float64, Float64}
     per_capita_bounds::Union{Nothing, Tuple{Float64, Float64}}
+    fixed_fluxes::Union{Nothing, Matrix{Float64}}
     coordinates::Vector{@NamedTuple{kind::Symbol, i::Int, j::Int}}
 end
 
 function FeasibleCommunities(
         web::AbstractMatrix, x::AbstractVector{<:Real};
         rates = (basal = (0.0, 5.0), consumer = (-1.0, 0.0)), self_regulation = :all,
-        efficiency = nothing, self_share = nothing, bounds = (0.0, Inf), per_capita_bounds = nothing
+        efficiency = nothing, self_share = nothing, bounds = (0.0, Inf), per_capita_bounds = nothing,
+        fixed_fluxes = nothing
     )
     S = LinearAlgebra.checksquare(web)
     length(x) == S || throw(DimensionMismatch("x must have length $S, got $(length(x))"))
@@ -152,6 +160,15 @@ function FeasibleCommunities(
         0 <= lo <= hi || throw(ArgumentError("per_capita_bounds must satisfy 0 ≤ lo ≤ hi, got $per_capita_bounds"))
         (float(lo), float(hi))
     end
+    flux = if fixed_fluxes === nothing
+        nothing
+    else
+        size(fixed_fluxes) == (S, S) || throw(DimensionMismatch("fixed_fluxes must be $S×$S, got $(size(fixed_fluxes))"))
+        all(>=(0), fixed_fluxes) || throw(ArgumentError("fixed_fluxes must be non-negative"))
+        all(fixed_fluxes[i, j] == 0 || i == j || eats[i, j] for i in 1:S, j in 1:S) ||
+            throw(ArgumentError("fixed_fluxes must be zero except on feeding links"))
+        [eats[i, j] ? float(fixed_fluxes[i, j]) : 0.0 for i in 1:S, j in 1:S]
+    end
     coords = @NamedTuple{kind::Symbol, i::Int, j::Int}[]
     for i in 1:S
         self_regulated[i] && push!(coords, (kind = :self, i = i, j = i))
@@ -164,12 +181,16 @@ function FeasibleCommunities(
     rate_bounds === nothing || append!(coords, [(kind = :growth, i = i, j = i) for i in 1:S])
     return FeasibleCommunities(
         eats, Vector{Float64}(x), fixed_rates, rate_bounds, self_regulated, band, share,
-        (float(first(bounds)), float(last(bounds))), per_capita, coords
+        (float(first(bounds)), float(last(bounds))), per_capita, flux, coords
     )
 end
 
-# an efficiency on every link, from a number or a matrix over [prey, predator]
+# an efficiency on every link, from a number, a vector over prey or a matrix over [prey, predator]
 link_efficiencies(eats, e::Real) = [eats[i, j] ? float(e) : 0.0 for i in axes(eats, 1), j in axes(eats, 2)]
+function link_efficiencies(eats, e::AbstractVector)
+    length(e) == size(eats, 1) || throw(DimensionMismatch("an efficiency vector must have length $(size(eats, 1))"))
+    return [eats[i, j] ? float(e[i]) : 0.0 for i in axes(eats, 1), j in axes(eats, 2)]
+end
 function link_efficiencies(eats, e::AbstractMatrix)
     size(e) == size(eats) || throw(DimensionMismatch("efficiency matrices must be $(size(eats, 1))×$(size(eats, 1))"))
     return [eats[i, j] ? float(e[i, j]) : 0.0 for i in axes(eats, 1), j in axes(eats, 2)]
@@ -275,6 +296,15 @@ function theta_halfspaces(fc::FeasibleCommunities)
                 push!(rhs_in, 0)
                 lo[i, j] > 0 && (push!(inequalities, -row(lo[i, j])); push!(rhs_in, 0))
             end
+        end
+    end
+    if fc.fixed_fluxes !== nothing
+        for i in 1:S, j in 1:S
+            fc.eats[i, j] || continue
+            row = zeros(n)
+            row[index[(:loss, i, j)]] = 1
+            push!(equalities, row)
+            push!(rhs_eq, fc.fixed_fluxes[i, j] / (fc.x[i] * fc.x[j]))
         end
     end
     if fc.self_share !== nothing
@@ -398,20 +428,29 @@ row, and the polytope is bounded unless some row has unbounded coordinates of bo
 grow together; a self-regulated top predator whose self-regulation share is below 1 cannot. With
 efficiency bands, flux is bounded on every link whose band stays below 1, and the polytope is
 unbounded exactly when links whose band reaches 1 form a feeding loop with no species on it
-draining a positive minimum self-regulation share.
+draining a positive minimum self-regulation share. With `fixed_fluxes` the losses are fixed; with
+efficiency bands too, the polytope is bounded when the growth rates of self-regulated species
+are bounded above.
 """
 function isbounded(fc::FeasibleCommunities)
     isfinite(last(fc.bounds)) && return true
     fc.per_capita_bounds !== nothing && isfinite(last(fc.per_capita_bounds)) && return true
     S = length(fc.x)
     s_min, s_max = fc.self_share === nothing ? (0.0, Inf) : fc.self_share
+    fixed_losses = fc.fixed_fluxes !== nothing
+    # with fixed fluxes every loss is fixed, and with efficiency bands every gain is bounded, so
+    # each row bounds σ_i x_i by its growth rate
+    if fixed_losses && fc.efficiency !== nothing
+        return fc.rate_bounds === nothing || all(isfinite, last(fc.rate_bounds)[fc.self_regulated])
+    end
     if fc.efficiency === nothing
         return all(1:S) do i
-            kinds = [c.kind for c in fc.coordinates if c.i == i && c.kind !== :growth]
+            kinds = [c.kind for c in fc.coordinates if c.i == i && c.kind !== :growth && !(fixed_losses && c.kind === :loss)]
             positive = any(==(:gain), kinds)
             negative = any(k -> k === :loss || k === :self, kinds)
             positive && negative || return true
-            # only gains and self-regulation, with a share below 1: a self-regulated top predator
+            # only gains and self-regulation, with a share below 1: a self-regulated top predator,
+            # or any self-regulated consumer when its losses are fixed
             return !any(==(:loss), kinds) && s_max < 1
         end
     end

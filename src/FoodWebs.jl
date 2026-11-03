@@ -68,6 +68,9 @@ include("biomass.jl")
 export biomass, biomass_ratios, is_inverted_pyramid, is_pyramid, pyramid_slope, steady_state_biomass
 export mass_abundance_links, mass_abundance_slope, mass_level_slope, mass_ratios, massplot, massplot!
 
+include("energetics.jl")
+export assimilation_efficiencies, fluxes_from_metabolism
+
 include("layout.jl")
 export foodwebplot, foodwebplot!, trophic_layout
 public edge_crossings

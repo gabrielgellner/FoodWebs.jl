@@ -18,6 +18,9 @@ predictions. The research code in
   pyramid measures, and body mass summaries (mass ratios, mass-abundance slope and links, trophic
   level against mass), tested against cheddar and Cohen et al. (2003, 2009);
   `test/fixtures/make_body_mass.R` computes the summaries of every cheddar web with cheddar.
+- `src/energetics.jl`: link fluxes at equilibrium from metabolism (fluxweb, Gauzens et al. 2019)
+  and assimilation efficiencies by resource type; `test/fixtures/make_fluxweb.R` computes the
+  fluxes and Jacobian of fluxweb's example webs with fluxweb.
 - `src/feasible.jl`: `FeasibleCommunities`, the polytope of Lotka–Volterra parameters with a
   given equilibrium, its structure without a solver, and priors on it.
 - `src/compartments.jl`: modularity of partitions of webs and weight matrices, and partition
