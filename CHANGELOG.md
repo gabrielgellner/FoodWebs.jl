@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.2] - 2026-11-02
+
+### Bug Fixes
+
+- **deps**: Allow PolytopeSamplers 0.4, so that projects can use FoodWebs with it
+
+## [0.9.1] - 2026-11-02
+
+### Bug Fixes
+
+- **deps**: Allow PolytopeSamplers 0.3, so that projects can use FoodWebs with it
+
 ## [0.9.0] - 2026-11-02
 
 ### Bug Fixes

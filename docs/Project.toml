@@ -12,4 +12,4 @@ SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
 
 [sources]
 FoodWebs = {path = ".."}
-PolytopeSamplers = {rev = "v0.3.0", url = "https://github.com/gabrielgellner/PolytopeSamplers.jl"}
+PolytopeSamplers = {rev = "v0.4.0", url = "https://github.com/gabrielgellner/PolytopeSamplers.jl"}
