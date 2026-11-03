@@ -23,6 +23,7 @@ makedocs(;
         "Empirical food webs" => "data.md",
         "Trophic levels and structure" => "properties.md",
         "Equilibrium biomass" => "biomass.md",
+        "Energy fluxes" => "energetics.md",
         "Feasible communities" => "feasible.md",
         "Dynamics" => "dynamics.md",
         "Motifs" => "motifs.md",
