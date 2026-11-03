@@ -85,9 +85,17 @@ end
 
 The heaviest of the [`feeding_loops`](@ref) of `J` with `min_length` to `max_length` species, or
 `nothing` when `J` has none. Loops of two species, a predator and its prey, are left out by
-default, as in Neutel, Heesterbeek & de Ruiter (2002). The search drops a partial loop when even
-the largest entry of `J` on every remaining step would leave it lighter than the heaviest loop
-found so far, so it reaches longer loops than [`feeding_loops`](@ref) can list.
+default, as in Neutel, Heesterbeek & de Ruiter (2002). When several loops tie, it returns one of
+them.
+
+Karp's (1978) algorithm first finds the loop with the largest mean log entry over all lengths, in
+time proportional to the number of species times the number of entries. When that loop has
+`min_length` to `max_length` species it is the answer. Otherwise its weight bounds every loop, and
+a depth-first search looks for the heaviest loop within the lengths. The search drops a partial
+loop when even the largest entry of `J` on every remaining step would leave it lighter than the
+heaviest loop found so far, and stops once a loop reaches Karp's bound, so it reaches longer loops
+than [`feeding_loops`](@ref) can list. With the default `min_length = 3`, Karp's loop is often a
+predator and its prey, and then the search does the work.
 """
 function heaviest_loop(J::AbstractMatrix; min_length::Integer = 3, max_length::Integer = 8)
     S = LinearAlgebra.checksquare(J)
@@ -96,19 +104,28 @@ function heaviest_loop(J::AbstractMatrix; min_length::Integer = 3, max_length::I
     out = [[j for j in 1:S if j != i && J[i, j] != 0] for i in 1:S]
     any(!isempty, out) || return nothing
     logw = [J[i, j] == 0 ? -Inf : log(abs(J[i, j])) for i in 1:S, j in 1:S]
+    bound, cycle = max_mean_cycle(logw, out)
+    if cycle !== nothing && min_length <= length(cycle) <= max_length
+        k = argmin(cycle)
+        return make_loop(J, [cycle[k:end]; cycle[1:(k - 1)]])
+    end
+    # no loop within the lengths beats Karp's loop, so a loop within rounding of it is the heaviest
+    reached = bound - 1.0e-12 * max(1, abs(bound))
     top = maximum(logw[i, j] for i in 1:S for j in out[i])
-    best = -Inf
+    # Refs, since the closure below updates them
+    best = Ref(-Inf)
     heaviest = Int[]
     path = Int[]
     onpath = falses(S)
     # P is the sum of the log entries along the path so far
     function extend!(s, v, P)
         for w in out[v]
+            best[] >= reached && return nothing
             if w == s
                 k = length(path)
-                if k >= min_length && (P + logw[v, s]) / k > best
-                    best = (P + logw[v, s]) / k
-                    heaviest = copy(path)
+                if k >= min_length && (P + logw[v, s]) / k > best[]
+                    best[] = (P + logw[v, s]) / k
+                    copy!(heaviest, path)
                 end
             elseif w > s && !onpath[w] && length(path) < max_length
                 Q = P + logw[v, w]
@@ -116,7 +133,7 @@ function heaviest_loop(J::AbstractMatrix; min_length::Integer = 3, max_length::I
                 # at most (Q + (k - q) top) / k, which is monotone in k
                 q = length(path)
                 kmin = max(q + 1, min_length)
-                max((Q + (kmin - q) * top) / kmin, (Q + (max_length - q) * top) / max_length) <= best && continue
+                max((Q + (kmin - q) * top) / kmin, (Q + (max_length - q) * top) / max_length) <= best[] && continue
                 push!(path, w)
                 onpath[w] = true
                 extend!(s, w, Q)
@@ -127,6 +144,7 @@ function heaviest_loop(J::AbstractMatrix; min_length::Integer = 3, max_length::I
         return nothing
     end
     for s in 1:S
+        best[] >= reached && break
         push!(path, s)
         onpath[s] = true
         extend!(s, s, 0.0)
@@ -134,6 +152,46 @@ function heaviest_loop(J::AbstractMatrix; min_length::Integer = 3, max_length::I
         pop!(path)
     end
     return isempty(heaviest) ? nothing : make_loop(J, heaviest)
+end
+
+# The largest mean weight of a cycle of the digraph with edges `out` and weights `w`, and a cycle
+# that reaches it, by Karp's (1978) algorithm: with D[k, v] the heaviest walk of k edges ending at
+# v, the largest cycle mean is the maximum over v of the minimum over k < S of
+# (D[S, v] - D[k, v]) / (S - k). A cycle on the heaviest S-edge walk to that v reaches it
+# (Chaturvedi & McConnell 2017); the cycle is `nothing` if rounding leaves it short.
+function max_mean_cycle(w, out)
+    S = length(out)
+    D = fill(-Inf, S + 1, S)
+    pred = zeros(Int, S + 1, S)
+    D[1, :] .= 0
+    for k in 1:S, u in 1:S
+        isfinite(D[k, u]) || continue
+        for v in out[u]
+            d = D[k, u] + w[u, v]
+            d > D[k + 1, v] && (D[k + 1, v] = d; pred[k + 1, v] = u)
+        end
+    end
+    best, vbest = -Inf, 0
+    for v in 1:S
+        isfinite(D[S + 1, v]) || continue
+        m = minimum((D[S + 1, v] - D[k + 1, v]) / (S - k) for k in 0:(S - 1) if isfinite(D[k + 1, v]))
+        m > best && ((best, vbest) = (m, v))
+    end
+    vbest == 0 && return -Inf, nothing
+    # the walk back from vbest repeats a vertex within S + 1 steps
+    walk = [vbest]
+    seen = Dict(vbest => 1)
+    for k in (S + 1):-1:2
+        u = pred[k, walk[end]]
+        if haskey(seen, u)
+            cycle = reverse(walk[seen[u]:end])
+            mean = sum(w[cycle[m], cycle[mod1(m + 1, length(cycle))]] for m in eachindex(cycle)) / length(cycle)
+            return best, mean >= best - 1.0e-9 * max(1, abs(best)) ? cycle : nothing
+        end
+        push!(walk, u)
+        seen[u] = length(walk)
+    end
+    return best, nothing
 end
 
 """

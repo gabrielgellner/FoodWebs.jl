@@ -95,6 +95,38 @@ end
     end
 end
 
+@testset "maximum mean cycle" begin
+    # in the omnivory triangle the heaviest loop over all lengths is 1 → 2 → 3 → 1, so Karp's
+    # algorithm finds it without a search
+    J = omnivory_matrix()
+    logw = [J[i, j] == 0 || i == j ? -Inf : log(abs(J[i, j])) for i in 1:3, j in 1:3]
+    out = [[j for j in 1:3 if j != i && J[i, j] != 0] for i in 1:3]
+    bound, cycle = FoodWebs.max_mean_cycle(logw, out)
+    @test exp(bound) ≈ cbrt(2 * 4 * 0.6)
+    @test cycle in ([1, 2, 3], [2, 3, 1], [3, 1, 2])
+    @test FoodWebs.max_mean_cycle(fill(-Inf, 2, 2), [Int[], Int[]]) == (-Inf, nothing)
+    for seed in 1:20
+        web = niche_network(Xoshiro(seed + 990), 7, 0.25)
+        J = random_predprey(Xoshiro(seed), web, Uniform(0.1, 2), 0.5)
+        S = size(J, 1)
+        logw = [J[i, j] == 0 || i == j ? -Inf : log(abs(J[i, j])) for i in 1:S, j in 1:S]
+        out = [[j for j in 1:S if j != i && J[i, j] != 0] for i in 1:S]
+        bound, cycle = FoodWebs.max_mean_cycle(logw, out)
+        # the bound is the heaviest of all loops, of any length
+        all_loops = feeding_loops(J; max_length = S)
+        @test exp(bound) ≈ all_loops[1].weight
+        @test cycle !== nothing
+        @test exp(sum(logw[cycle[m], cycle[mod1(m + 1, end)]] for m in eachindex(cycle)) / length(cycle)) ≈
+            all_loops[1].weight
+        @test heaviest_loop(J; min_length = 2, max_length = S) == all_loops[1]
+        # when the heaviest loop is a predator–prey pair the search finds the heaviest longer one
+        for (m, L) in ((3, S), (3, 4), (4, 5))
+            loops = feeding_loops(J; min_length = m, max_length = L)
+            @test heaviest_loop(J; min_length = m, max_length = L) == (isempty(loops) ? nothing : loops[1])
+        end
+    end
+end
+
 @testset "loop membership" begin
     J = omnivory_matrix()
     loops = feeding_loops(J; min_length = 3)
