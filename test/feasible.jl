@@ -112,6 +112,61 @@ end
     @test !haskey(P, :scale)
 end
 
+# the turnover of every species at θ: the growth rate of a basal species, the gains of a consumer
+function point_turnover(fc, web, θ)
+    A = interaction_matrix(fc, θ)
+    r = growth_rates(fc, θ)
+    x = fc.x
+    return [any(web[:, i] .!= 0) ? sum(A[i, k] * x[k] for k in eachindex(x) if web[k, i] != 0) : r[i] for i in eachindex(x)]
+end
+point_self(fc, θ) = -[interaction_matrix(fc, θ)[i, i] for i in eachindex(fc.x)] .* fc.x
+
+@testset "self-regulation floor and total share" begin
+    rng = Xoshiro(41)
+    web = generalized_cascade_network(rng, 10, 0.2)
+    x = rand(rng, 10) .+ 0.5
+    # the floor holds at vertices, and binds when one species' self-regulation is minimized
+    fc = FeasibleCommunities(web, x; efficiency = 0.5, self_floor = 0.05)
+    P = halfspaces(fc)
+    @test isnonempty(P)
+    for _ in 1:10
+        θ = lp_point(P, randn(rng, length(P.lower)))
+        @test all(point_self(fc, θ) .>= 0.05 * sum(point_turnover(fc, web, θ)) / 10 .- 1.0e-8)
+    end
+    self1 = [c.kind === :self && c.i == 1 ? -1.0 : 0.0 for c in coordinates(fc)]
+    θ = lp_point(P, self1)
+    @test point_self(fc, θ)[1] ≈ 0.05 * sum(point_turnover(fc, web, θ)) / 10 atol = 1.0e-8
+    # a floor of 0 removes no points: the same vertices as no floor
+    c = randn(rng, length(P.lower))
+    @test lp_point(halfspaces(FeasibleCommunities(web, x; efficiency = 0.5, self_floor = 0.0)), c) ≈
+        lp_point(halfspaces(FeasibleCommunities(web, x; efficiency = 0.5)), c) atol = 1.0e-7
+    # a total share fixes summed self-regulation against summed turnover, and a band bounds it
+    for total in (0.1, (0.05, 0.2))
+        fc = FeasibleCommunities(web, x; efficiency = 0.5, total_self_share = total, self_share = (0.0, 0.3))
+        P = halfspaces(fc)
+        lo, hi = total isa Tuple ? total : (total, total)
+        for _ in 1:10
+            θ = lp_point(P, randn(rng, length(P.lower)))
+            ratio = sum(point_self(fc, θ)) / sum(point_turnover(fc, web, θ))
+            @test lo - 1.0e-8 <= ratio <= hi + 1.0e-8
+            @test all(point_self(fc, θ) .<= 0.3 .* point_turnover(fc, web, θ) .+ 1.0e-8)
+        end
+    end
+    # with fixed rates, a basal turnover is a constant
+    chain = food_chain_network(3)
+    fc = FeasibleCommunities(chain, [3.0, 2.0, 1.0]; rates = [1.0, -0.2, -0.1], self_floor = 0.1, total_self_share = (0.0, 0.5))
+    P = halfspaces(fc)
+    for _ in 1:5
+        θ = lp_point(P, randn(rng, length(P.lower)))
+        θ === nothing && continue
+        T = point_turnover(fc, chain, θ)
+        @test all(point_self(fc, θ) .>= 0.1 * sum(T) / 3 .- 1.0e-8)
+        @test sum(point_self(fc, θ)) <= 0.5 * sum(T) + 1.0e-8
+    end
+    @test_throws ArgumentError FeasibleCommunities(chain, ones(3); self_floor = 1.5)
+    @test_throws ArgumentError FeasibleCommunities(chain, ones(3); total_self_share = (0.6, 0.4))
+end
+
 @testset "per capita bounds" begin
     # a coordinate at A[i, j] has the per capita rate θ x[j], so (lo, hi) bounds it by lo / x[j]
     # and hi / x[j]; growth rates keep their intervals
