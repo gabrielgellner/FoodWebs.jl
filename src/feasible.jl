@@ -35,8 +35,8 @@
 
 """
     FeasibleCommunities(web, x; rates, self_regulation = :all, efficiency = nothing,
-                        self_share = nothing, bounds = (0.0, Inf), per_capita_bounds = nothing,
-                        fixed_fluxes = nothing)
+                        self_share = nothing, self_floor = nothing, total_self_share = nothing,
+                        bounds = (0.0, Inf), per_capita_bounds = nothing, fixed_fluxes = nothing)
 
 The Lotka–Volterra parameters on the food web `web` (`web[i, j] != 0` when species `j` eats
 species `i`) that have the equilibrium biomasses `x > 0`: the interaction matrix `A` and growth
@@ -59,6 +59,14 @@ variables.
   `e_min λ ≤ γ ≤ e_max λ` with `0 ≤ e_min ≤ e_max ≤ 1`.
 - `self_share`: `nothing`, a share `s` or a band `(s_min, s_max)` in `[0, 1]` of each
   self-regulated species' turnover taken by its self-regulation, `s_min T_i ≤ x_i σ_i ≤ s_max T_i`.
+- `self_floor`: `nothing`, or a share `s₀` in `[0, 1]` of the web's mean turnover
+  `T̄ = Σ_k T_k / S` below which no self-regulated species' self-regulation falls,
+  `x_i σ_i ≥ s₀ T̄`. Since `x_i σ_i ≤ T_i`, the floor also raises every self-regulated species'
+  turnover to at least `s₀ T̄`.
+- `total_self_share`: `nothing`, a share `s` or a band `(s_min, s_max)` in `[0, 1]` of the summed
+  turnover of the self-regulated species taken by their summed self-regulation,
+  `s_min Σ T_i ≤ Σ x_i σ_i ≤ s_max Σ T_i`. With `self_share` it fixes the mean of the species'
+  shares, weighted by turnover, while `self_share` bounds their spread.
 - `bounds`: `(lo, hi)` for every loss, gain and self-regulation magnitude.
 - `per_capita_bounds`: `nothing`, or `(lo, hi)` for the per capita rate of every loss, gain and
   self-regulation term: a coordinate `θ` at `A[i, j]` contributes `θ x[j]` to species `i`'s per
@@ -71,7 +79,7 @@ variables.
   the diagonal of `F` is left out, and a cannibal's `σ_i` must hold its net cannibalism.
 
 The community matrix `J = diag(x) A` has the eigenvalues of `A diag(x)`, the matrix of per capita
-rates, and the equilibrium, the rate intervals, `self_share` and `per_capita_bounds` constrain per
+rates, and the equilibrium, the rate intervals, the self-regulation shares and floor, and `per_capita_bounds` constrain per
 capita rates only. Rescaling `x` by a constant therefore leaves the spectra unchanged, and
 without efficiency bands so does any change of `x`. A finite `bounds` caps the per capita rate of
 a coordinate at `A[i, j]` at `hi x[j]`, which depends on the scale and the shape of `x`. Use
@@ -92,6 +100,8 @@ struct FeasibleCommunities
     self_regulated::Vector{Bool}
     efficiency::Union{Nothing, Tuple{Matrix{Float64}, Matrix{Float64}}}
     self_share::Union{Nothing, Tuple{Float64, Float64}}
+    self_floor::Union{Nothing, Float64}
+    total_self_share::Union{Nothing, Tuple{Float64, Float64}}
     bounds::Tuple{Float64, Float64}
     per_capita_bounds::Union{Nothing, Tuple{Float64, Float64}}
     fixed_fluxes::Union{Nothing, Matrix{Float64}}
@@ -101,8 +111,8 @@ end
 function FeasibleCommunities(
         web::AbstractMatrix, x::AbstractVector{<:Real};
         rates = (basal = (0.0, 5.0), consumer = (-1.0, 0.0)), self_regulation = :all,
-        efficiency = nothing, self_share = nothing, bounds = (0.0, Inf), per_capita_bounds = nothing,
-        fixed_fluxes = nothing
+        efficiency = nothing, self_share = nothing, self_floor = nothing, total_self_share = nothing,
+        bounds = (0.0, Inf), per_capita_bounds = nothing, fixed_fluxes = nothing
     )
     S = LinearAlgebra.checksquare(web)
     length(x) == S || throw(DimensionMismatch("x must have length $S, got $(length(x))"))
@@ -151,6 +161,19 @@ function FeasibleCommunities(
         0 <= lo <= hi <= 1 || throw(ArgumentError("self_share must satisfy 0 ≤ s_min ≤ s_max ≤ 1, got $self_share"))
         (float(lo), float(hi))
     end
+    floor = if self_floor === nothing
+        nothing
+    else
+        0 <= self_floor <= 1 || throw(ArgumentError("self_floor must lie in [0, 1], got $self_floor"))
+        float(self_floor)
+    end
+    total = if total_self_share === nothing
+        nothing
+    else
+        lo, hi = total_self_share isa Tuple ? total_self_share : (total_self_share, total_self_share)
+        0 <= lo <= hi <= 1 || throw(ArgumentError("total_self_share must satisfy 0 ≤ s_min ≤ s_max ≤ 1, got $total_self_share"))
+        (float(lo), float(hi))
+    end
     first(bounds) <= last(bounds) || throw(ArgumentError("bounds must have lo ≤ hi"))
     first(bounds) >= 0 || throw(ArgumentError("magnitudes are non-negative, so the lower bound must be at least 0"))
     per_capita = if per_capita_bounds === nothing
@@ -180,7 +203,7 @@ function FeasibleCommunities(
     end
     rate_bounds === nothing || append!(coords, [(kind = :growth, i = i, j = i) for i in 1:S])
     return FeasibleCommunities(
-        eats, Vector{Float64}(x), fixed_rates, rate_bounds, self_regulated, band, share,
+        eats, Vector{Float64}(x), fixed_rates, rate_bounds, self_regulated, band, share, floor, total,
         (float(first(bounds)), float(last(bounds))), per_capita, flux, coords
     )
 end
@@ -327,6 +350,38 @@ function theta_halfspaces(fc::FeasibleCommunities)
             end
         end
     end
+    regulated = [i for i in 1:S if fc.self_regulated[i]]
+    if fc.self_floor !== nothing
+        # s₀ T̄ - x_i σ_i ≤ 0, with T̄ the mean turnover of all species
+        turnovers = [turnover_row(fc, index, fixed, k) for k in 1:S]
+        mean_row = sum(first, turnovers) ./ S
+        mean_constant = sum(last, turnovers) / S
+        for i in regulated
+            row = fc.self_floor .* mean_row
+            row[index[(:self, i, i)]] -= fc.x[i]
+            push!(inequalities, row)
+            push!(rhs_in, -fc.self_floor * mean_constant)
+        end
+    end
+    if fc.total_self_share !== nothing && !isempty(regulated)
+        s_min, s_max = fc.total_self_share
+        # Σ (x_i σ_i - s T_i) over the self-regulated species, as for one species' share
+        total_row(s) = (rows = [share_row(fc, index, fixed, i, s) for i in regulated]; (sum(first, rows), sum(last, rows)))
+        if s_min == s_max
+            row, constant = total_row(s_max)
+            push!(equalities, row)
+            push!(rhs_eq, constant)
+        else
+            row, constant = total_row(s_max)
+            push!(inequalities, row)
+            push!(rhs_in, constant)
+            if s_min > 0
+                row, constant = total_row(s_min)
+                push!(inequalities, -row)
+                push!(rhs_in, -constant)
+            end
+        end
+    end
     A = isempty(inequalities) ? zeros(0, n) : permutedims(reduce(hcat, inequalities))
     if !isempty(equalities)
         C = vcat(C, permutedims(reduce(hcat, equalities)))
@@ -335,25 +390,32 @@ function theta_halfspaces(fc::FeasibleCommunities)
     return (; lower, upper, A, b = rhs_in, C, d)
 end
 
-# x_i σ_i - s T_i for species i, as coefficients and a constant: T_i is the growth rate of a basal
-# species and the gains Σ_prey x_k γ of a consumer
-function share_row(fc::FeasibleCommunities, index, fixed, i, s)
-    S = length(fc.x)
+# the turnover T_i of species i as coefficients and a constant, T_i = row ⋅ θ + constant: the growth
+# rate of a basal species and the gains Σ_prey x_k γ of a consumer
+function turnover_row(fc::FeasibleCommunities, index, fixed, i)
     row = zeros(length(fc.coordinates))
-    row[index[(:self, i, i)]] = fc.x[i]
     constant = 0.0
     if !any(fc.eats[:, i])
         if fixed === nothing
-            row[index[(:growth, i, i)]] -= s
+            row[index[(:growth, i, i)]] = 1
         else
-            constant = s * fixed[i]
+            constant = fixed[i]
         end
     else
-        for k in 1:S
-            fc.eats[k, i] && (row[index[(:gain, i, k)]] -= s * fc.x[k])
+        for k in eachindex(fc.x)
+            fc.eats[k, i] && (row[index[(:gain, i, k)]] = fc.x[k])
         end
     end
     return row, constant
+end
+
+# x_i σ_i - s T_i for species i as coefficients and a constant: the share constraint is
+# row ⋅ θ = constant (or ≤ for a band's upper end)
+function share_row(fc::FeasibleCommunities, index, fixed, i, s)
+    turnover, constant = turnover_row(fc, index, fixed, i)
+    row = -s .* turnover
+    row[index[(:self, i, i)]] += fc.x[i]
+    return row, s * constant
 end
 
 """
@@ -430,7 +492,9 @@ efficiency bands, flux is bounded on every link whose band stays below 1, and th
 unbounded exactly when links whose band reaches 1 form a feeding loop with no species on it
 draining a positive minimum self-regulation share. With `fixed_fluxes` the losses are fixed; with
 efficiency bands too, the polytope is bounded when the growth rates of self-regulated species
-are bounded above.
+are bounded above. The rule leaves out `self_floor` and `total_self_share`, which only remove
+points, so a polytope it calls bounded is bounded, and one it calls unbounded may be bounded by
+them.
 """
 function isbounded(fc::FeasibleCommunities)
     isfinite(last(fc.bounds)) && return true
