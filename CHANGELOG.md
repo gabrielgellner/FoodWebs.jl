@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.0] - 2026-11-04
+
+### Features
+
+- **feasible**: Add a floor on self-regulation and a share of total turnover in self-regulation
+
 ## [0.11.0] - 2026-11-03
 
 ### Features
